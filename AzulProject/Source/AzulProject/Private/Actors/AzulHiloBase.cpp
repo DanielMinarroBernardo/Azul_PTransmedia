@@ -1,12 +1,17 @@
-#include "AzulHiloBase.h"
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "Actors/AzulHiloBase.h"
 #include "EngineUtils.h" // Necesario para TActorIterator
-#include "AzulCharacterBase.h"
+#include "Characters/AzulCharacterBase.h"
 #include "Components/SplineComponent.h"
 #include "NiagaraComponent.h"
 #include "Engine/World.h"
 
+// Sets default values
 AAzulHiloBase::AAzulHiloBase()
 {
+ 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	SplineComp = CreateDefaultSubobject<USplineComponent>(TEXT("SplineComp"));
@@ -26,10 +31,11 @@ AAzulHiloBase::AAzulHiloBase()
 	}
 }
 
+// Called when the game starts or when spawned
 void AAzulHiloBase::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	// Si hay plantilla, asignarla al componente y activarlo.
 	if (NiagaraComp)
 	{
@@ -46,23 +52,23 @@ void AAzulHiloBase::BeginPlay()
 		EndPoint = Other->GetActorLocation();
 		// Usar EndPoint para definir el punto final del spline
 	}
-
 }
 
 // Called every frame
 void AAzulHiloBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
 }
 
 void AAzulHiloBase::UpdateSpline_Implementation(const FVector& NewStartPosition)
 {
 	//Cambiar el SpawnRate del Hilo con el Length del Spline
-	
+
 	SplineComp->ClearSplinePoints(false);
 
-	// Cambiar punto inicial
-	SplineComp->AddSplinePoint(FVector(300,200,0), ESplineCoordinateSpace::Local);
+	// Cambiar puntos del spline
+	SplineComp->AddSplinePoint(FVector(300, 200, 0), ESplineCoordinateSpace::Local);
 	SplineComp->AddSplinePoint(FVector(400, 600, 0), ESplineCoordinateSpace::Local);
 
 
@@ -88,4 +94,3 @@ AAzulCharacterBase* AAzulHiloBase::GetSonCharacter(UWorld* World)
 
 	return nullptr; // No encontrado
 }
-

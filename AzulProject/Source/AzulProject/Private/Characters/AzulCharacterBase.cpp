@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AzulCharacterBase.h"
+#include "Characters/AzulCharacterBase.h"
 
 // Sets default values
 AAzulCharacterBase::AAzulCharacterBase()

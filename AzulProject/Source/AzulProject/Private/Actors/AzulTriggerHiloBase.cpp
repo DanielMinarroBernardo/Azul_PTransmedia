@@ -1,6 +1,8 @@
+// Fill out your copyright notice in the Description page of Project Settings.
 
-#include "AzulTriggerHiloBase.h"
-#include "AzulCharacterBase.h"
+
+#include "Actors/AzulTriggerHiloBase.h"
+#include "Characters/AzulCharacterBase.h"
 #include "EngineUtils.h" // Para TActorIterator
 
 // Sets default values
@@ -14,14 +16,6 @@ AAzulTriggerHiloBase::AAzulTriggerHiloBase()
 	SetRootComponent(TriggerSphere);
 	TriggerSphere->SetCollisionProfileName(TEXT("Trigger"));
 	TriggerSphere->SetGenerateOverlapEvents(true);
-
-	// Cargar la clase Blueprint del hilo
-	static ConstructorHelpers::FClassFinder<AAzulHiloBase> HiloBP(TEXT("/Game/Code/BP_Hilo"));
-	if (HiloBP.Succeeded())
-	{
-		HiloActorClass = HiloBP.Class;
-	}
-
 }
 
 // Called when the game starts or when spawned
@@ -33,16 +27,6 @@ void AAzulTriggerHiloBase::BeginPlay()
 	if (TriggerSphere)
 	{
 		TriggerSphere->OnComponentBeginOverlap.AddDynamic(this, &AAzulTriggerHiloBase::OnBeginOverlap);
-	}
-
-	// Buscar el actor del hilo si no se asignó manualmente
-	if (!HiloActor && HiloActorClass)
-	{
-		for (TActorIterator<AAzulHiloBase> It(GetWorld(), HiloActorClass); It; ++It)
-		{
-			HiloActor = *It;
-			break; // Usa el primero encontrado
-		}
 	}
 }
 
@@ -60,14 +44,12 @@ void AAzulTriggerHiloBase::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, A
 	AAzulCharacterBase* OverlappingCharacter = Cast<AAzulCharacterBase>(OtherActor);
 	if (!OverlappingCharacter)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, "No");
 		return; // Si no es un personaje AzulCharacterBase, no hacer nada
 	}
 
 	// Verificar que haya un hilo asignado y que implemente la interfaz
 	if (HiloActor && HiloActor->GetClass()->ImplementsInterface(UAzulHiloInterface::StaticClass()))
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, "si");
 		// Llamar a la función UpdateSpline definida en la interfaz
 		IAzulHiloInterface::Execute_UpdateSpline(HiloActor, GetActorLocation());
 	}

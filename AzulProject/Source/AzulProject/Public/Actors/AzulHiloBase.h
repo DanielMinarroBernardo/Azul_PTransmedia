@@ -1,10 +1,12 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/SplineComponent.h"
-#include "AzulHiloInterface.h"
-#include "AzulCharacterBase.h"
+#include "Interfaces/AzulHiloInterface.h"
+#include "Characters/AzulCharacterBase.h"
 #include "NiagaraSystem.h"
 #include "NiagaraComponent.h"
 #include "AzulHiloBase.generated.h"
@@ -13,14 +15,17 @@ UCLASS()
 class AZULPROJECT_API AAzulHiloBase : public AActor, public IAzulHiloInterface
 {
 	GENERATED_BODY()
-
-public:
+	
+public:	
+	// Sets default values for this actor's properties
 	AAzulHiloBase();
 
 protected:
+	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:
+public:	
+	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Spline

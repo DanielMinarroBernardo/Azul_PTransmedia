@@ -6,8 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "Components/SphereComponent.h"
 #include "AzulHiloBase.h"
-#include "AzulCharacterBase.h"
-#include "AzulHiloInterface.h"
+#include "Characters/AzulCharacterBase.h"
+#include "Interfaces/AzulHiloInterface.h"
 #include "AzulTriggerHiloBase.generated.h"
 
 UCLASS()
@@ -30,13 +30,10 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Clase del actor de hilo (Blueprint derivado de AzulHiloBase)
-	UPROPERTY(EditDefaultsOnly, Category = "Hilo")
-	TSubclassOf<AAzulHiloBase> HiloActorClass;
-
 	// Referencia al actor del hilo (AzulHiloBase o su Blueprint)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hilo")
-	AAzulHiloBase* HiloActor;
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Hilo", meta = (DisplayName = "Actor del Hilo", ToolTip = "Actor del que se leerá la Location"))
+	AAzulHiloBase* HiloActor = nullptr;
+
 
 	// Evento de solapamiento
 	UFUNCTION()
