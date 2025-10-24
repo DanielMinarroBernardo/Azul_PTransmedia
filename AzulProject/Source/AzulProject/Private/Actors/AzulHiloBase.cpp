@@ -74,6 +74,9 @@ void AAzulHiloBase::UpdateSpline_Implementation(const FVector& NewStartPosition)
 
 	// Asegurar coherencia
 	SplineComp->UpdateSpline();
+
+	NiagaraComp->SetFloatParameter(FName("SpawnRate"), SplineComp->GetSplineLength());
+	NiagaraComp->ResetSystem();
 }
 
 AAzulCharacterBase* AAzulHiloBase::GetSonCharacter(UWorld* World)
