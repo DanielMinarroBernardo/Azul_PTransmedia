@@ -2,26 +2,26 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Interfaces/AzulInteractuableInterface.h"
 #include "AzulCharacterBase.generated.h"
 
 UCLASS()
-class AZULPROJECT_API AAzulCharacterBase : public ACharacter
+class AZULPROJECT_API AAzulCharacterBase : public ACharacter, public IAzulInteractuableInterface
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	AAzulCharacterBase();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactuable")
+	TScriptInterface<IAzulInteractuableInterface> CurrentInteractable;
 
 };
