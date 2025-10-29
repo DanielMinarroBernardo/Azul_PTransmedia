@@ -31,7 +31,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	// Referencia al actor del hilo (AzulHiloBase o su Blueprint)
-	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Hilo", meta = (DisplayName = "Actor del Hilo", ToolTip = "Actor del que se leerá la Location"))
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Hilo")
 	AAzulHiloBase* HiloActor = nullptr;
 
 

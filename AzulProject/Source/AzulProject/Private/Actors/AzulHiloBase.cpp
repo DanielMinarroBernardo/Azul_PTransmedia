@@ -22,7 +22,7 @@ AAzulHiloBase::AAzulHiloBase()
 	NiagaraComp->SetupAttachment(SplineComp);
 
 	// Cargar el Niagara System una sola vez en tiempo de construcción
-	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> NiagaraAsset(TEXT("/Game/VFX/NS_Hilo.NS_Hilo"));
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> NiagaraAsset(TEXT("/Game/VFX/FXS_Hilo.FXS_Hilo"));
 
 	if (NiagaraAsset.Succeeded())
 	{
