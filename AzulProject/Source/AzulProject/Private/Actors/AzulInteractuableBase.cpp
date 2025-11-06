@@ -56,7 +56,7 @@ void AAzulInteractuableBase::OnBeginOverlap(UPrimitiveComponent* OverlappedComp,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	// Verificar que el actor que entra sea del tipo AzulCharacterBase o derivado
-	AAzulCharacterBase* OverlappingCharacter = Cast<AAzulCharacterBase>(OtherActor);
+	OverlappingCharacter = Cast<AAzulCharacterBase>(OtherActor);
 	if (!OverlappingCharacter)
 	{
 		return; // Si no es un personaje AzulCharacterBase, no hacer nada
@@ -76,7 +76,7 @@ void AAzulInteractuableBase::OnEndOverlap(UPrimitiveComponent* OverlappedComp, A
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	// Verificar que el actor que sale sea del tipo AzulCharacterBase o derivado
-	AAzulCharacterBase* OverlappingCharacter = Cast<AAzulCharacterBase>(OtherActor);
+	OverlappingCharacter = Cast<AAzulCharacterBase>(OtherActor);
 	if (!OverlappingCharacter)
 	{
 		return; // Si no es un personaje AzulCharacterBase, no hacer nada

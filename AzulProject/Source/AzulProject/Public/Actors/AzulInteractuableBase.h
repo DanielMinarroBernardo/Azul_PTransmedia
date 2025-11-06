@@ -35,6 +35,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI", meta = (AllowPrivateAccess = "true"))
 	UWidgetComponent* WidgetComp;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
+	AAzulCharacterBase* OverlappingCharacter;
+
 	// Función llamada cuando ocurre overlap (debe ser UFUNCTION para AddDynamic)
 	UFUNCTION()
 	void OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
