@@ -2,6 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "Components/Button.h"
+#include "Components/HorizontalBox.h"
+#include "Components/HorizontalBoxSlot.h"
+#include "Components/TextBlock.h"
 #include "AzulDialogue.generated.h"
 
 // --- Estructuras auxiliares ---
@@ -60,12 +64,7 @@ struct FDialogueScene
     TArray<FDialogueNode> Dialogues;
 };
 
-// --- Delegados expuestos a Blueprint ---
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDialogueUpdated, const FDialogueNode&, Dialogue);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnChoicesCreated, const TArray<FDialogueChoice>&, Choices);
-
-// --- Clase principal ---
+// --- Clase principal simplificada ---
 
 UCLASS(Blueprintable, BlueprintType)
 class AZULPROJECT_API UAzulDialogue : public UObject
@@ -89,29 +88,36 @@ protected:
     int32 PlayerScore;
 
 public:
+
+    /** Cargar datos desde el archivo JSON */
     UFUNCTION(BlueprintCallable, Category = "AzulDialogue")
     bool LoadDialogueJSON();
 
-    UFUNCTION(BlueprintCallable, Category = "AzulDialogue")
-    TArray<FDialogueNode> GetDialoguesByScene(int32 SceneIndex) const;
-
+    /** Iniciar una escena concreta */
     UFUNCTION(BlueprintCallable, Category = "AzulDialogue")
     void StartScene(int32 SceneIndex);
 
+    /** Avanzar el diálogo al siguiente ID */
     UFUNCTION(BlueprintCallable, Category = "AzulDialogue")
     void AdvanceDialogue(int32 NextID);
 
+    /** Escoger una opción */
     UFUNCTION(BlueprintCallable, Category = "AzulDialogue")
     void ChooseOption(int32 ChoiceIndex);
 
-    /** Devuelve la cantidad de opciones del diálogo actual */
+    /** Obtener texto actual */
     UFUNCTION(BlueprintCallable, Category = "AzulDialogue")
-    int32 GetCurrentChoicesCount() const;
+    FString GetCurrentDialogueText() const;
 
-    /** 🔹 Eventos expuestos a Blueprint */
-    UPROPERTY(BlueprintAssignable, Category = "AzulDialogue")
-    FOnDialogueUpdated OnDialogueUpdated;
+    /** Obtener escena por índice */
+    UFUNCTION(BlueprintCallable, Category = "AzulDialogue")
+    FDialogueScene GetSceneByIndex(int32 SceneIndex) const;
 
-    UPROPERTY(BlueprintAssignable, Category = "AzulDialogue")
-    FOnChoicesCreated OnChoicesCreated;
+    /** Actualizar botones según las decisiones disponibles */
+    UFUNCTION(BlueprintCallable, Category = "AzulDialogue|UI")
+    void UpdateDecisionButtons(UHorizontalBox* ChoicesContainer);
+
+    /** Manejar la selección de un botón */
+    UFUNCTION(BlueprintCallable, Category = "AzulDialogue|UI")
+    void HandleChoiceSelection(int32 ChoiceIndex, UHorizontalBox* ChoicesContainer);
 };
