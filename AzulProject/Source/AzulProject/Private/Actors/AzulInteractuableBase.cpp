@@ -6,20 +6,20 @@ AAzulInteractuableBase::AAzulInteractuableBase()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Static mesh (visual)
-	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
-	// Usar el mesh como root para la facilidad de edición en el editor
-	SetRootComponent(MeshComp);
-	// Dejar la colisión del mesh desactivada: la esfera manejará los overlaps
-	MeshComp->SetCollisionProfileName(TEXT("NoCollision"));
-	MeshComp->SetGenerateOverlapEvents(false);
-
 	// Sphere collision (trigger)
 	CollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionSphere"));
-	CollisionSphere->SetupAttachment(RootComponent);
+	// Usar el mesh como root para la facilidad de edición en el editor
+	SetRootComponent(CollisionSphere);
 	CollisionSphere->InitSphereRadius(100.0f); // valor por defecto editable en BP si se expone
 	CollisionSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	CollisionSphere->SetGenerateOverlapEvents(true);
+
+	// Static mesh (visual)
+	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
+	MeshComp->SetupAttachment(RootComponent);
+	// Dejar la colisión del mesh desactivada: la esfera manejará los overlaps
+	MeshComp->SetCollisionProfileName(TEXT("NoCollision"));
+	MeshComp->SetGenerateOverlapEvents(false);
 
 	// Widget component
 	WidgetComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("Widget"));

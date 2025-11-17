@@ -1,7 +1,7 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Actors/AzulTriggerHiloBase.h"
+#include "Actors/AzulInteractuableBase.h"
+#include "Components/SphereComponent.h"
+#include "Interfaces/AzulHiloInterface.h"
 #include "Characters/AzulCharacterBase.h"
 #include "EngineUtils.h" // Para TActorIterator
 
@@ -29,13 +29,12 @@ void AAzulTriggerHiloBase::BeginPlay()
 		TriggerSphere->OnComponentBeginOverlap.AddDynamic(this, &AAzulTriggerHiloBase::OnBeginOverlap);
 	}
 }
-
-// Called every frame
 void AAzulTriggerHiloBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 }
+
 
 void AAzulTriggerHiloBase::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -50,8 +49,11 @@ void AAzulTriggerHiloBase::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, A
 	// Verificar que haya un hilo asignado y que implemente la interfaz
 	if (HiloActor && HiloActor->GetClass()->ImplementsInterface(UAzulHiloInterface::StaticClass()))
 	{
+		FVector Pos = GetActorLocation();
+		Pos.Z = 0.f;
+
 		// Llamar a la función UpdateSpline definida en la interfaz
-		IAzulHiloInterface::Execute_UpdateSpline(HiloActor, GetActorLocation());
+		IAzulHiloInterface::Execute_UpdateSpline(HiloActor, Pos);
 	}
 }
 

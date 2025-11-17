@@ -1,53 +1,62 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/SplineComponent.h"
-#include "Interfaces/AzulHiloInterface.h"
-#include "Characters/AzulCharacterBase.h"
 #include "NiagaraSystem.h"
 #include "NiagaraComponent.h"
+#include "Interfaces/AzulHiloInterface.h"
+#include "Actors/AzulInteractuableBase.h"
 #include "AzulHiloBase.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSplineRouteChanged,
+	const TArray<FVector>&, Previous,
+	const TArray<FVector>&, Target);
 
 UCLASS()
 class AZULPROJECT_API AAzulHiloBase : public AActor, public IAzulHiloInterface
 {
 	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
+
+public:
 	AAzulHiloBase();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+public:
 
-	// Spline
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Hilo")
+	// Interfaz
+	virtual void UpdateSpline_Implementation(const FVector& TriggerPos) override;
+
+	// Llamado desde BP para aplicar puntos interpolados
+	UFUNCTION(BlueprintCallable, Category = "Hilo")
+	void ApplyInterpolatedSplinePoints(const TArray<FVector>& Points);
+
+	// Evento para BP (Timeline)
+	UPROPERTY(BlueprintAssignable, Category = "Hilo")
+	FOnSplineRouteChanged OnSplineRouteChanged;
+
+	// Componentes
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	USplineComponent* SplineComp;
 
-	UPROPERTY(EditAnywhere, Category = "Hilo")
-	bool bLoopSpline = false;
-
-	UPROPERTY(EditAnywhere, Category = "Hilo")
-	FVector EndPoint;
-
-	// Niagara
-	UPROPERTY(EditAnywhere, Category = "Niagara")
-	UNiagaraSystem* NiagaraTemplate;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Niagara")
+	UPROPERTY(VisibleAnywhere)
 	UNiagaraComponent* NiagaraComp;
 
-	//INTERFAZ
-	virtual void UpdateSpline_Implementation(const FVector& NewStartPosition) override;
+	UPROPERTY(EditAnywhere)
+	UNiagaraSystem* NiagaraTemplate;
+
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Hilo")
+	AAzulInteractuableBase* HijoActor = nullptr;
+
 
 private:
-	AAzulCharacterBase* GetSonCharacter(UWorld* World);
+
+	TArray<FVector> PreviousPoints;
+	TArray<FVector> TargetPoints;
+
+	FVector CachedStartPos;
+
+	TArray<FVector> GenerateCurvedRoute(const FVector& StartPos, const FVector& EndPos);
 };

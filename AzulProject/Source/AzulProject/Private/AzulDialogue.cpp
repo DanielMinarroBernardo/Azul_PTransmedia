@@ -181,7 +181,7 @@ void UAzulDialogue::UpdateDecisionButtons(UHorizontalBox* ChoicesContainer)
         return;
     }
 
-    // --- Si es un nodo de decisión ---
+    // Si es un nodo de decisión
     if (Node->Type == TEXT("decision"))
     {
         const int32 NumChoices = Node->Choices.Num();
@@ -275,6 +275,6 @@ void UAzulDialogue::HandleChoiceSelection(int32 ChoiceIndex, UHorizontalBox* Cho
         }
     }
 
-    // 🔹 Actualizar los botones y texto tras avanzar
+    //Actualizar los botones y texto tras avanzar
     UpdateDecisionButtons(ChoicesContainer);
 }

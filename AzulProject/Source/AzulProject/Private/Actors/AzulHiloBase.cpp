@@ -1,99 +1,110 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿#include "Actors/AzulHiloBase.h"
+#include "Actors/AzulInteractuableBase.h"
+#include "Kismet/GameplayStatics.h"
 
-
-#include "Actors/AzulHiloBase.h"
-#include "EngineUtils.h" // Necesario para TActorIterator
-#include "Characters/AzulCharacterBase.h"
-#include "Components/SplineComponent.h"
-#include "NiagaraComponent.h"
-#include "Engine/World.h"
-
-// Sets default values
 AAzulHiloBase::AAzulHiloBase()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+    SplineComp = CreateDefaultSubobject<USplineComponent>(TEXT("SplineComp"));
+    RootComponent = SplineComp;
 
-	SplineComp = CreateDefaultSubobject<USplineComponent>(TEXT("SplineComp"));
-	RootComponent = SplineComp;
-	SplineComp->SetMobility(EComponentMobility::Movable);
-
-	NiagaraComp = CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraComp"));
-	NiagaraComp->SetupAttachment(SplineComp);
-
-	// Cargar el Niagara System una sola vez en tiempo de construcci�n
-	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> NiagaraAsset(TEXT("/Game/VFX/FXS_Hilo.FXS_Hilo"));
-
-	if (NiagaraAsset.Succeeded())
-	{
-		NiagaraTemplate = NiagaraAsset.Object;
-		NiagaraComp->SetAsset(NiagaraTemplate);
-	}
+    NiagaraComp = CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraComp"));
+    NiagaraComp->SetupAttachment(SplineComp);
 }
 
-// Called when the game starts or when spawned
 void AAzulHiloBase::BeginPlay()
 {
-	Super::BeginPlay();
-	
-	// Si hay plantilla, asignarla al componente y activarlo.
-	if (NiagaraComp)
-	{
-		if (NiagaraTemplate)
-		{
-			NiagaraComp->SetAsset(NiagaraTemplate);
-			NiagaraComp->Activate(true);
-		}
-	}
+    Super::BeginPlay();
 
-	AAzulCharacterBase* Other = GetSonCharacter(GetWorld());
-	if (Other)
-	{
-		EndPoint = Other->GetActorLocation();
-		// Usar EndPoint para definir el punto final del spline
-	}
+    if (NiagaraTemplate)
+    {
+        NiagaraComp->SetAsset(NiagaraTemplate);
+        NiagaraComp->Activate(true);
+    }
 }
 
-// Called every frame
-void AAzulHiloBase::Tick(float DeltaTime)
+//
+// INTERFAZ — solo se llama cuando un trigger la activa
+//
+void AAzulHiloBase::UpdateSpline_Implementation(const FVector& TriggerPos)
 {
-	Super::Tick(DeltaTime);
+    ACharacter* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+    if (!Player || !HijoActor) return;
 
+    FVector Start = Player->GetActorLocation();
+    Start.Z = 0.f;
+
+    FVector End = HijoActor->GetActorLocation();
+    End.Z = 0.f;
+
+    TArray<FVector> NewPoints = GenerateCurvedRoute(Start, End);
+
+    if (PreviousPoints.Num() == 0)
+        PreviousPoints = NewPoints;
+
+    OnSplineRouteChanged.Broadcast(PreviousPoints, NewPoints);
+
+    PreviousPoints = NewPoints;
 }
 
-void AAzulHiloBase::UpdateSpline_Implementation(const FVector& NewStartPosition)
+
+
+TArray<FVector> AAzulHiloBase::GenerateCurvedRoute(const FVector& StartPos, const FVector& EndPos)
 {
-	//Cambiar el SpawnRate del Hilo con el Length del Spline
+    TArray<FVector> Points;
 
-	SplineComp->ClearSplinePoints(false);
+    FVector A(StartPos.X, StartPos.Y, 0.f);
+    FVector B(EndPos.X, EndPos.Y, 0.f);
 
-	// Cambiar puntos del spline
-	SplineComp->AddSplinePoint(FVector(300, 200, 0), ESplineCoordinateSpace::Local);
-	SplineComp->AddSplinePoint(FVector(400, 600, 0), ESplineCoordinateSpace::Local);
+    FVector Dir = (B - A).GetSafeNormal();
+    FVector Perp(Dir.Y, -Dir.X, 0.f);   // perpendicular estable en 2D
 
+    float Dist = FVector::Distance(A, B);
 
-	// Asegurar coherencia
-	SplineComp->UpdateSpline();
+    // offset muy pequeño -> NUNCA puede crear un círculo
+    float CurveStrength = FMath::Clamp(Dist * 0.15f, 20.f, 80.f);
 
-	NiagaraComp->SetFloatParameter(FName("SpawnRate"), SplineComp->GetSplineLength());
-	NiagaraComp->ResetSystem();
+    FVector Mid = (A + B) * 0.5f + (Perp * CurveStrength);
+    Mid.Z = 0.f;
+
+    // 3 puntos = curva ligera
+    Points.Add(A);
+    Points.Add(Mid);
+    Points.Add(B);
+
+    return Points;
 }
 
-AAzulCharacterBase* AAzulHiloBase::GetSonCharacter(UWorld* World)
+
+
+
+void AAzulHiloBase::ApplyInterpolatedSplinePoints(const TArray<FVector>& Points)
 {
-	if (!World) return nullptr;
+    SplineComp->ClearSplinePoints(true);
 
-	APawn* Mom = World->GetFirstPlayerController()->GetPawn();
-	if (!Mom) return nullptr;
+    for (int32 i = 0; i < Points.Num(); i++)
+    {
+        // Los puntos vienen ya en WORLD → usar WORLD
+        FVector Flat = FVector(Points[i].X, Points[i].Y, 0.f);
 
-	for (TActorIterator<AAzulCharacterBase> It(World); It; ++It)
-	{
-		AAzulCharacterBase* Son = *It;
-		if (Son && Son != Mom)
-		{
-			return Son; // Solo hay dos, devolvemos el hijo
-		}
-	}
+        SplineComp->AddSplinePoint(Flat, ESplineCoordinateSpace::World);
+    }
 
-	return nullptr; // No encontrado
+    // Para evitar overshoot DEFINITIVAMENTE
+    for (int32 i = 0; i < Points.Num(); i++)
+    {
+        SplineComp->SetSplinePointType(i, ESplinePointType::Linear, false);
+        // Si quieres ligera curva:
+        // SplineComp->SetSplinePointType(i, ESplinePointType::CurveClamped, false);
+    }
+
+    // Actualizar spline
+    SplineComp->SetClosedLoop(false);
+    SplineComp->UpdateSpline();
+
+    // VFX
+    NiagaraComp->SetFloatParameter("SpawnRate", SplineComp->GetSplineLength());
+    NiagaraComp->ResetSystem();
 }
+
+
+

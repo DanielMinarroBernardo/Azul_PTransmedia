@@ -8,7 +8,7 @@
 #include "Components/TextBlock.h"
 #include "AzulDialogue.generated.h"
 
-// --- Estructuras auxiliares ---
+//Estructuras
 
 USTRUCT(BlueprintType)
 struct FDialogueChoice
@@ -64,8 +64,6 @@ struct FDialogueScene
     TArray<FDialogueNode> Dialogues;
 };
 
-// --- Clase principal simplificada ---
-
 UCLASS(Blueprintable, BlueprintType)
 class AZULPROJECT_API UAzulDialogue : public UObject
 {
@@ -89,35 +87,35 @@ protected:
 
 public:
 
-    /** Cargar datos desde el archivo JSON */
+    //Cargar datos desde el archivo JSON
     UFUNCTION(BlueprintCallable, Category = "AzulDialogue")
     bool LoadDialogueJSON();
 
-    /** Iniciar una escena concreta */
+    //Iniciar una escena concreta
     UFUNCTION(BlueprintCallable, Category = "AzulDialogue")
     void StartScene(int32 SceneIndex);
 
-    /** Avanzar el diálogo al siguiente ID */
+    //Avanzar el diálogo al siguiente ID
     UFUNCTION(BlueprintCallable, Category = "AzulDialogue")
     void AdvanceDialogue(int32 NextID);
 
-    /** Escoger una opción */
+    // Escoger una opción
     UFUNCTION(BlueprintCallable, Category = "AzulDialogue")
     void ChooseOption(int32 ChoiceIndex);
 
-    /** Obtener texto actual */
+    // Obtener texto actual
     UFUNCTION(BlueprintCallable, Category = "AzulDialogue")
     FString GetCurrentDialogueText() const;
 
-    /** Obtener escena por índice */
+    // Obtener escena por índice
     UFUNCTION(BlueprintCallable, Category = "AzulDialogue")
     FDialogueScene GetSceneByIndex(int32 SceneIndex) const;
 
-    /** Actualizar botones según las decisiones disponibles */
+    // Actualizar botones según las decisiones disponibles
     UFUNCTION(BlueprintCallable, Category = "AzulDialogue|UI")
     void UpdateDecisionButtons(UHorizontalBox* ChoicesContainer);
 
-    /** Manejar la selección de un botón */
+    // Manejar la selección de un botón
     UFUNCTION(BlueprintCallable, Category = "AzulDialogue|UI")
     void HandleChoiceSelection(int32 ChoiceIndex, UHorizontalBox* ChoicesContainer);
 };
