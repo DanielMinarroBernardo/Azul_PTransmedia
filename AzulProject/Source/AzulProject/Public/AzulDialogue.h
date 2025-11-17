@@ -2,67 +2,41 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "Components/Button.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
+#include "Components/Button.h"
 #include "Components/TextBlock.h"
+#include "Engine/DataTable.h"
 #include "AzulDialogue.generated.h"
 
-//Estructuras
-
 USTRUCT(BlueprintType)
-struct FDialogueChoice
+struct FDialogueRow : public FTableRowBase
 {
     GENERATED_BODY()
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere)
-    FString Text;
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere)
-    int32 NextID;
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere)
-    int32 Score;
-};
-
-USTRUCT(BlueprintType)
-struct FDialogueNode
-{
-    GENERATED_BODY()
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 ID;
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere)
-    FString Type;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    bool IsDecision;
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere)
-    FString Speaker;
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString Text;
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 NextID;
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere)
-    TArray<FDialogueChoice> Choices;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TArray<FString> ChoicesText;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TArray<int32> ChoicesNext;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TArray<int32> ChoicesScore;
 };
 
-USTRUCT(BlueprintType)
-struct FDialogueScene
-{
-    GENERATED_BODY()
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere)
-    int32 SceneID;
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere)
-    FString SceneName;
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere)
-    TArray<FDialogueNode> Dialogues;
-};
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDialogueFinished);
 
 UCLASS(Blueprintable, BlueprintType)
 class AZULPROJECT_API UAzulDialogue : public UObject
@@ -73,49 +47,73 @@ public:
     UAzulDialogue();
 
 protected:
-    UPROPERTY(BlueprintReadOnly)
-    TArray<FDialogueScene> Scenes;
 
-    UPROPERTY(BlueprintReadOnly)
+    /** Tabla actual de diálogo (solo escena activa) */
+    UPROPERTY()
+    UDataTable* DialogueTable;
+
+    /** Lista de escenas en orden */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
+    TArray<UDataTable*> SceneTables;
+
+    /** Escena actual (índice dentro del array) */
+    UPROPERTY()
     int32 CurrentSceneIndex;
 
-    UPROPERTY(BlueprintReadOnly)
-    int32 CurrentDialogueID;
-
-    UPROPERTY(BlueprintReadOnly)
+    /** Estado interno de diálogo */
+    int32 CurrentID;
     int32 PlayerScore;
+
+    /** Estado de resultado */
+    bool bSceneCompletedCorrectly;
+
+protected:
+
+    FDialogueRow* GetCurrentRow();
+
+    /** Determina si el jugador supera la escena */
+    bool EvaluateScene();
+
+    /** Cambia internamente a la siguiente escena o repite */
+    void AdvanceSceneLogic();
 
 public:
 
-    //Cargar datos desde el archivo JSON
-    UFUNCTION(BlueprintCallable, Category = "AzulDialogue")
-    bool LoadDialogueJSON();
+    UFUNCTION(BlueprintCallable)
+    void InitScenes(const TArray<UDataTable*>& Scenes);
 
-    //Iniciar una escena concreta
-    UFUNCTION(BlueprintCallable, Category = "AzulDialogue")
-    void StartScene(int32 SceneIndex);
+    UFUNCTION(BlueprintCallable)
+    void StartScene();  // siempre empieza en el ID = 1
 
-    //Avanzar el diálogo al siguiente ID
-    UFUNCTION(BlueprintCallable, Category = "AzulDialogue")
-    void AdvanceDialogue(int32 NextID);
+    UFUNCTION(BlueprintCallable)
+    FString GetDialogueText();
 
-    // Escoger una opción
-    UFUNCTION(BlueprintCallable, Category = "AzulDialogue")
-    void ChooseOption(int32 ChoiceIndex);
+    UFUNCTION(BlueprintCallable)
+    bool IsDecision();
 
-    // Obtener texto actual
-    UFUNCTION(BlueprintCallable, Category = "AzulDialogue")
-    FString GetCurrentDialogueText() const;
+    UFUNCTION(BlueprintCallable)
+    TArray<FString> GetChoiceTexts();
 
-    // Obtener escena por índice
-    UFUNCTION(BlueprintCallable, Category = "AzulDialogue")
-    FDialogueScene GetSceneByIndex(int32 SceneIndex) const;
+    UFUNCTION(BlueprintCallable)
+    void SelectChoice(int32 ChoiceIndex);
 
-    // Actualizar botones según las decisiones disponibles
-    UFUNCTION(BlueprintCallable, Category = "AzulDialogue|UI")
-    void UpdateDecisionButtons(UHorizontalBox* ChoicesContainer);
+    UFUNCTION(BlueprintCallable)
+    void Continue();
 
-    // Manejar la selección de un botón
-    UFUNCTION(BlueprintCallable, Category = "AzulDialogue|UI")
-    void HandleChoiceSelection(int32 ChoiceIndex, UHorizontalBox* ChoicesContainer);
+    UFUNCTION(BlueprintCallable, Category = "Dialogue|UI")
+    void GetButtonData(int32 ButtonIndex, bool& bIsVisible, FString& OutText);
+
+    UFUNCTION(BlueprintCallable, Category = "Dialogue|UI")
+    void OnButtonPressed(int32 ButtonIndex);
+
+    UFUNCTION(BlueprintCallable, Category = "Dialogue|UI")
+    void IsSceneFinished(bool& bIsFinished);
+
+    UFUNCTION(BlueprintCallable, Category = "Dialogue|UI")
+    void SetCurrentButtons(UHorizontalBox* ChoiceContainer);
+
+
+    /** Evento que el widget escucha para cerrarse */
+    UPROPERTY(BlueprintAssignable)
+    FOnDialogueFinished OnDialogueFinished;
 };

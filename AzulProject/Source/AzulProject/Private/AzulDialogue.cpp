@@ -1,280 +1,239 @@
 ﻿#include "AzulDialogue.h"
-#include "Misc/FileHelper.h"
-#include "Misc/Paths.h"
-#include "Json.h"
 
 UAzulDialogue::UAzulDialogue()
 {
+    CurrentID = 1;
+    PlayerScore = 0;
     CurrentSceneIndex = 0;
-    CurrentDialogueID = 1;
+    bSceneCompletedCorrectly = false;
+}
+
+void UAzulDialogue::InitScenes(const TArray<UDataTable*>& Scenes)
+{
+    SceneTables = Scenes;
+
+    if (SceneTables.IsValidIndex(0))
+    {
+        DialogueTable = SceneTables[0];
+    }
+
+    CurrentSceneIndex = 0;
+    CurrentID = 1;
     PlayerScore = 0;
 }
 
-bool UAzulDialogue::LoadDialogueJSON()
+void UAzulDialogue::StartScene()
 {
-    FString FilePath = FPaths::ProjectContentDir() / TEXT("Data/dialogues.json");
-    FString JsonStr;
-
-    if (!FFileHelper::LoadFileToString(JsonStr, *FilePath))
-    {
-        UE_LOG(LogTemp, Error, TEXT("No se pudo leer el archivo JSON en %s"), *FilePath);
-        return false;
-    }
-
-    TSharedPtr<FJsonObject> Root;
-    TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(JsonStr);
-
-    if (!FJsonSerializer::Deserialize(Reader, Root) || !Root.IsValid())
-    {
-        UE_LOG(LogTemp, Error, TEXT("Error al parsear el JSON."));
-        return false;
-    }
-
-    const TArray<TSharedPtr<FJsonValue>>* JsonScenes;
-    if (!Root->TryGetArrayField(TEXT("Scenes"), JsonScenes))
-    {
-        UE_LOG(LogTemp, Error, TEXT("No se encontró el campo 'Scenes' en el JSON."));
-        return false;
-    }
-
-    Scenes.Empty();
-
-    for (auto SceneValue : *JsonScenes)
-    {
-        TSharedPtr<FJsonObject> SceneObj = SceneValue->AsObject();
-        if (!SceneObj.IsValid()) continue;
-
-        FDialogueScene Scene;
-        Scene.SceneID = SceneObj->GetIntegerField(TEXT("SceneID"));
-        Scene.SceneName = SceneObj->GetStringField(TEXT("SceneName"));
-
-        const TArray<TSharedPtr<FJsonValue>>* JsonDialogues;
-        if (SceneObj->TryGetArrayField(TEXT("Dialogues"), JsonDialogues))
-        {
-            for (auto DValue : *JsonDialogues)
-            {
-                TSharedPtr<FJsonObject> DObj = DValue->AsObject();
-                if (!DObj.IsValid()) continue;
-
-                FDialogueNode Node;
-                Node.ID = DObj->GetIntegerField(TEXT("ID"));
-                Node.Type = DObj->GetStringField(TEXT("Type"));
-                Node.Speaker = DObj->GetStringField(TEXT("Speaker"));
-                Node.Text = DObj->GetStringField(TEXT("Text"));
-                Node.NextID = DObj->HasTypedField<EJson::Number>(TEXT("NextID")) ? DObj->GetIntegerField(TEXT("NextID")) : -1;
-
-                if (Node.Type == TEXT("decision"))
-                {
-                    const TArray<TSharedPtr<FJsonValue>>* ChoicesArray;
-                    if (DObj->TryGetArrayField(TEXT("Choices"), ChoicesArray))
-                    {
-                        for (auto CValue : *ChoicesArray)
-                        {
-                            TSharedPtr<FJsonObject> CObj = CValue->AsObject();
-                            if (!CObj.IsValid()) continue;
-
-                            FDialogueChoice Choice;
-                            Choice.Text = CObj->GetStringField(TEXT("Text"));
-                            Choice.NextID = CObj->GetIntegerField(TEXT("NextID"));
-                            Choice.Score = CObj->HasField(TEXT("Score")) ? CObj->GetIntegerField(TEXT("Score")) : 0;
-                            Node.Choices.Add(Choice);
-                        }
-                    }
-                }
-
-                Scene.Dialogues.Add(Node);
-            }
-        }
-
-        Scenes.Add(Scene);
-    }
-
-    UE_LOG(LogTemp, Log, TEXT("Se cargaron %d escenas desde el JSON."), Scenes.Num());
-    return true;
-}
-
-void UAzulDialogue::StartScene(int32 SceneIndex)
-{
-    if (!Scenes.IsValidIndex(SceneIndex))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Índice de escena inválido: %d"), SceneIndex);
-        return;
-    }
-
-    CurrentSceneIndex = SceneIndex;
-    CurrentDialogueID = 1;
+    CurrentID = 1;
     PlayerScore = 0;
 }
 
-void UAzulDialogue::AdvanceDialogue(int32 NextID)
+FDialogueRow* UAzulDialogue::GetCurrentRow()
 {
-    if (!Scenes.IsValidIndex(CurrentSceneIndex)) return;
+    if (!DialogueTable) return nullptr;
 
-    const FDialogueScene& Scene = Scenes[CurrentSceneIndex];
-    const FDialogueNode* Node = Scene.Dialogues.FindByPredicate(
-        [&](const FDialogueNode& N) { return N.ID == NextID; });
+    FName RowName = FName(*FString::FromInt(CurrentID));
+    return DialogueTable->FindRow<FDialogueRow>(RowName, TEXT(""));
+}
 
-    if (!Node)
+FString UAzulDialogue::GetDialogueText()
+{
+    FDialogueRow* Row = GetCurrentRow();
+    return Row ? Row->Text : TEXT("");
+}
+
+bool UAzulDialogue::IsDecision()
+{
+    FDialogueRow* Row = GetCurrentRow();
+    return Row ? Row->IsDecision : false;
+}
+
+TArray<FString> UAzulDialogue::GetChoiceTexts()
+{
+    FDialogueRow* Row = GetCurrentRow();
+    return Row ? Row->ChoicesText : TArray<FString>();
+}
+
+void UAzulDialogue::SelectChoice(int32 Index)
+{
+    FDialogueRow* Row = GetCurrentRow();
+    if (!Row) return;
+
+    if (Row->ChoicesNext.IsValidIndex(Index))
     {
-        UE_LOG(LogTemp, Warning, TEXT("No se encontró el diálogo con ID %d"), NextID);
-        return;
+        PlayerScore += Row->ChoicesScore[Index];
+        CurrentID = Row->ChoicesNext[Index];
     }
-
-    CurrentDialogueID = NextID;
 }
 
-void UAzulDialogue::ChooseOption(int32 ChoiceIndex)
+bool UAzulDialogue::EvaluateScene()
 {
-    if (!Scenes.IsValidIndex(CurrentSceneIndex)) return;
-
-    const FDialogueScene& Scene = Scenes[CurrentSceneIndex];
-    const FDialogueNode* Node = Scene.Dialogues.FindByPredicate(
-        [&](const FDialogueNode& N) { return N.ID == CurrentDialogueID; });
-
-    if (!Node || Node->Choices.Num() <= ChoiceIndex) return;
-
-    const FDialogueChoice& Choice = Node->Choices[ChoiceIndex];
-    PlayerScore += Choice.Score;
-
-    AdvanceDialogue(Choice.NextID);
+    return PlayerScore >= 0;
 }
 
-FString UAzulDialogue::GetCurrentDialogueText() const
+void UAzulDialogue::AdvanceSceneLogic()
 {
-    if (!Scenes.IsValidIndex(CurrentSceneIndex))
-        return TEXT("");
+    bSceneCompletedCorrectly = EvaluateScene();
 
-    const FDialogueScene& Scene = Scenes[CurrentSceneIndex];
-    const FDialogueNode* Node = Scene.Dialogues.FindByPredicate(
-        [&](const FDialogueNode& N) { return N.ID == CurrentDialogueID; });
-
-    return Node ? Node->Text : TEXT("");
-}
-
-FDialogueScene UAzulDialogue::GetSceneByIndex(int32 SceneIndex) const
-{
-    if (Scenes.IsValidIndex(SceneIndex))
-        return Scenes[SceneIndex];
-    return FDialogueScene();
-}
-
-void UAzulDialogue::UpdateDecisionButtons(UHorizontalBox* ChoicesContainer)
-{
-    if (!ChoicesContainer || !Scenes.IsValidIndex(CurrentSceneIndex)) return;
-
-    const FDialogueScene& Scene = Scenes[CurrentSceneIndex];
-    const FDialogueNode* Node = Scene.Dialogues.FindByPredicate(
-        [&](const FDialogueNode& N) { return N.ID == CurrentDialogueID; });
-
-    if (!Node) return;
-
-    const TArray<UWidget*> Children = ChoicesContainer->GetAllChildren();
-
-    // Si el diálogo terminó, ocultar todos los botones
-    if (Node->NextID == -1 && Node->Type != TEXT("decision"))
+    if (bSceneCompletedCorrectly)
     {
-        for (UWidget* Child : Children)
-        {
-            if (UButton* Button = Cast<UButton>(Child))
-                Button->SetVisibility(ESlateVisibility::Collapsed);
-        }
-        return;
-    }
-
-    // Si es un nodo de decisión
-    if (Node->Type == TEXT("decision"))
-    {
-        const int32 NumChoices = Node->Choices.Num();
-
-        for (int32 i = 0; i < Children.Num(); ++i)
-        {
-            if (UButton* Button = Cast<UButton>(Children[i]))
-            {
-                // Buscar el TextBlock hijo
-                UTextBlock* TextBlock = nullptr;
-                const TArray<UWidget*> ButtonChildren = Button->GetAllChildren();
-                for (UWidget* SubChild : ButtonChildren)
-                {
-                    if (UTextBlock* TB = Cast<UTextBlock>(SubChild))
-                    {
-                        TextBlock = TB;
-                        break;
-                    }
-                }
-
-                if (i < NumChoices)
-                {
-                    Button->SetVisibility(ESlateVisibility::Visible);
-                    if (TextBlock)
-                        TextBlock->SetText(FText::FromString(Node->Choices[i].Text));
-                }
-                else
-                {
-                    Button->SetVisibility(ESlateVisibility::Collapsed);
-                }
-            }
-        }
+        // avanzar a la siguiente escena
+        CurrentSceneIndex++;
     }
     else
     {
-        // --- Si es un nodo normal (solo texto con "Continuar") ---
-        bool bShown = false;
-        for (UWidget* Child : Children)
-        {
-            if (UButton* Button = Cast<UButton>(Child))
-            {
-                if (!bShown)
-                {
-                    // Mostrar solo el primer botón como “Continuar”
-                    Button->SetVisibility(ESlateVisibility::Visible);
+        // repetir escena: CurrentSceneIndex no cambia
+    }
 
-                    // Cambiar texto a "Continuar"
-                    const TArray<UWidget*> ButtonChildren = Button->GetAllChildren();
-                    for (UWidget* SubChild : ButtonChildren)
-                    {
-                        if (UTextBlock* TB = Cast<UTextBlock>(SubChild))
-                        {
-                            TB->SetText(FText::FromString(TEXT("Continuar")));
-                            break;
-                        }
-                    }
-                    bShown = true;
-                }
-                else
-                {
-                    Button->SetVisibility(ESlateVisibility::Collapsed);
-                }
-            }
+    // Seguridad
+    CurrentSceneIndex = FMath::Clamp(CurrentSceneIndex, 0, SceneTables.Num() - 1);
+
+    // cambiar a la nueva DataTable
+    DialogueTable = SceneTables[CurrentSceneIndex];
+
+    // reiniciar diálogo interno para la próxima vez que se abra
+    CurrentID = 1;
+    PlayerScore = 0;
+}
+
+void UAzulDialogue::Continue()
+{
+    FDialogueRow* Row = GetCurrentRow();
+    if (!Row) return;
+
+    CurrentID = Row->NextID;
+
+    if (CurrentID == -1)
+    {
+        // se terminó la escena → decidir si avanzar o repetir
+        AdvanceSceneLogic();
+
+        // avisar al widget para que se cierre
+        OnDialogueFinished.Broadcast();
+
+        return;
+    }
+}
+
+void UAzulDialogue::GetButtonData(int32 ButtonIndex, bool& bIsVisible, FString& OutText)
+{
+    bIsVisible = false;
+    OutText = "";
+
+    FDialogueRow* Row = GetCurrentRow();
+    if (!Row) return;
+
+    if (!Row->IsDecision)
+    {
+        // NO ES DECISIÓN → SOLO EL BOTÓN 0 ES VISIBLE
+        if (ButtonIndex == 0)
+        {
+            bIsVisible = true;
+            OutText = "Continuar";
+        }
+        return;
+    }
+
+    // ES DECISIÓN → VARIOS BOTONES
+    if (Row->ChoicesText.IsValidIndex(ButtonIndex))
+    {
+        bIsVisible = true;
+        OutText = Row->ChoicesText[ButtonIndex];
+    }
+}
+
+void UAzulDialogue::OnButtonPressed(int32 ButtonIndex)
+{
+    FDialogueRow* Row = GetCurrentRow();
+    if (!Row) return;
+
+    if (!Row->IsDecision)
+    {
+        // Botón 0 es continuar
+        Continue();
+        return;
+    }
+
+    // Es decisión
+    if (Row->ChoicesNext.IsValidIndex(ButtonIndex))
+    {
+        PlayerScore += Row->ChoicesScore[ButtonIndex];
+        CurrentID = Row->ChoicesNext[ButtonIndex];
+
+        // Después de seleccionar, actualizar flujo
+        if (CurrentID == -1)
+        {
+            AdvanceSceneLogic();
+            OnDialogueFinished.Broadcast();
         }
     }
 }
 
-void UAzulDialogue::HandleChoiceSelection(int32 ChoiceIndex, UHorizontalBox* ChoicesContainer)
+void UAzulDialogue::IsSceneFinished(bool& bIsFinished)
 {
-    if (!Scenes.IsValidIndex(CurrentSceneIndex)) return;
+    bIsFinished = (CurrentID == -1);
+}
 
-    const FDialogueScene& Scene = Scenes[CurrentSceneIndex];
-    const FDialogueNode* Node = Scene.Dialogues.FindByPredicate(
-        [&](const FDialogueNode& N) { return N.ID == CurrentDialogueID; });
+void UAzulDialogue::SetCurrentButtons(UHorizontalBox* ChoiceContainer)
+{
+    if (!ChoiceContainer) return;
 
-    if (!Node) return;
+    TArray<UWidget*> Children = ChoiceContainer->GetAllChildren();
 
-    if (Node->Type == TEXT("decision"))
+    // Convertir widgets en botones y textblocks
+    TArray<UButton*> Buttons;
+    TArray<UTextBlock*> ButtonTexts;
+
+    for (UWidget* Child : Children)
     {
-        ChooseOption(ChoiceIndex);
+        // Intentar obtener un botón
+        UButton* Btn = Cast<UButton>(Child);
+        if (Btn)
+        {
+            Buttons.Add(Btn);
+
+            // Leer el textblock que contiene
+            UTextBlock* Txt = Btn->GetChildAt(0) ? Cast<UTextBlock>(Btn->GetChildAt(0)) : nullptr;
+            ButtonTexts.Add(Txt);
+        }
     }
-    else
+
+    // *** CASO 1: NO ES DECISIÓN ***
+    if (!IsDecision())
     {
-        // Si es diálogo normal, usar NextID directamente
-        if (Node->NextID != -1)
-            AdvanceDialogue(Node->NextID);
+        for (int32 i = 0; i < Buttons.Num(); i++)
+        {
+            if (i == 0)
+            {
+                Buttons[i]->SetVisibility(ESlateVisibility::Visible);
+                if (ButtonTexts[i])
+                    ButtonTexts[i]->SetText(FText::FromString("Continuar"));
+            }
+            else
+            {
+                Buttons[i]->SetVisibility(ESlateVisibility::Collapsed);
+            }
+        }
+        return;
+    }
+
+    // *** CASO 2: ES DECISIÓN ***
+    TArray<FString> Choices = GetChoiceTexts();
+
+    int32 NumChoices = Choices.Num();
+    int32 NumButtons = Buttons.Num();
+
+    for (int32 i = 0; i < NumButtons; i++)
+    {
+        if (i < NumChoices)
+        {
+            Buttons[i]->SetVisibility(ESlateVisibility::Visible);
+            if (ButtonTexts[i])
+                ButtonTexts[i]->SetText(FText::FromString(Choices[i]));
+        }
         else
         {
-            // Fin del diálogo
-            UE_LOG(LogTemp, Log, TEXT("Fin del diálogo."));
+            Buttons[i]->SetVisibility(ESlateVisibility::Collapsed);
         }
     }
-
-    //Actualizar los botones y texto tras avanzar
-    UpdateDecisionButtons(ChoicesContainer);
 }

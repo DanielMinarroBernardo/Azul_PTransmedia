@@ -1,7 +1,8 @@
-Binaries
-DerivedDataCache
-Intermediate
-Saved
+# Unreal Engine
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
 .vscode
 .vs
 *.VC.db
@@ -12,3 +13,10 @@ Saved
 *.suo
 *.xcodeproj
 *.xcworkspace
+
+# Empaquetados
+Build/
+Content/Paks/
+
+# Otros
+*.log
