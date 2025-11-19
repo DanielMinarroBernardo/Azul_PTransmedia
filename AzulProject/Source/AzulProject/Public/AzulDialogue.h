@@ -59,9 +59,17 @@ public:
     /** Row actual */
     FDialogueRow* CurrentRow = nullptr;
 
+    UPROPERTY(BlueprintReadWrite, EditAnywhere)
+    bool bIsLevelComplete = false;
+
+
     /* Sistema de puntuación acumulada */
     UPROPERTY(BlueprintReadOnly)
     int32 PlayerScore = 0;
+
+    UPROPERTY(BlueprintReadWrite, EditAnywhere)
+    UButton* ContinueButton;
+
 
     /** Inicializa el sistema */
     UFUNCTION(BlueprintCallable)
@@ -93,7 +101,8 @@ public:
     UFUNCTION(BlueprintCallable)
     void SetDialogueTables(const TArray<UDataTable*>& InTables);
 
-
+    UPROPERTY()
+    TArray<UButton*> ChoiceButtons;
 
     /** Evento que el widget escucha para cerrarse */
     UPROPERTY(BlueprintAssignable)
@@ -106,7 +115,6 @@ private:
 
     /** Variables auxiliares para manejar botones */
     UFUNCTION() void HandleContinueClicked();
-    UFUNCTION() void HandleChoiceClicked();
 
     int32 PendingChoiceIndex = -1;
 

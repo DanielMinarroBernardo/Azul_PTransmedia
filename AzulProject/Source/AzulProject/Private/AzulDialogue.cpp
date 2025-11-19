@@ -9,11 +9,9 @@ void UAzulDialogue::StartDialogue()
     CurrentID = 1;
     PlayerScore = 0;
 
-    UE_LOG(LogTemp, Log, TEXT("UAzulDialogue::StartDialogue - Tables: %d"), DialogueTables.Num());
-    if (GEngine)
+    if (DialogueTables.IsValidIndex(0))
     {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green,
-            FString::Printf(TEXT("StartDialogue - Tables: %d"), DialogueTables.Num()));
+        CurrentTable = DialogueTables[0];  // Tabla fija siempre
     }
 
     LoadCurrentRow();
@@ -22,18 +20,10 @@ void UAzulDialogue::StartDialogue()
 
 bool UAzulDialogue::LoadCurrentRow()
 {
-    UE_LOG(LogTemp, Log, TEXT("LoadCurrentRow - TableIndex=%d CurrentID=%d"), CurrentTableIndex, CurrentID);
-
-    if (GEngine)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Cyan,
-            FString::Printf(TEXT("LoadCurrentRow - TableIndex=%d  CurrentID=%d"), CurrentTableIndex, CurrentID));
-    }
 
     // 1. Validar índice de tabla
     if (!DialogueTables.IsValidIndex(CurrentTableIndex))
     {
-        UE_LOG(LogTemp, Warning, TEXT("LoadCurrentRow - Invalid table index %d"), CurrentTableIndex);
         OnDialogueFinished.Broadcast();
         return false;
     }
@@ -42,7 +32,6 @@ bool UAzulDialogue::LoadCurrentRow()
     CurrentTable = DialogueTables[CurrentTableIndex];
     if (!CurrentTable)
     {
-        UE_LOG(LogTemp, Warning, TEXT("LoadCurrentRow - CurrentTable es NULL en index %d"), CurrentTableIndex);
         OnDialogueFinished.Broadcast();
         return false;
     }
@@ -51,74 +40,58 @@ bool UAzulDialogue::LoadCurrentRow()
     FName RowName = FName(*FString::FromInt(CurrentID));
     CurrentRow = CurrentTable->FindRow<FDialogueRow>(RowName, TEXT(""));
 
-    // 4. Si no existe, pasar a la siguiente tabla
+    UE_LOG(LogTemp, Warning, TEXT("Cargando fila ID=%d en tabla=%s"),
+        CurrentID,
+        *CurrentTable->GetName());
+
+
+    // 4. Si no existe la fila → terminar diálogo (NO cambiar de DataTable)
     if (!CurrentRow)
     {
-        UE_LOG(LogTemp, Warning, TEXT("LoadCurrentRow - Row %d no existe en tabla %s"),
-            CurrentID, *CurrentTable->GetName());
-
-        if (GEngine)
-        {
-            GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Yellow,
-                FString::Printf(TEXT("Row %d no existe en tabla %s"), CurrentID, *CurrentTable->GetName()));
-        }
-
-        // Pasar a la siguiente DataTable
-        CurrentTableIndex++;
-
-        // No hay más tablas → diálogo terminado
-        if (!DialogueTables.IsValidIndex(CurrentTableIndex))
-        {
-            UE_LOG(LogTemp, Log, TEXT("LoadCurrentRow - No hay más DataTables"));
-            OnDialogueFinished.Broadcast();
-            return false;
-        }
-
-        // Volver a empezar desde ID = 1
-        CurrentID = 1;
-
-        CurrentTable = DialogueTables[CurrentTableIndex];
-        if (!CurrentTable)
-        {
-            UE_LOG(LogTemp, Error, TEXT("LoadCurrentRow - New table es NULL"));
-            OnDialogueFinished.Broadcast();
-            return false;
-        }
-
-        RowName = FName(*FString::FromInt(CurrentID));
-        CurrentRow = CurrentTable->FindRow<FDialogueRow>(RowName, TEXT(""));
-
-        if (!CurrentRow)
-        {
-            UE_LOG(LogTemp, Error, TEXT("LoadCurrentRow - La nueva tabla NO tiene fila ID=1"));
-            OnDialogueFinished.Broadcast();
-            return false;
-        }
+        UE_LOG(LogTemp, Error, TEXT("NO EXISTE la fila con ID=%d en la tabla %s"),
+            CurrentID,
+            *CurrentTable->GetName());
+        OnDialogueFinished.Broadcast();
+        return false;
     }
 
-    // 5. Todo OK → fila cargada correctamente
-    UE_LOG(LogTemp, Log, TEXT("LoadCurrentRow - Loaded ID=%d : %s"),
-        CurrentRow->ID, *CurrentRow->Text);
 
-    if (GEngine)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::White,
-            FString::Printf(TEXT("Loaded Row ID=%d : %s"), CurrentRow->ID, *CurrentRow->Text));
-    }
+    //// 4. Si no existe la fila → pasar a la siguiente DataTable
+    //if (!CurrentRow)
+    //{
+    //    // Pasar a la siguiente DataTable
+    //    CurrentTableIndex++;
 
+    //    // ¿Existen más DataTables?
+    //    if (!DialogueTables.IsValidIndex(CurrentTableIndex))
+    //    {
+    //        OnDialogueFinished.Broadcast();
+    //        return false;
+    //    }
+
+    //    // Reiniciar ID al empezar la nueva tabla
+    //    CurrentID = 1;
+
+    //    // Cargar la nueva tabla
+    //    CurrentTable = DialogueTables[CurrentTableIndex];
+    //    RowName = FName(*FString::FromInt(CurrentID));
+    //    CurrentRow = CurrentTable->FindRow<FDialogueRow>(RowName, TEXT(""));
+
+    //    return CurrentRow != nullptr;
+    //}
+
+    // 5. Fila cargada correctamente
     return true;
 }
+
+
 
 
 FString UAzulDialogue::GetCurrentText() const
 {
     if (!CurrentRow)
     {
-        if (GEngine)
-        {
-            GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::Red, TEXT("GetCurrentText - ERROR: No hay fila actual"));
-        }
-        UE_LOG(LogTemp, Warning, TEXT("GetCurrentText - No CurrentRow"));
+        OnDialogueFinished.Broadcast();
         return FString("ERROR: No hay fila actual");
     }
 
@@ -130,44 +103,70 @@ void UAzulDialogue::UpdateWidget(UHorizontalBox* ChoicesContainer)
     if (!ChoicesContainer || !CurrentRow)
         return;
 
-    ChoicesContainer->ClearChildren();
+    if (ContinueButton)
+    {
+        ContinueButton->SetIsEnabled(!CurrentRow->IsDecision);
+    }
 
-    // Si NO es una decisión NO añadimos nada (tu botón de Continuar está en el Widget)
+
+    // 1. Primera vez: rellenar el array automáticamente desde el HorizontalBox
+    if (ChoiceButtons.Num() == 0)
+    {
+        const int32 ChildCount = ChoicesContainer->GetChildrenCount();
+
+        for (int32 i = 0; i < ChildCount; i++)
+        {
+            UWidget* Child = ChoicesContainer->GetChildAt(i);
+            UButton* Btn = Cast<UButton>(Child);
+
+            if (Btn)
+            {
+                ChoiceButtons.Add(Btn);
+            }
+        }
+    }
+
+    // Si no hay botones → salir
+    if (ChoiceButtons.Num() == 0)
+        return;
+
+    // -------------------------------------------------------
+    // 2. Si NO es decisión → ocultar todos los botones
+    // -------------------------------------------------------
     if (!CurrentRow->IsDecision)
     {
-        UE_LOG(LogTemp, Log, TEXT("UpdateWidget - Non-decision row, using BP Continue button"));
+        for (UButton* Btn : ChoiceButtons)
+        {
+            if (Btn)
+                Btn->SetVisibility(ESlateVisibility::Collapsed);
+        }
+
         return;
     }
 
-    //  SI es decisión → creamos los botones
-    UE_LOG(LogTemp, Log, TEXT("UpdateWidget - Decision row with %d choices"), CurrentRow->ChoicesText.Num());
+    // -------------------------------------------------------
+    // 3. Mostrar solo los necesarios y poner texto
+    // -------------------------------------------------------
 
-    for (int32 i = 0; i < CurrentRow->ChoicesText.Num(); i++)
+    int32 NumChoices = CurrentRow->ChoicesText.Num();
+
+    for (int32 i = 0; i < ChoiceButtons.Num(); i++)
     {
-        UButton* Button = NewObject<UButton>(ChoicesContainer);
+        UButton* Btn = ChoiceButtons[i];
+        if (!Btn) continue;
 
-        UTextBlock* Label = NewObject<UTextBlock>(Button);
-        Label->SetText(FText::FromString(CurrentRow->ChoicesText[i]));
-        Button->AddChild(Label);
-
-        // Guardamos el índice
-        PendingChoiceIndex = i;
-
-        // Asignar evento dinámico
-        Button->OnClicked.AddDynamic(this, &UAzulDialogue::HandleChoiceClicked);
-
-        // Añadir al HorizontalBox con Slot personalizado
-        UHorizontalBoxSlot* Slot = Cast<UHorizontalBoxSlot>(ChoicesContainer->AddChild(Button));
-        if (Slot)
+        if (i < NumChoices)
         {
-            // Espaciado (tú puedes cambiarlo)
-            Slot->SetPadding(FMargin(10.f, 0.f));
+            Btn->SetVisibility(ESlateVisibility::Visible);
 
-            // Que se estire horizontalmente
-            Slot->SetHorizontalAlignment(HAlign_Fill);
-
-            // Que ocupe el espacio proporcional
-            Slot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+            if (UTextBlock* Label = Cast<UTextBlock>(Btn->GetChildAt(0)))
+            {
+                Label->SetText(FText::FromString(CurrentRow->ChoicesText[i]));
+            }
+        }
+        else
+        {
+            Btn->SetVisibility(ESlateVisibility::Collapsed);
         }
     }
 }
@@ -175,114 +174,49 @@ void UAzulDialogue::UpdateWidget(UHorizontalBox* ChoicesContainer)
 
 void UAzulDialogue::HandleContinueClicked()
 {
-    UE_LOG(LogTemp, Log, TEXT("HandleContinueClicked - clicked"));
-    if (GEngine)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("Continue clicked"));
-    }
-
     ContinueDialogue();
-    OnDialogueUpdated.Broadcast();
-}
-
-void UAzulDialogue::HandleChoiceClicked()
-{
-    UE_LOG(LogTemp, Log, TEXT("HandleChoiceClicked - clicked PendingChoiceIndex=%d"), PendingChoiceIndex);
-    if (GEngine)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow,
-            FString::Printf(TEXT("Choice clicked: index=%d"), PendingChoiceIndex));
-    }
-
-    OnChoiceClicked(PendingChoiceIndex);
-    OnDialogueUpdated.Broadcast();
-}
-
-void UAzulDialogue::ContinueDialogue()
-{
-    if (!CurrentRow) return;
-
-    UE_LOG(LogTemp, Log, TEXT("ContinueDialogue - CurrentID=%d NextID=%d"), CurrentID, CurrentRow->NextID);
-    if (GEngine)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Cyan,
-            FString::Printf(TEXT("ContinueDialogue - Moving from %d to %d"), CurrentID, CurrentRow->NextID));
-    }
-
-    CurrentID = CurrentRow->NextID;
-
-    if (!LoadCurrentRow())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("ContinueDialogue - LoadCurrentRow returned false"));
-        return;
-    }
-
     OnDialogueUpdated.Broadcast();
 }
 
 void UAzulDialogue::OnChoiceClicked(int32 ButtonIndex)
 {
+    // Actualizar puntuación si corresponde
+    if (CurrentRow->ChoicesScore.IsValidIndex(ButtonIndex))
+        PlayerScore += CurrentRow->ChoicesScore[ButtonIndex];
+
+    // Cambiar ID
+    if (CurrentRow->ChoicesNext.IsValidIndex(ButtonIndex))
+        CurrentID = CurrentRow->ChoicesNext[ButtonIndex];
+
+    LoadCurrentRow();
+    OnDialogueUpdated.Broadcast();
+}
+
+
+
+void UAzulDialogue::ContinueDialogue()
+{
     if (!CurrentRow) return;
 
-    UE_LOG(LogTemp, Log, TEXT("OnChoiceClicked - ButtonIndex=%d"), ButtonIndex);
-    if (GEngine)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Emerald,
-            FString::Printf(TEXT("OnChoiceClicked - index=%d"), ButtonIndex));
-    }
+    CurrentID = CurrentRow->NextID;
 
-    if (!CurrentRow->ChoicesNext.IsValidIndex(ButtonIndex))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("OnChoiceClicked - Invalid choice index %d"), ButtonIndex);
-        if (GEngine)
-        {
-            GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::Red,
-                FString::Printf(TEXT("Invalid choice index %d"), ButtonIndex));
-        }
-        return;
-    }
-
-    if (CurrentRow->ChoicesScore.IsValidIndex(ButtonIndex))
-    {
-        int32 ScoreBefore = PlayerScore;
-        PlayerScore += CurrentRow->ChoicesScore[ButtonIndex];
-        UE_LOG(LogTemp, Log, TEXT("OnChoiceClicked - Score changed: %d -> %d (delta %d)"),
-            ScoreBefore, PlayerScore, CurrentRow->ChoicesScore[ButtonIndex]);
-        if (GEngine)
-        {
-            GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Blue,
-                FString::Printf(TEXT("Score: %d (+%d)"), PlayerScore, CurrentRow->ChoicesScore[ButtonIndex]));
-        }
-    }
-
-    CurrentID = CurrentRow->ChoicesNext[ButtonIndex];
-
-    UE_LOG(LogTemp, Log, TEXT("OnChoiceClicked - New CurrentID=%d"), CurrentID);
     if (!LoadCurrentRow())
     {
-        UE_LOG(LogTemp, Warning, TEXT("OnChoiceClicked - LoadCurrentRow returned false after selecting choice"));
         return;
     }
 
     OnDialogueUpdated.Broadcast();
 }
 
+
 void UAzulDialogue::SetDialogueText(UTextBlock* Text)
 {
     if (!Text)
     {
-        UE_LOG(LogTemp, Warning, TEXT("SetDialogueText - Null Text block"));
         return;
     }
 
     const FString CurrentText = GetCurrentText();
-    UE_LOG(LogTemp, Log, TEXT("SetDialogueText - Setting text: %s"), *CurrentText);
-    if (GEngine)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::White,
-            FString::Printf(TEXT("Dialog text: %s"), *CurrentText));
-    }
-
     Text->SetText(FText::FromString(CurrentText));
 }
 
