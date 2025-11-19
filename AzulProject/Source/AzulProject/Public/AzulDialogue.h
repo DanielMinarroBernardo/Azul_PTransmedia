@@ -36,6 +36,7 @@ struct FDialogueRow : public FTableRowBase
     TArray<int32> ChoicesScore;
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDialogueUpdated);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDialogueFinished);
 
 UCLASS(Blueprintable, BlueprintType)
@@ -44,76 +45,70 @@ class AZULPROJECT_API UAzulDialogue : public UObject
     GENERATED_BODY()
 
 public:
-    UAzulDialogue();
 
-protected:
+    /** DataTables que me pasas en orden */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TArray<UDataTable*> DialogueTables;
 
-    /** Tabla actual de diálogo (solo escena activa) */
-    UPROPERTY()
-    UDataTable* DialogueTable;
+    /** Índice de la DataTable actual */
+    int32 CurrentTableIndex = 0;
 
-    /** Lista de escenas en orden */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
-    TArray<UDataTable*> SceneTables;
+    /** ID actual del diálogo (Row Name → ID) */
+    int32 CurrentID = 1;
 
-    /** Escena actual (índice dentro del array) */
-    UPROPERTY()
-    int32 CurrentSceneIndex;
+    /** Row actual */
+    FDialogueRow* CurrentRow = nullptr;
 
-    /** Estado interno de diálogo */
-    int32 CurrentID;
-    int32 PlayerScore;
+    /* Sistema de puntuación acumulada */
+    UPROPERTY(BlueprintReadOnly)
+    int32 PlayerScore = 0;
 
-    /** Estado de resultado */
-    bool bSceneCompletedCorrectly;
+    /** Inicializa el sistema */
+    UFUNCTION(BlueprintCallable)
+    void StartDialogue();
 
-protected:
+    /** Obtiene la fila actual */
+    bool LoadCurrentRow();
 
-    FDialogueRow* GetCurrentRow();
+    /** Devuelve el texto actual */
+    UFUNCTION(BlueprintCallable)
+    FString GetCurrentText() const;
 
-    /** Determina si el jugador supera la escena */
-    bool EvaluateScene();
+    /** Rellena los botones o activa botón Continuar */
+    UFUNCTION(BlueprintCallable)
+    void UpdateWidget(UHorizontalBox* ChoicesContainer);
 
-    /** Cambia internamente a la siguiente escena o repite */
-    void AdvanceSceneLogic();
+    /** Avanza al siguiente ID si no hay decisiones */
+    UFUNCTION(BlueprintCallable)
+    void ContinueDialogue();
 
-public:
+    /** Llamado desde los botones → selecciona opción */
+    UFUNCTION(BlueprintCallable)
+    void OnChoiceClicked(int32 ButtonIndex);
+    
+    /*Setea el current texto del diálogo*/
+    UFUNCTION(BlueprintCallable)
+    void SetDialogueText(UTextBlock* Text);
 
     UFUNCTION(BlueprintCallable)
-    void InitScenes(const TArray<UDataTable*>& Scenes);
+    void SetDialogueTables(const TArray<UDataTable*>& InTables);
 
-    UFUNCTION(BlueprintCallable)
-    void StartScene();  // siempre empieza en el ID = 1
-
-    UFUNCTION(BlueprintCallable)
-    FString GetDialogueText();
-
-    UFUNCTION(BlueprintCallable)
-    bool IsDecision();
-
-    UFUNCTION(BlueprintCallable)
-    TArray<FString> GetChoiceTexts();
-
-    UFUNCTION(BlueprintCallable)
-    void SelectChoice(int32 ChoiceIndex);
-
-    UFUNCTION(BlueprintCallable)
-    void Continue();
-
-    UFUNCTION(BlueprintCallable, Category = "Dialogue|UI")
-    void GetButtonData(int32 ButtonIndex, bool& bIsVisible, FString& OutText);
-
-    UFUNCTION(BlueprintCallable, Category = "Dialogue|UI")
-    void OnButtonPressed(int32 ButtonIndex);
-
-    UFUNCTION(BlueprintCallable, Category = "Dialogue|UI")
-    void IsSceneFinished(bool& bIsFinished);
-
-    UFUNCTION(BlueprintCallable, Category = "Dialogue|UI")
-    void SetCurrentButtons(UHorizontalBox* ChoiceContainer);
 
 
     /** Evento que el widget escucha para cerrarse */
     UPROPERTY(BlueprintAssignable)
     FOnDialogueFinished OnDialogueFinished;
+
+    UPROPERTY(BlueprintAssignable)
+    FOnDialogueUpdated OnDialogueUpdated;
+
+private:
+
+    /** Variables auxiliares para manejar botones */
+    UFUNCTION() void HandleContinueClicked();
+    UFUNCTION() void HandleChoiceClicked();
+
+    int32 PendingChoiceIndex = -1;
+
+    UDataTable* CurrentTable = nullptr;
 };
