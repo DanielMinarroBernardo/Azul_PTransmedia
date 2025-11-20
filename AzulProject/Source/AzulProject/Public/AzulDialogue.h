@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "Components/HorizontalBox.h"
-#include "Components/HorizontalBoxSlot.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Engine/DataTable.h"
@@ -46,65 +45,51 @@ class AZULPROJECT_API UAzulDialogue : public UObject
 
 public:
 
-    /** DataTables que me pasas en orden */
+    /** SOLO UNA DataTable */
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TArray<UDataTable*> DialogueTables;
+    UDataTable* DialogueTable;
 
-    /** Índice de la DataTable actual */
-    int32 CurrentTableIndex = 0;
-
-    /** ID actual del diálogo (Row Name → ID) */
+    /** ID actual */
     int32 CurrentID = 1;
 
-    /** Row actual */
+    /** Fila actual */
     FDialogueRow* CurrentRow = nullptr;
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere)
-    bool bIsLevelComplete = false;
-
-
-    /* Sistema de puntuación acumulada */
+    /* Puntuación */
     UPROPERTY(BlueprintReadOnly)
     int32 PlayerScore = 0;
 
     UPROPERTY(BlueprintReadWrite, EditAnywhere)
     UButton* ContinueButton;
 
-
-    /** Inicializa el sistema */
-    UFUNCTION(BlueprintCallable)
-    void StartDialogue();
-
-    /** Obtiene la fila actual */
-    bool LoadCurrentRow();
-
-    /** Devuelve el texto actual */
-    UFUNCTION(BlueprintCallable)
-    FString GetCurrentText() const;
-
-    /** Rellena los botones o activa botón Continuar */
-    UFUNCTION(BlueprintCallable)
-    void UpdateWidget(UHorizontalBox* ChoicesContainer);
-
-    /** Avanza al siguiente ID si no hay decisiones */
-    UFUNCTION(BlueprintCallable)
-    void ContinueDialogue();
-
-    /** Llamado desde los botones → selecciona opción */
-    UFUNCTION(BlueprintCallable)
-    void OnChoiceClicked(int32 ButtonIndex);
-    
-    /*Setea el current texto del diálogo*/
-    UFUNCTION(BlueprintCallable)
-    void SetDialogueText(UTextBlock* Text);
-
-    UFUNCTION(BlueprintCallable)
-    void SetDialogueTables(const TArray<UDataTable*>& InTables);
-
     UPROPERTY()
     TArray<UButton*> ChoiceButtons;
 
-    /** Evento que el widget escucha para cerrarse */
+    /** Inicializa diálogo (llamado al pulsar E) */
+    UFUNCTION(BlueprintCallable)
+    void StartDialogue();
+
+    bool LoadCurrentRow();
+
+    UFUNCTION(BlueprintCallable)
+    FString GetCurrentText() const;
+
+    UFUNCTION(BlueprintCallable)
+    void UpdateWidget(UHorizontalBox* ChoicesContainer);
+
+    UFUNCTION(BlueprintCallable)
+    void ContinueDialogue();
+
+    UFUNCTION(BlueprintCallable)
+    void OnChoiceClicked(int32 ButtonIndex);
+
+    UFUNCTION(BlueprintCallable)
+    void SetDialogueText(UTextBlock* Text);
+
+    /** Set DataTable si quieres hacerlo por código */
+    UFUNCTION(BlueprintCallable)
+    void SetDialogueTable(UDataTable* InTable);
+
     UPROPERTY(BlueprintAssignable)
     FOnDialogueFinished OnDialogueFinished;
 
@@ -113,10 +98,8 @@ public:
 
 private:
 
-    /** Variables auxiliares para manejar botones */
-    UFUNCTION() void HandleContinueClicked();
-
-    int32 PendingChoiceIndex = -1;
+    UFUNCTION()
+    void HandleContinueClicked();
 
     UDataTable* CurrentTable = nullptr;
 };

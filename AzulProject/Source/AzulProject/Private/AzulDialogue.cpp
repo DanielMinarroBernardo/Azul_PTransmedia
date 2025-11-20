@@ -5,84 +5,49 @@
 
 void UAzulDialogue::StartDialogue()
 {
-    CurrentTableIndex = 0;
+    UE_LOG(LogTemp, Warning, TEXT("START DIALOGUE C++ LLAMADO"));
+
     CurrentID = 1;
     PlayerScore = 0;
 
-    if (DialogueTables.IsValidIndex(0))
-    {
-        CurrentTable = DialogueTables[0];  // Tabla fija siempre
-    }
+    ChoiceButtons.Empty();
+
+    CurrentTable = DialogueTable;
 
     LoadCurrentRow();
+    UE_LOG(LogTemp, Warning, TEXT("EMITIENDO OnDialogueUpdated (StartDialogue)"));
     OnDialogueUpdated.Broadcast();
 }
 
+
 bool UAzulDialogue::LoadCurrentRow()
 {
-
-    // 1. Validar índice de tabla
-    if (!DialogueTables.IsValidIndex(CurrentTableIndex))
-    {
-        OnDialogueFinished.Broadcast();
-        return false;
-    }
-
-    // 2. Establecer la tabla actual
-    CurrentTable = DialogueTables[CurrentTableIndex];
     if (!CurrentTable)
     {
         OnDialogueFinished.Broadcast();
         return false;
     }
 
-    // 3. Buscar la fila con el ID actual
     FName RowName = FName(*FString::FromInt(CurrentID));
     CurrentRow = CurrentTable->FindRow<FDialogueRow>(RowName, TEXT(""));
 
-    UE_LOG(LogTemp, Warning, TEXT("Cargando fila ID=%d en tabla=%s"),
-        CurrentID,
-        *CurrentTable->GetName());
+    UE_LOG(LogTemp, Warning, TEXT("LoadCurrentRow ejecutado. CurrentID = %d"), CurrentID);
 
-
-    // 4. Si no existe la fila → terminar diálogo (NO cambiar de DataTable)
-    if (!CurrentRow)
+    if (CurrentRow)
     {
-        UE_LOG(LogTemp, Error, TEXT("NO EXISTE la fila con ID=%d en la tabla %s"),
+        UE_LOG(LogTemp, Warning, TEXT("Fila encontrada: %s"), *CurrentRow->Text);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("ERROR: Fila con ID %d NO encontrada en la DataTable %s"),
             CurrentID,
             *CurrentTable->GetName());
-        OnDialogueFinished.Broadcast();
-        return false;
     }
 
 
-    //// 4. Si no existe la fila → pasar a la siguiente DataTable
-    //if (!CurrentRow)
-    //{
-    //    // Pasar a la siguiente DataTable
-    //    CurrentTableIndex++;
-
-    //    // ¿Existen más DataTables?
-    //    if (!DialogueTables.IsValidIndex(CurrentTableIndex))
-    //    {
-    //        OnDialogueFinished.Broadcast();
-    //        return false;
-    //    }
-
-    //    // Reiniciar ID al empezar la nueva tabla
-    //    CurrentID = 1;
-
-    //    // Cargar la nueva tabla
-    //    CurrentTable = DialogueTables[CurrentTableIndex];
-    //    RowName = FName(*FString::FromInt(CurrentID));
-    //    CurrentRow = CurrentTable->FindRow<FDialogueRow>(RowName, TEXT(""));
-
-    //    return CurrentRow != nullptr;
-    //}
-
-    // 5. Fila cargada correctamente
     return true;
 }
+
 
 
 
@@ -110,21 +75,21 @@ void UAzulDialogue::UpdateWidget(UHorizontalBox* ChoicesContainer)
 
 
     // 1. Primera vez: rellenar el array automáticamente desde el HorizontalBox
-    if (ChoiceButtons.Num() == 0)
+// SIEMPRE reconstruir los botones
+    ChoiceButtons.Empty();
+
+    const int32 ChildCount = ChoicesContainer->GetChildrenCount();
+    for (int32 i = 0; i < ChildCount; i++)
     {
-        const int32 ChildCount = ChoicesContainer->GetChildrenCount();
+        UWidget* Child = ChoicesContainer->GetChildAt(i);
+        UButton* Btn = Cast<UButton>(Child);
 
-        for (int32 i = 0; i < ChildCount; i++)
+        if (Btn)
         {
-            UWidget* Child = ChoicesContainer->GetChildAt(i);
-            UButton* Btn = Cast<UButton>(Child);
-
-            if (Btn)
-            {
-                ChoiceButtons.Add(Btn);
-            }
+            ChoiceButtons.Add(Btn);
         }
     }
+
 
     // Si no hay botones → salir
     if (ChoiceButtons.Num() == 0)
@@ -180,28 +145,42 @@ void UAzulDialogue::HandleContinueClicked()
 
 void UAzulDialogue::OnChoiceClicked(int32 ButtonIndex)
 {
-    // Actualizar puntuación si corresponde
     if (CurrentRow->ChoicesScore.IsValidIndex(ButtonIndex))
         PlayerScore += CurrentRow->ChoicesScore[ButtonIndex];
 
-    // Cambiar ID
     if (CurrentRow->ChoicesNext.IsValidIndex(ButtonIndex))
         CurrentID = CurrentRow->ChoicesNext[ButtonIndex];
 
-    LoadCurrentRow();
+    if (!LoadCurrentRow())
+    {
+        OnDialogueFinished.Broadcast();
+        return;
+    }
+
     OnDialogueUpdated.Broadcast();
 }
 
 
 
+
 void UAzulDialogue::ContinueDialogue()
 {
-    if (!CurrentRow) return;
+    if (!CurrentRow)
+        return;
+
+    // Si NextID es 0 o no existe → diálogo terminado
+    if (CurrentRow->NextID <= 0)
+    {
+        UE_LOG(LogTemp, Error, TEXT("DIALOGO TERMINADO EN SEGUIDA — NextID <= 0"));
+        OnDialogueFinished.Broadcast();
+        return;
+    }
 
     CurrentID = CurrentRow->NextID;
 
     if (!LoadCurrentRow())
     {
+        OnDialogueFinished.Broadcast();
         return;
     }
 
@@ -218,24 +197,15 @@ void UAzulDialogue::SetDialogueText(UTextBlock* Text)
 
     const FString CurrentText = GetCurrentText();
     Text->SetText(FText::FromString(CurrentText));
+
+    UE_LOG(LogTemp, Warning, TEXT("SETDIALOGUETEXT ejecutado: %s"), *GetCurrentText());
+
 }
 
-void UAzulDialogue::SetDialogueTables(const TArray<UDataTable*>& InTables)
+void UAzulDialogue::SetDialogueTable(UDataTable* InTable)
 {
-    DialogueTables = InTables;
-
-    // Reset
-    CurrentTableIndex = 0;
-    CurrentID = 1;
-    CurrentRow = nullptr;
-
-    if (DialogueTables.Num() > 0)
-    {
-        CurrentTable = DialogueTables[0];
-    }
-    else
-    {
-        CurrentTable = nullptr;
-    }
+    DialogueTable = InTable;
+    CurrentTable = InTable;
 }
+
 
