@@ -6,10 +6,11 @@
 #include "GameFramework/Actor.h"
 #include "Components/SphereComponent.h"
 #include "AzulHiloBase.h"
-#include "Characters/AzulCharacterBase.h"
 #include "Actors/AzulInteractuableBase.h"
 #include "Interfaces/AzulHiloInterface.h"
 #include "AzulTriggerHiloBase.generated.h"
+
+class AAzulCharacterBase;
 
 UCLASS()
 class AZULPROJECT_API AAzulTriggerHiloBase : public AActor

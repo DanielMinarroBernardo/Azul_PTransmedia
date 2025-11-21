@@ -2,13 +2,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Characters/AzulCharacterBase.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Interfaces/AzulInteractuableInterface.h"
 #include "Components/WidgetComponent.h"
 #include "Blueprint/UserWidget.h"
 #include "AzulInteractuableBase.generated.h"
+
+class AAzulCharacterBase;
 
 UCLASS()
 class AZULPROJECT_API AAzulInteractuableBase : public AActor, public IAzulInteractuableInterface

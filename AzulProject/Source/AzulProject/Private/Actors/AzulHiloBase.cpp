@@ -1,5 +1,7 @@
 ﻿#include "Actors/AzulHiloBase.h"
 #include "Actors/AzulInteractuableBase.h"
+#include "Actors/AzulTriggerHiloBase.h"
+#include "Characters/AzulCharacterBase.h"
 #include "Kismet/GameplayStatics.h"
 
 AAzulHiloBase::AAzulHiloBase()
@@ -22,57 +24,64 @@ void AAzulHiloBase::BeginPlay()
     }
 }
 
-//
-// INTERFAZ — solo se llama cuando un trigger la activa
-//
-void AAzulHiloBase::UpdateSpline_Implementation(const FVector& TriggerPos)
-{
-    ACharacter* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-    if (!Player || !HijoActor) return;
-
-    FVector Start = Player->GetActorLocation();
-    Start.Z = 0.f;
-
-    FVector End = HijoActor->GetActorLocation();
-    End.Z = 0.f;
-
-    TArray<FVector> NewPoints = GenerateCurvedRoute(Start, End);
-
-    if (PreviousPoints.Num() == 0)
-        PreviousPoints = NewPoints;
-
-    OnSplineRouteChanged.Broadcast(PreviousPoints, NewPoints);
-
-    PreviousPoints = NewPoints;
-}
-
-
-
 TArray<FVector> AAzulHiloBase::GenerateCurvedRoute(const FVector& StartPos, const FVector& EndPos)
 {
-    TArray<FVector> Points;
+    TArray<FVector> FinalPoints;
 
+    // --------------------------
+    // 1) Preparamos A y B
+    // --------------------------
     FVector A(StartPos.X, StartPos.Y, 0.f);
     FVector B(EndPos.X, EndPos.Y, 0.f);
 
-    FVector Dir = (B - A).GetSafeNormal();
-    FVector Perp(Dir.Y, -Dir.X, 0.f);   // perpendicular estable en 2D
+    FVector AB = (B - A);
+    float Dist = AB.Size();
 
-    float Dist = FVector::Distance(A, B);
+    if (Dist < KINDA_SMALL_NUMBER)
+    {
+        FinalPoints.Add(A);
+        FinalPoints.Add(B);
+        return FinalPoints;
+    }
 
-    // offset muy pequeño -> NUNCA puede crear un círculo
-    float CurveStrength = FMath::Clamp(Dist * 0.15f, 20.f, 80.f);
+    FVector Dir = AB.GetSafeNormal();
+    FVector Perp(Dir.Y, -Dir.X, 0.f); // perpendicular estable 2D
 
-    FVector Mid = (A + B) * 0.5f + (Perp * CurveStrength);
-    Mid.Z = 0.f;
+    // Curvatura ligera
+    float CurveStrength = FMath::Clamp(Dist * 0.18f, 30.f, 120.f);
 
-    // 3 puntos = curva ligera
-    Points.Add(A);
-    Points.Add(Mid);
-    Points.Add(B);
+    // --------------------------
+    // 2) Puntos de control Bezier
+    // --------------------------
+    FVector C1 = A + Dir * (Dist * 0.25f) + Perp * CurveStrength;
+    FVector C2 = A + Dir * (Dist * 0.75f) + Perp * CurveStrength;
 
-    return Points;
+    C1.Z = 0.f;
+    C2.Z = 0.f;
+
+    // --------------------------
+    // 3) Subdividir Bezier en 32 pasos
+    // --------------------------
+    const int32 Subdivisions = 32;
+
+    for (int32 i = 0; i <= Subdivisions; i++)
+    {
+        float t = (float)i / (float)Subdivisions;
+
+        FVector P =
+            FMath::Pow(1 - t, 3) * A +
+            3 * FMath::Pow(1 - t, 2) * t * C1 +
+            3 * (1 - t) * FMath::Pow(t, 2) * C2 +
+            FMath::Pow(t, 3) * B;
+
+        FinalPoints.Add(P);
+    }
+
+    return FinalPoints;
 }
+
+
+
 
 
 
@@ -92,9 +101,7 @@ void AAzulHiloBase::ApplyInterpolatedSplinePoints(const TArray<FVector>& Points)
     // Para evitar overshoot DEFINITIVAMENTE
     for (int32 i = 0; i < Points.Num(); i++)
     {
-        SplineComp->SetSplinePointType(i, ESplinePointType::Linear, false);
-        // Si quieres ligera curva:
-        // SplineComp->SetSplinePointType(i, ESplinePointType::CurveClamped, false);
+       SplineComp->SetSplinePointType(i, ESplinePointType::CurveClamped, false);
     }
 
     // Actualizar spline

@@ -39,12 +39,16 @@ void AAzulTriggerHiloBase::Tick(float DeltaTime)
 void AAzulTriggerHiloBase::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	
 	// Verificar que el actor que entra sea del tipo AzulCharacterBase o derivado
 	AAzulCharacterBase* OverlappingCharacter = Cast<AAzulCharacterBase>(OtherActor);
+
 	if (!OverlappingCharacter)
 	{
 		return; // Si no es un personaje AzulCharacterBase, no hacer nada
 	}
+
+	OverlappingCharacter->CurrentTrigger = this;
 
 	// Verificar que haya un hilo asignado y que implemente la interfaz
 	if (HiloActor && HiloActor->GetClass()->ImplementsInterface(UAzulHiloInterface::StaticClass()))
@@ -52,8 +56,8 @@ void AAzulTriggerHiloBase::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, A
 		FVector Pos = GetActorLocation();
 		Pos.Z = 0.f;
 
-		// Llamar a la función UpdateSpline definida en la interfaz
-		IAzulHiloInterface::Execute_UpdateSpline(HiloActor, Pos);
+		//if(OverlappingCharacter->bisPressF)
+			// Llamar a la función UpdateSpline definida en la interfaz
+			IAzulHiloInterface::Execute_UpdateSpline(HiloActor, Pos);
 	}
 }
-

@@ -5,6 +5,8 @@
 #include "Interfaces/AzulInteractuableInterface.h"
 #include "AzulCharacterBase.generated.h"
 
+class AAzulTriggerHiloBase;
+
 UCLASS()
 class AZULPROJECT_API AAzulCharacterBase : public ACharacter, public IAzulInteractuableInterface
 {
@@ -18,6 +20,9 @@ protected:
 
 public:	
 	virtual void Tick(float DeltaTime) override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	AAzulTriggerHiloBase* CurrentTrigger;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 

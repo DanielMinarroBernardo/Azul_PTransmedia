@@ -6,8 +6,10 @@
 #include "NiagaraSystem.h"
 #include "NiagaraComponent.h"
 #include "Interfaces/AzulHiloInterface.h"
-#include "Actors/AzulInteractuableBase.h"
 #include "AzulHiloBase.generated.h"
+
+class AAzulInteractuableBase;
+
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSplineRouteChanged,
 	const TArray<FVector>&, Previous,
@@ -41,7 +43,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	USplineComponent* SplineComp;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	UNiagaraComponent* NiagaraComp;
 
 	UPROPERTY(EditAnywhere)
