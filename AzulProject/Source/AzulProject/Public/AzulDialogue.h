@@ -65,6 +65,10 @@ public:
     UPROPERTY()
     TArray<UButton*> ChoiceButtons;
 
+    UPROPERTY(BlueprintReadWrite, EditAnywhere)
+    FString PlayerName;
+
+
     /** Inicializa diálogo (llamado al pulsar E) */
     UFUNCTION(BlueprintCallable)
     void StartDialogue();

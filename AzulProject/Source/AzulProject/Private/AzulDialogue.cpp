@@ -56,12 +56,20 @@ FString UAzulDialogue::GetCurrentText() const
 {
     if (!CurrentRow)
     {
-        OnDialogueFinished.Broadcast();
         return FString("ERROR: No hay fila actual");
     }
 
-    return CurrentRow ? CurrentRow->Text : FString("ERROR: No hay fila actual");
+    FString Text = CurrentRow->Text;
+
+    // Reemplazar {PlayerName}
+    if (!PlayerName.IsEmpty())
+    {
+        Text = Text.Replace(TEXT("{SonName}"), *PlayerName, ESearchCase::CaseSensitive);
+    }
+
+    return Text;
 }
+
 
 void UAzulDialogue::UpdateWidget(UHorizontalBox* ChoicesContainer)
 {

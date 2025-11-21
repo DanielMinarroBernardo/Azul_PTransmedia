@@ -81,6 +81,10 @@ TArray<FVector> AAzulHiloBase::GenerateCurvedRoute(const FVector& StartPos, cons
 }
 
 
+void AAzulHiloBase::UpdateSpline_Implementation(const UE::Math::TVector<double>& Posicion)
+{
+    
+}
 
 
 
