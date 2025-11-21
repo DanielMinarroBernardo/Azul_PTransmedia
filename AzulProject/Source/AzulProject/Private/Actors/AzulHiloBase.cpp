@@ -83,7 +83,23 @@ TArray<FVector> AAzulHiloBase::GenerateCurvedRoute(const FVector& StartPos, cons
 
 void AAzulHiloBase::UpdateSpline_Implementation(const UE::Math::TVector<double>& Posicion)
 {
-    
+    ACharacter* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+    if (!Player || !HijoActor) return;
+
+    FVector Start = Player->GetActorLocation();
+    Start.Z = 0.f;
+
+    FVector End = HijoActor->GetActorLocation();
+    End.Z = 0.f;
+
+    TArray<FVector> NewPoints = GenerateCurvedRoute(Start, End);
+
+    if (PreviousPoints.Num() == 0)
+        PreviousPoints = NewPoints;
+
+    OnSplineRouteChanged.Broadcast(PreviousPoints, NewPoints);
+
+    PreviousPoints = NewPoints;
 }
 
 
