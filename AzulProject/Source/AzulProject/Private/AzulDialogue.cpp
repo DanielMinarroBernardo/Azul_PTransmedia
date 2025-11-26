@@ -61,7 +61,7 @@ FString UAzulDialogue::GetCurrentText() const
 
     FString Text = CurrentRow->Text;
 
-    // Reemplazar {PlayerName}
+    // Reemplazar {SonName}
     if (!PlayerName.IsEmpty())
     {
         Text = Text.Replace(TEXT("{SonName}"), *PlayerName, ESearchCase::CaseSensitive);

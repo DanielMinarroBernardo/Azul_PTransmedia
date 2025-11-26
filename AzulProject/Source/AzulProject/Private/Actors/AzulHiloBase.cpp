@@ -103,9 +103,6 @@ void AAzulHiloBase::UpdateSpline_Implementation(const UE::Math::TVector<double>&
 }
 
 
-
-
-
 void AAzulHiloBase::ApplyInterpolatedSplinePoints(const TArray<FVector>& Points)
 {
     SplineComp->ClearSplinePoints(true);
