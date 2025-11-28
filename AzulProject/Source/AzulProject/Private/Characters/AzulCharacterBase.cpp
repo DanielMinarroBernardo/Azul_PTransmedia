@@ -2,6 +2,9 @@
 
 
 #include "Characters/AzulCharacterBase.h"
+#include "Actors/AzulInteractuableBase.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Interfaces/AzulInteractuableInterface.h"
 
 // Sets default values
 AAzulCharacterBase::AAzulCharacterBase()
@@ -23,6 +26,33 @@ void AAzulCharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+bool AAzulCharacterBase::IsLookingAtInteractable(UCameraComponent* Camera, float MinDot) const
+{
+    if (!Camera || !CurrentInteractable.GetObject())
+        return false;
+
+    // Convertir objeto de interfaz a Actor
+    AActor* RawActor = Cast<AActor>(CurrentInteractable.GetObject());
+    if (!RawActor)
+        return false;
+
+    // Asegurar que es derivado de AAzulInteractuableBase
+    AAzulInteractuableBase* Interactable = Cast<AAzulInteractuableBase>(RawActor);
+    if (!Interactable)
+        return false;
+
+    // Obtener punto objetivo (centro del Mesh)
+    FVector TargetPoint = Interactable->MeshComp
+        ? Interactable->MeshComp->Bounds.Origin
+        : Interactable->GetActorLocation();
+
+    // LookAt + Dot Product
+    FVector ToTarget = (TargetPoint - Camera->GetComponentLocation()).GetSafeNormal();
+    float Dot = FVector::DotProduct(Camera->GetForwardVector(), ToTarget);
+
+    return Dot >= MinDot;
 }
 
 // Called to bind functionality to input

@@ -2,6 +2,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Camera/CameraComponent.h"
+#include "GameplayTagContainer.h"
+#include "Actors/AzulInteractuableBase.h"
 #include "Interfaces/AzulInteractuableInterface.h"
 #include "AzulCharacterBase.generated.h"
 
@@ -23,6 +26,14 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	AAzulTriggerHiloBase* CurrentTrigger;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
+	FGameplayTagContainer PlayerTags;
+
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	bool IsLookingAtInteractable(UCameraComponent* Camera, float MinDot = 0.75f) const;
+
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 

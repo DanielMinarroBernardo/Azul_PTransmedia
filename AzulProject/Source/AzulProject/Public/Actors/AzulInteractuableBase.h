@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "GameplayTagContainer.h"
 #include "Interfaces/AzulInteractuableInterface.h"
 #include "Components/WidgetComponent.h"
 #include "Blueprint/UserWidget.h"
@@ -20,7 +21,6 @@ public:
 	// Sets default values for this actor's properties
 	AAzulInteractuableBase();
 
-protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -38,6 +38,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
 	AAzulCharacterBase* OverlappingCharacter;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
+	FGameplayTag InteractTag;
+
 
 	// Función llamada cuando ocurre overlap (debe ser UFUNCTION para AddDynamic)
 	UFUNCTION()
