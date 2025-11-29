@@ -49,6 +49,22 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     UDataTable* DialogueTable;
 
+    /** Secuencia opcional de tablas para encadenar */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TArray<UDataTable*> DialogueSequence;
+
+    /** Índice actual en la secuencia */
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+    int32 CurrentTableIndex = 0;
+
+    /** Repetir tabla hasta terminarla correctamente */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    bool bRepeatUntilFinished = false;
+
+    /** Control opcional de reinicio manual */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    bool bHasFinishedTable = false;
+
     /** ID actual */
     int32 CurrentID = 1;
 
@@ -71,7 +87,7 @@ public:
 
     /** Inicializa diálogo (llamado al pulsar E) */
     UFUNCTION(BlueprintCallable)
-    void StartDialogue();
+    void StartDialogue(UDataTable* OverrideTable = nullptr, bool bRestart = true);
 
     bool LoadCurrentRow();
 
@@ -93,6 +109,10 @@ public:
     /** Set DataTable si quieres hacerlo por código */
     UFUNCTION(BlueprintCallable)
     void SetDialogueTable(UDataTable* InTable);
+
+    /** Secuencia automática */
+    UFUNCTION(BlueprintCallable)
+    void AdvanceToNextTable();
 
     UPROPERTY(BlueprintAssignable)
     FOnDialogueFinished OnDialogueFinished;

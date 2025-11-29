@@ -3,19 +3,38 @@
 #include "Engine/Engine.h" // Para AddOnScreenDebugMessage
 #include "Misc/OutputDeviceDebug.h"
 
-void UAzulDialogue::StartDialogue()
+void UAzulDialogue::StartDialogue(UDataTable* OverrideTable, bool bRestart)
 {
-    UE_LOG(LogTemp, Warning, TEXT("START DIALOGUE C++ LLAMADO"));
+    UE_LOG(LogTemp, Warning, TEXT("StartDialogue ejecutado"));
 
-    CurrentID = 1;
-    PlayerScore = 0;
+    if (OverrideTable)
+    {
+        DialogueTable = OverrideTable;
+        CurrentTable = OverrideTable;
+        CurrentTableIndex = DialogueSequence.Find(OverrideTable);
+    }
+    else
+    {
+        CurrentTable = DialogueTable;
+    }
+
+    if (!CurrentTable)
+    {
+        UE_LOG(LogTemp, Error, TEXT("StartDialogue: Tabla inválida"));
+        OnDialogueFinished.Broadcast();
+        return;
+    }
+
+    if (bRestart)
+    {
+        CurrentID = 1;
+        PlayerScore = 0;
+        bHasFinishedTable = false;
+    }
 
     ChoiceButtons.Empty();
 
-    CurrentTable = DialogueTable;
-
     LoadCurrentRow();
-    UE_LOG(LogTemp, Warning, TEXT("EMITIENDO OnDialogueUpdated (StartDialogue)"));
     OnDialogueUpdated.Broadcast();
 }
 
@@ -33,22 +52,16 @@ bool UAzulDialogue::LoadCurrentRow()
 
     UE_LOG(LogTemp, Warning, TEXT("LoadCurrentRow ejecutado. CurrentID = %d"), CurrentID);
 
-    if (CurrentRow)
+    if (!CurrentRow)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Fila encontrada: %s"), *CurrentRow->Text);
-    }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("ERROR: Fila con ID %d NO encontrada en la DataTable %s"),
-            CurrentID,
-            *CurrentTable->GetName());
+        UE_LOG(LogTemp, Error, TEXT("Fila %d NO encontrada"), CurrentID);
+        OnDialogueFinished.Broadcast();
+        return false;
     }
 
 
     return true;
 }
-
-
 
 
 
@@ -193,6 +206,21 @@ void UAzulDialogue::ContinueDialogue()
     }
 
     OnDialogueUpdated.Broadcast();
+}
+
+void UAzulDialogue::AdvanceToNextTable()
+{
+    CurrentTableIndex++;
+
+    if (DialogueSequence.IsValidIndex(CurrentTableIndex))
+    {
+        StartDialogue(DialogueSequence[CurrentTableIndex], true);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("No hay más tablas en la secuencia"));
+        OnDialogueFinished.Broadcast();
+    }
 }
 
 
