@@ -3,27 +3,41 @@
 
 #include "Actors/AzulStoryObjectBase.h"
 #include "AzulStoryManagerSubsystem.h"
+#include "Kismet/GameplayStatics.h"
+#include "Characters/AzulCharacterBase.h"
+
 
 void AAzulStoryObjectBase::Interactua_Implementation()
 {
+    UE_LOG(LogTemp, Error, TEXT("STORYOBJECT: ¡Interactua se llamó correctamente!"));
     Super::Interactua_Implementation();
 
-    UAzulStoryManagerSubsystem* Story =
-        GetGameInstance()->GetSubsystem<UAzulStoryManagerSubsystem>();
+    // Obtener el PlayerCharacter
+    AAzulCharacterBase* Player = Cast<AAzulCharacterBase>(
+        UGameplayStatics::GetPlayerCharacter(this, 0)
+    );
 
-    if (!Story)
+    if (!Player)
+    {
+        UE_LOG(LogTemp, Error, TEXT("StoryObject: No se pudo obtener el PlayerCharacter"));
         return;
-
-    // Cambiar variante
-    if (!VariantToSet.IsNone())
-    {
-        Story->CurrentSceneVariant = VariantToSet;
     }
 
-    // Cambiar escena
-    if (SceneToSet > 0)
+    // Comprobar que VariantToSet no está vacío
+    if (!VariantToSet.IsValid())
     {
-        Story->AdvanceScene(SceneToSet, Story->CurrentSceneVariant);
+        UE_LOG(LogTemp, Warning, TEXT("StoryObject %s: VariantToSet NO asignado"),
+            *GetName());
+        return;
     }
+
+    // AÑADIR EL TAG AL PLAYER
+    Player->ActiveStoryTags.AddTag(VariantToSet);
+
+    UE_LOG(LogTemp, Warning, TEXT("StoryObject %s AÑADIÓ TAG: %s"),
+        *GetName(), *VariantToSet.ToString());
+
+    MeshComp->SetVisibility(false, true);
 }
+
 

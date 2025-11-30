@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Actors/AzulInteractuableBase.h"
+#include "GameplayTagContainer.h"
 #include "AzulStoryObjectBase.generated.h"
 
 /**
@@ -16,9 +17,9 @@ class AZULPROJECT_API AAzulStoryObjectBase : public AAzulInteractuableBase
 
 public:
 
-    /* Variante que este objeto activa (por ejemplo "A", "B", "ObjetoAzul") */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Story")
-    FName VariantToSet;
+    FGameplayTag VariantToSet;
+
 
     /* Escena que este objeto activa (0 para no cambiar escena) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Story")

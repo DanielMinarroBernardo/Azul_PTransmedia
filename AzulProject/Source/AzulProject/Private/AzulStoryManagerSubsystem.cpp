@@ -91,3 +91,17 @@ void UAzulStoryManagerSubsystem::AddNPCDialogueEntry(
 
     NPCMap.SceneDialogue.Add(Scene, Entry);
 }
+
+void UAzulStoryManagerSubsystem::ApplyStoryObject(const FName Variant, int32 SceneIndex)
+{
+    // Establecer la escena actual
+    CurrentStoryScene = SceneIndex;
+
+    // Establecer la variante actual
+    CurrentSceneVariant = Variant;
+
+    UE_LOG(LogTemp, Warning,
+        TEXT("[STORY] SceneIndex cambiado a %d | Variant cambiada a %s"),
+        CurrentStoryScene,
+        *CurrentSceneVariant.ToString());
+}

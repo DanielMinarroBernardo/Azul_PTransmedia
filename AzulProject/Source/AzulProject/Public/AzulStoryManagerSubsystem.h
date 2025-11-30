@@ -97,6 +97,10 @@ public:
         bool bRepeatUntilCompleted
     );
 
+    UFUNCTION(BlueprintCallable, Category = "Story")
+    void ApplyStoryObject(FName Variant, int32 Scene);
+
+
     virtual bool ShouldCreateSubsystem(UObject* Outer) const override { return true; }
 
 };

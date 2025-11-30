@@ -28,6 +28,11 @@ void AAzulCharacterBase::Tick(float DeltaTime)
 
 }
 
+void AAzulCharacterBase::AddStoryTag(const FGameplayTag& NewTag)
+{
+    ActiveStoryTags.AddTag(NewTag);
+}
+
 bool AAzulCharacterBase::IsLookingAtInteractable(UCameraComponent* Camera, float MinDot) const
 {
     if (!Camera || !CurrentInteractable.GetObject())

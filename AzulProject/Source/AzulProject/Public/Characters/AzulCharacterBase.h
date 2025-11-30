@@ -27,8 +27,11 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	AAzulTriggerHiloBase* CurrentTrigger;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
-	FGameplayTagContainer PlayerTags;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Story")
+	FGameplayTagContainer ActiveStoryTags;
+
+	UFUNCTION(BlueprintCallable, Category = "Story")
+	void AddStoryTag(const FGameplayTag& NewTag);
 
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction")

@@ -89,7 +89,7 @@ public:
     UFUNCTION(BlueprintCallable)
     void StartDialogue(UDataTable* OverrideTable = nullptr, bool bRestart = true);
 
-    bool LoadCurrentRow();
+    void LoadCurrentRow();
 
     UFUNCTION(BlueprintCallable)
     FString GetCurrentText() const;

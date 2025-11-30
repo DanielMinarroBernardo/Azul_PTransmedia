@@ -1,7 +1,11 @@
 ﻿#include "Actors/AzulNPCBase.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
-#include "AzulStoryManagerSubsystem.h"
+#include "Dialogos/AzulDialogueMappingDataAsset.h"
+#include "GameplayTagContainer.h"
+#include "Dialogos/AzulWidgetDialogueBase.h"
+#include "Characters/AzulCharacterBase.h"
+
 
 AAzulNPCBase::AAzulNPCBase()
 {
@@ -12,7 +16,7 @@ void AAzulNPCBase::BeginPlay()
 {
     Super::BeginPlay();
 
-    // Crear motor de diálogo (sin tabla todavía)
+    // Crear motor de diálogo
     DialogueSystem = NewObject<UAzulDialogue>(this, UAzulDialogue::StaticClass());
 
     if (!DialogueSystem)
@@ -20,14 +24,12 @@ void AAzulNPCBase::BeginPlay()
         UE_LOG(LogTemp, Error, TEXT("No se pudo crear DialogueSystem en %s"), *GetName());
         return;
     }
-
-    // Cuando termine el diálogo, queremos recibir un aviso
-    DialogueSystem->OnDialogueFinished.AddDynamic(this, &AAzulNPCBase::OnNPCDialogueFinished);
 }
 
 void AAzulNPCBase::Interactua_Implementation()
 {
     Super::Interactua_Implementation();
+
 
     if (!DialogueWidgetClass)
     {
@@ -35,17 +37,32 @@ void AAzulNPCBase::Interactua_Implementation()
         return;
     }
 
-    // PEDIMOS al StoryManager qué tabla toca en este momento
-    UAzulStoryManagerSubsystem* StoryManager =
-        GetGameInstance()->GetSubsystem<UAzulStoryManagerSubsystem>();
+    AAzulCharacterBase* Player = Cast<AAzulCharacterBase>(UGameplayStatics::GetPlayerCharacter(this, 0));
 
-    if (!StoryManager)
+    if (!Player)
     {
-        UE_LOG(LogTemp, Error, TEXT("StoryManager no encontrado"));
+        UE_LOG(LogTemp, Error, TEXT("No se pudo obtener el PlayerCharacter"));
         return;
     }
 
-    UDataTable* TableToUse = StoryManager->GetDialogueForNPC(NPC_ID);
+    if (!DialogueMappingDataAsset)
+    {
+        UE_LOG(LogTemp, Error, TEXT("NPC %s no tiene asignado DialogueMappingDataAsset"), *GetName());
+        return;
+    }
+
+    UDataTable* TableToUse = DialogueMappingDataAsset->ResolveDialogueTable(NPCDialogueBaseTag, Player->ActiveStoryTags);
+
+    UE_LOG(LogTemp, Warning, TEXT("TableToUse = %s"),
+        TableToUse ? *TableToUse->GetName() : TEXT("NULL"));
+
+
+    if (!TableToUse)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("NPC %s no tiene diálogo válido para los tags actuales"), *GetName());
+        return;
+    }
+
 
     // Si este NPC no tiene diálogo en esta escena → NO habla
     if (!TableToUse)
@@ -54,36 +71,87 @@ void AAzulNPCBase::Interactua_Implementation()
         return;
     }
 
-    // Crear y mostrar el widget
-    DialogueWidgetInstance = CreateWidget<UUserWidget>(
-        GetWorld(),
-        DialogueWidgetClass
-    );
+    // 1. Crear el widget si no está
+    if (!DialogueWidgetInstance)
+    {
+        UAzulWidgetDialogueBase* W = CreateWidget<UAzulWidgetDialogueBase>(GetWorld(), DialogueWidgetClass);
+        W->NPC = this;
+        DialogueWidgetInstance = W;
+    }
 
-    if (DialogueWidgetInstance)
+
+    // 2. Añadirlo al viewport si no está visible
+    if (!DialogueWidgetInstance->IsInViewport())
     {
         DialogueWidgetInstance->AddToViewport();
     }
 
-    // Iniciar el diálogo en el estado correcto de la historia
-    DialogueSystem->StartDialogue(TableToUse, true);
+    // 3. Cambiar input a UI Only
+    APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+    if (PC)
+    {
+        FInputModeUIOnly InputMode;
+        InputMode.SetWidgetToFocus(DialogueWidgetInstance->TakeWidget());
+        PC->SetInputMode(InputMode);
+        PC->bShowMouseCursor = true;
+    }
+
+    // 4. Reset delegates para evitar duplicados
+    DialogueSystem->OnDialogueUpdated.RemoveDynamic(this, &AAzulNPCBase::OnNPCDialogueUpdated);
+    DialogueSystem->OnDialogueFinished.RemoveDynamic(this, &AAzulNPCBase::OnNPCDialogueFinished);
+
+
+    // 5. Conectar delegates
+    DialogueSystem->OnDialogueUpdated.AddDynamic(this, &AAzulNPCBase::OnNPCDialogueUpdated);
+    DialogueSystem->OnDialogueFinished.AddDynamic(this, &AAzulNPCBase::OnNPCDialogueFinished);
+
+
+	// 6. Iniciar diálogo
+    DialogueSystem->StartDialogue(TableToUse);
+
+    
+}
+
+void AAzulNPCBase::OnNPCDialogueUpdated()
+{
+    if (!DialogueWidgetInstance) return;
+
+    UTextBlock* Text = Cast<UTextBlock>(DialogueWidgetInstance->GetWidgetFromName(TEXT("DialogueText")));
+    UHorizontalBox* Choices = Cast<UHorizontalBox>(DialogueWidgetInstance->GetWidgetFromName(TEXT("ChoicesContainer")));
+
+    if (DialogueSystem)
+    {
+        DialogueSystem->SetDialogueText(Text);
+        DialogueSystem->UpdateWidget(Choices);
+    }
 }
 
 void AAzulNPCBase::OnNPCDialogueFinished()
 {
-    // Cerramos widget si estuviera abierto
-    if (DialogueWidgetInstance)
+    if (!DialogueWidgetInstance) return;
+
+    DialogueWidgetInstance->RemoveFromParent();
+
+    APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+    if (PC)
     {
-        DialogueWidgetInstance->RemoveFromParent();
-        DialogueWidgetInstance = nullptr;
+        PC->SetInputMode(FInputModeGameOnly());
+        PC->bShowMouseCursor = false;
     }
+}
 
-    // Avisamos al StoryManager que este NPC ha terminado su diálogo
-    UAzulStoryManagerSubsystem* StoryManager =
-        GetGameInstance()->GetSubsystem<UAzulStoryManagerSubsystem>();
-
-    if (StoryManager)
+void AAzulNPCBase::OnContinueRequested()
+{
+    if (DialogueSystem)
     {
-        StoryManager->OnNPCDialogueFinished(NPC_ID);
+        DialogueSystem->ContinueDialogue();
+    }
+}
+
+void AAzulNPCBase::OnChoiceSelected(int32 Index)
+{
+    if (DialogueSystem)
+    {
+        DialogueSystem->OnChoiceClicked(Index);
     }
 }

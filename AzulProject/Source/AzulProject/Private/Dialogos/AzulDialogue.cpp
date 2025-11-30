@@ -1,4 +1,4 @@
-﻿#include "AzulDialogue.h"
+﻿#include "Dialogos/AzulDialogue.h"
 #include "Components/TextBlock.h"
 #include "Engine/Engine.h" // Para AddOnScreenDebugMessage
 #include "Misc/OutputDeviceDebug.h"
@@ -39,29 +39,29 @@ void UAzulDialogue::StartDialogue(UDataTable* OverrideTable, bool bRestart)
 }
 
 
-bool UAzulDialogue::LoadCurrentRow()
+void UAzulDialogue::LoadCurrentRow()
 {
-    if (!CurrentTable)
+    if (!DialogueTable)
     {
-        OnDialogueFinished.Broadcast();
-        return false;
+        UE_LOG(LogTemp, Error, TEXT("LoadCurrentRow: DialogueTable es NULL"));
+        return;
     }
 
-    FName RowName = FName(*FString::FromInt(CurrentID));
-    CurrentRow = CurrentTable->FindRow<FDialogueRow>(RowName, TEXT(""));
-
-    UE_LOG(LogTemp, Warning, TEXT("LoadCurrentRow ejecutado. CurrentID = %d"), CurrentID);
+    FString RowIDString = FString::FromInt(CurrentID);
+    CurrentRow = DialogueTable->FindRow<FDialogueRow>(*RowIDString, TEXT(""));
 
     if (!CurrentRow)
     {
-        UE_LOG(LogTemp, Error, TEXT("Fila %d NO encontrada"), CurrentID);
+        UE_LOG(LogTemp, Error, TEXT("LoadCurrentRow: Fila %d NO encontrada"), CurrentID);
         OnDialogueFinished.Broadcast();
-        return false;
+        return;
     }
 
+    UE_LOG(LogTemp, Warning, TEXT("LoadCurrentRow ejecutado. CurrentID = %d"), CurrentID);
 
-    return true;
+    OnDialogueUpdated.Broadcast();
 }
+
 
 
 
@@ -164,22 +164,29 @@ void UAzulDialogue::HandleContinueClicked()
     OnDialogueUpdated.Broadcast();
 }
 
-void UAzulDialogue::OnChoiceClicked(int32 ButtonIndex)
+void UAzulDialogue::OnChoiceClicked(int32 Index)
 {
-    if (CurrentRow->ChoicesScore.IsValidIndex(ButtonIndex))
-        PlayerScore += CurrentRow->ChoicesScore[ButtonIndex];
-
-    if (CurrentRow->ChoicesNext.IsValidIndex(ButtonIndex))
-        CurrentID = CurrentRow->ChoicesNext[ButtonIndex];
-
-    if (!LoadCurrentRow())
+    if (!CurrentRow || !CurrentRow->IsDecision)
     {
-        OnDialogueFinished.Broadcast();
+        UE_LOG(LogTemp, Error, TEXT("OnChoiceClicked llamado en fila NO decisión"));
         return;
     }
 
-    OnDialogueUpdated.Broadcast();
+    if (!CurrentRow->ChoicesNext.IsValidIndex(Index))
+    {
+        UE_LOG(LogTemp, Error, TEXT("ChoiceClicked: índice %d inválido"), Index);
+        return;
+    }
+
+    // 1. Saltar a la fila decidida
+    CurrentID = CurrentRow->ChoicesNext[Index];
+
+    UE_LOG(LogTemp, Warning, TEXT("ChoiceClicked: Avanzando a fila %d"), CurrentID);
+
+    // 2. Cargar la siguiente línea
+    LoadCurrentRow();
 }
+
 
 
 
@@ -187,26 +194,34 @@ void UAzulDialogue::OnChoiceClicked(int32 ButtonIndex)
 void UAzulDialogue::ContinueDialogue()
 {
     if (!CurrentRow)
-        return;
-
-    // Si NextID es 0 o no existe → diálogo terminado
-    if (CurrentRow->NextID <= 0)
     {
-        UE_LOG(LogTemp, Error, TEXT("DIALOGO TERMINADO EN SEGUIDA — NextID <= 0"));
+        UE_LOG(LogTemp, Error, TEXT("ContinueDialogue: CurrentRow es NULL"));
+        return;
+    }
+
+    // 1. Si es decisión, NO se avanza automáticamente
+    if (CurrentRow->IsDecision)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("ContinueDialogue: Fila %d ES decisión → no avanzar"), CurrentID);
+        return;
+    }
+
+    // 2. Si NextID = 0 → fin del diálogo
+    if (CurrentRow->NextID == 0)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("ContinueDialogue: Fin del diálogo (NextID = 0)"));
         OnDialogueFinished.Broadcast();
         return;
     }
 
+    // 3. Avance normal
     CurrentID = CurrentRow->NextID;
 
-    if (!LoadCurrentRow())
-    {
-        OnDialogueFinished.Broadcast();
-        return;
-    }
+    UE_LOG(LogTemp, Warning, TEXT("ContinueDialogue: Avanzando a fila %d"), CurrentID);
 
-    OnDialogueUpdated.Broadcast();
+    LoadCurrentRow();
 }
+
 
 void UAzulDialogue::AdvanceToNextTable()
 {
