@@ -33,6 +33,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Story")
 	void AddStoryTag(const FGameplayTag& NewTag);
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Story")
+	FString SonName;
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	bool IsLookingAtInteractable(UCameraComponent* Camera, float MinDot = 0.75f) const;

@@ -81,9 +81,6 @@ public:
     UPROPERTY()
     TArray<UButton*> ChoiceButtons;
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere)
-    FString PlayerName;
-
 
     /** Inicializa diálogo (llamado al pulsar E) */
     UFUNCTION(BlueprintCallable)
@@ -106,14 +103,6 @@ public:
     UFUNCTION(BlueprintCallable)
     void SetDialogueText(UTextBlock* Text);
 
-    /** Set DataTable si quieres hacerlo por código */
-    UFUNCTION(BlueprintCallable)
-    void SetDialogueTable(UDataTable* InTable);
-
-    /** Secuencia automática */
-    UFUNCTION(BlueprintCallable)
-    void AdvanceToNextTable();
-
     UPROPERTY(BlueprintAssignable)
     FOnDialogueFinished OnDialogueFinished;
 
@@ -124,6 +113,9 @@ private:
 
     UFUNCTION()
     void HandleContinueClicked();
+
+    FString ProcessSonName(const FString& InText);
+
 
     UDataTable* CurrentTable = nullptr;
 };

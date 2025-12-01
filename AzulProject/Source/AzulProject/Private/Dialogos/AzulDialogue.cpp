@@ -1,6 +1,8 @@
 ﻿#include "Dialogos/AzulDialogue.h"
 #include "Components/TextBlock.h"
 #include "Engine/Engine.h" // Para AddOnScreenDebugMessage
+#include "Characters/AzulCharacterBase.h"
+#include "Kismet/GameplayStatics.h"
 #include "Misc/OutputDeviceDebug.h"
 
 void UAzulDialogue::StartDialogue(UDataTable* OverrideTable, bool bRestart)
@@ -73,12 +75,6 @@ FString UAzulDialogue::GetCurrentText() const
     }
 
     FString Text = CurrentRow->Text;
-
-    // Reemplazar {SonName}
-    if (!PlayerName.IsEmpty())
-    {
-        Text = Text.Replace(TEXT("{SonName}"), *PlayerName, ESearchCase::CaseSensitive);
-    }
 
     return Text;
 }
@@ -164,6 +160,24 @@ void UAzulDialogue::HandleContinueClicked()
     OnDialogueUpdated.Broadcast();
 }
 
+FString UAzulDialogue::ProcessSonName(const FString& InText)
+{
+    FString Out = InText;
+
+    AAzulCharacterBase* Player = Cast<AAzulCharacterBase>(
+        UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)
+    );
+
+    if (Player)
+    {
+        Out = Out.Replace(TEXT("{SonName}"), *Player->SonName);
+    }
+
+    return Out;
+}
+
+
+
 void UAzulDialogue::OnChoiceClicked(int32 Index)
 {
     if (!CurrentRow || !CurrentRow->IsDecision)
@@ -222,23 +236,6 @@ void UAzulDialogue::ContinueDialogue()
     LoadCurrentRow();
 }
 
-
-void UAzulDialogue::AdvanceToNextTable()
-{
-    CurrentTableIndex++;
-
-    if (DialogueSequence.IsValidIndex(CurrentTableIndex))
-    {
-        StartDialogue(DialogueSequence[CurrentTableIndex], true);
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("No hay más tablas en la secuencia"));
-        OnDialogueFinished.Broadcast();
-    }
-}
-
-
 void UAzulDialogue::SetDialogueText(UTextBlock* Text)
 {
     if (!Text)
@@ -246,17 +243,15 @@ void UAzulDialogue::SetDialogueText(UTextBlock* Text)
         return;
     }
 
-    const FString CurrentText = GetCurrentText();
+    FString CurrentText = GetCurrentText();
+
+    // reemplazar {SonName}
+    CurrentText = ProcessSonName(CurrentText);
+
     Text->SetText(FText::FromString(CurrentText));
 
-    UE_LOG(LogTemp, Warning, TEXT("SETDIALOGUETEXT ejecutado: %s"), *GetCurrentText());
+    UE_LOG(LogTemp, Warning, TEXT("SETDIALOGUETEXT ejecutado: %s"), *CurrentText);
 
-}
-
-void UAzulDialogue::SetDialogueTable(UDataTable* InTable)
-{
-    DialogueTable = InTable;
-    CurrentTable = InTable;
 }
 
 

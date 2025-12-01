@@ -20,10 +20,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Story")
     FGameplayTag VariantToSet;
 
-
-    /* Escena que este objeto activa (0 para no cambiar escena) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Story")
-    int32 SceneToSet = 0;
+    FGameplayTagContainer TagsToRemove;
+
 
     virtual void Interactua_Implementation() override;
 	
