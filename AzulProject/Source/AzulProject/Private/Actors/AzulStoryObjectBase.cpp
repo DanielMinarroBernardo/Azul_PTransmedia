@@ -54,6 +54,8 @@ void AAzulStoryObjectBase::Interactua_Implementation()
         *GetName(), *VariantToSet.ToString());
 
     MeshComp->SetVisibility(false, true);
+
+    OnInteracted();
 }
 
 
