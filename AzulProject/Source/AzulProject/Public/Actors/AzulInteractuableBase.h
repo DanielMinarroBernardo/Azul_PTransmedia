@@ -24,22 +24,25 @@ public:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Azul")
+	USceneComponent* RootComp;
+
 	// Visual representation
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Interactuable", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Azul|Interactuable", meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* MeshComp;
 
 	// Componente de colisión que genera overlaps
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interactuable", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Azul|Interactuable", meta = (AllowPrivateAccess = "true"))
 	USphereComponent* CollisionSphere;
 
 	// Widget component para mostrar UI (ej.: prompt de interacción)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Azul|UI", meta = (AllowPrivateAccess = "true"))
 	UWidgetComponent* WidgetComp;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Character")
 	AAzulCharacterBase* OverlappingCharacter;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Tags")
 	FGameplayTag InteractTag;
 
 

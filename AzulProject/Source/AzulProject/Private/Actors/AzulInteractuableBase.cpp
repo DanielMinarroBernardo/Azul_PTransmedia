@@ -9,10 +9,14 @@ AAzulInteractuableBase::AAzulInteractuableBase()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	// Crear el componente raíz (puede ser cualquier USceneComponent)
+	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
+	SetRootComponent(RootComp);
+	
+
 	// Sphere collision (trigger)
 	CollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionSphere"));
-	// Usar el mesh como root para la facilidad de edición en el editor
-	SetRootComponent(CollisionSphere);
+	CollisionSphere->SetupAttachment(RootComponent);
 	CollisionSphere->InitSphereRadius(100.0f); // valor por defecto editable en BP si se expone
 	CollisionSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	CollisionSphere->SetGenerateOverlapEvents(true);
@@ -29,7 +33,7 @@ AAzulInteractuableBase::AAzulInteractuableBase()
 	WidgetComp->SetupAttachment(RootComponent);
 	WidgetComp->SetWidgetSpace(EWidgetSpace::World); // o EWidgetSpace::Screen según prefieras
 	WidgetComp->SetDrawSize(FVector2D(1280.0, 720.0));
-	WidgetComp->SetRelativeLocation(FVector(0.0f, 0.0f, 120.0f));
+	WidgetComp->SetRelativeLocation(FVector(0.0f, 0.0f, 15.0f));
 	WidgetComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	WidgetComp->SetGenerateOverlapEvents(false);
 	WidgetComp->SetVisibility(false); // oculto por defecto
