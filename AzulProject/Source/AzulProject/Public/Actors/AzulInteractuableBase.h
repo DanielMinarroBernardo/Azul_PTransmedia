@@ -25,7 +25,7 @@ public:
 	virtual void BeginPlay() override;
 
 	// Visual representation
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interactuable", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Interactuable", meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* MeshComp;
 
 	// Componente de colisión que genera overlaps
@@ -54,6 +54,12 @@ public:
 	void OnEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
+	void OnExtraInteractBP();
+
+
+	virtual void Interactua_Implementation() override;
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

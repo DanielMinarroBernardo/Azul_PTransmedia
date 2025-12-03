@@ -48,6 +48,11 @@ void AAzulInteractuableBase::BeginPlay()
 	}
 }
 
+void AAzulInteractuableBase::Interactua_Implementation()
+{
+	OnExtraInteractBP();
+}
+
 // Called every frame
 void AAzulInteractuableBase::Tick(float DeltaTime)
 {

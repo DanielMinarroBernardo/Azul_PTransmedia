@@ -55,7 +55,7 @@ void AAzulStoryObjectBase::Interactua_Implementation()
 
     MeshComp->SetVisibility(false, true);
 
-    OnInteracted();
+    OnExtraInteractBP();
 }
 
 

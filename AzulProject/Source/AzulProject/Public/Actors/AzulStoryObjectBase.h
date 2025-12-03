@@ -23,8 +23,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Story")
     FGameplayTagContainer TagsToRemove;
 
-    UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
-    void OnInteracted();
+
 
     virtual void Interactua_Implementation() override;
 	
