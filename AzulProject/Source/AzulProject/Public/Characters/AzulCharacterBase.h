@@ -24,10 +24,17 @@ protected:
 public:	
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Azul|Interactuable")
 	AAzulTriggerHiloBase* CurrentTrigger;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Story")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Interactuable")
+	TScriptInterface<IAzulInteractuableInterface> CurrentInteractable;
+
+	UFUNCTION(BlueprintCallable, Category = "Azul|Interactuable")
+	bool IsLookingAtInteractable(UCameraComponent* Camera, float MinDot = 0.75f) const;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Story")
 	FGameplayTagContainer ActiveStoryTags;
 
 	UFUNCTION(BlueprintCallable, Category = "Story")
@@ -36,13 +43,10 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Story")
 	FString SonName;
 
-	UFUNCTION(BlueprintCallable, Category = "Interaction")
-	bool IsLookingAtInteractable(UCameraComponent* Camera, float MinDot = 0.75f) const;
 
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactuable")
-	TScriptInterface<IAzulInteractuableInterface> CurrentInteractable;
+
 
 };
