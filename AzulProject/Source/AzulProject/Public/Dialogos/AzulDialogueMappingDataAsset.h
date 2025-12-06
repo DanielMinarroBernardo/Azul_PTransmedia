@@ -18,7 +18,7 @@ struct FDialogueConditionSet
     GENERATED_BODY()
 
     // Tags que el Player debe tener para que esta entrada sea válida
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Dialogue")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
     FGameplayTagContainer RequiredTags;
 };
 
@@ -28,15 +28,15 @@ struct FDialogueMappingEntry
     GENERATED_BODY()
 
     // Identidad base del NPC (ej: Dialogue.Mage)
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Dialogue")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
     FGameplayTag NPC_BaseTag;
 
     // Conjunto de condiciones (ej: {State.Scene03, Quest.Completed})
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Dialogue")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
     FDialogueConditionSet Conditions;
 
     // Tabla final que se debe usar
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Dialogue")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
     UDataTable* DialogueTable = nullptr;
 };
 
@@ -48,7 +48,7 @@ class AZULPROJECT_API UAzulDialogueMappingDataAsset : public UDataAsset
 public:
 
     // Reglas de tu juego
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Dialogue")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
     TArray<FDialogueMappingEntry> Entries;
 
 
@@ -59,7 +59,7 @@ public:
      *    - Más tags requeridos = más prioridad
      *    - Orden en el DataAsset no importa
      */
-    UFUNCTION(BlueprintCallable, Category = "Azul|Dialogue")
+    UFUNCTION(BlueprintCallable, Category = "Dialogue")
     UDataTable* ResolveDialogueTable(
         const FGameplayTag& NPC_BaseTag,
         const FGameplayTagContainer& PlayerTags

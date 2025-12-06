@@ -46,23 +46,23 @@ class AZULPROJECT_API UAzulDialogue : public UObject
 public:
 
     /** SOLO UNA DataTable */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Dialogo")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     UDataTable* DialogueTable;
 
     /** Secuencia opcional de tablas para encadenar */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Dialogo")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<UDataTable*> DialogueSequence;
 
     /** Índice actual en la secuencia */
-    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Azul|Dialogo")
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
     int32 CurrentTableIndex = 0;
 
     /** Repetir tabla hasta terminarla correctamente */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Dialogo")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     bool bRepeatUntilFinished = false;
 
     /** Control opcional de reinicio manual */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Dialogo")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     bool bHasFinishedTable = false;
 
     /** ID actual */
@@ -72,10 +72,10 @@ public:
     FDialogueRow* CurrentRow = nullptr;
 
     /* Puntuación */
-    UPROPERTY(BlueprintReadOnly, Category = "Azul|Dialogo")
+    UPROPERTY(BlueprintReadOnly)
     int32 PlayerScore = 0;
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Azul|Dialogo")
+    UPROPERTY(BlueprintReadWrite, EditAnywhere)
     UButton* ContinueButton;
 
     UPROPERTY()

@@ -1,8 +1,6 @@
-ï»¿#include "Actors/AzulInteractuableBase.h"
+#include "Actors/AzulInteractuableBase.h"
 #include "Actors/AzulTriggerHiloBase.h"
 #include "Characters/AzulCharacterBase.h"
-#include "Kismet/KismetSystemLibrary.h"
-#include "Engine/LatentActionManager.h"
 #include "Actors/AzulHiloBase.h"
 
 // Sets default values
@@ -11,7 +9,7 @@ AAzulInteractuableBase::AAzulInteractuableBase()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Crear el componente raÃ­z (puede ser cualquier USceneComponent)
+	// Crear el componente raíz (puede ser cualquier USceneComponent)
 	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
 	SetRootComponent(RootComp);
 	
@@ -26,14 +24,14 @@ AAzulInteractuableBase::AAzulInteractuableBase()
 	// Static mesh (visual)
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
 	MeshComp->SetupAttachment(RootComponent);
-	// Dejar la colisiÃ³n del mesh desactivada: la esfera manejarÃ¡ los overlaps
+	// Dejar la colisión del mesh desactivada: la esfera manejará los overlaps
 	MeshComp->SetCollisionProfileName(TEXT("NoCollision"));
 	MeshComp->SetGenerateOverlapEvents(false);
 
 	// Widget component
 	WidgetComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("Widget"));
 	WidgetComp->SetupAttachment(RootComponent);
-	WidgetComp->SetWidgetSpace(EWidgetSpace::World); // o EWidgetSpace::Screen segÃºn prefieras
+	WidgetComp->SetWidgetSpace(EWidgetSpace::World); // o EWidgetSpace::Screen según prefieras
 	WidgetComp->SetDrawSize(FVector2D(1280.0, 720.0));
 	WidgetComp->SetRelativeLocation(FVector(0.0f, 0.0f, 15.0f));
 	WidgetComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -52,7 +50,6 @@ void AAzulInteractuableBase::BeginPlay()
 		CollisionSphere->OnComponentBeginOverlap.AddDynamic(this, &AAzulInteractuableBase::OnBeginOverlap);
 		CollisionSphere->OnComponentEndOverlap.AddDynamic(this, &AAzulInteractuableBase::OnEndOverlap);
 	}
-
 }
 
 void AAzulInteractuableBase::Interactua_Implementation()
@@ -66,8 +63,6 @@ void AAzulInteractuableBase::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 }
-
-
 
 void AAzulInteractuableBase::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -85,7 +80,7 @@ void AAzulInteractuableBase::OnBeginOverlap(UPrimitiveComponent* OverlappedComp,
 		WidgetComp->SetVisibility(true);
 	}
 
-	//Asignar a sÃ­ mismo como el interactuable del Character cuando overlapa
+	//Asignar a sí mismo como el interactuable del Character cuando overlapa
 	OverlappingCharacter->CurrentInteractable = TScriptInterface<IAzulInteractuableInterface>(this);
 }
 
@@ -107,4 +102,3 @@ void AAzulInteractuableBase::OnEndOverlap(UPrimitiveComponent* OverlappedComp, A
 	// Limpiar la referencia al interactuable en el Character cuando deja de overlapar
 	OverlappingCharacter->CurrentInteractable = nullptr;
 }
-

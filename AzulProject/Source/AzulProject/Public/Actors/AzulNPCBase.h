@@ -25,20 +25,20 @@ protected:
 
 public:
 
-    /** Esta clase ES un NPC que puede tener diálogo */
+    /** Esta clase ES un NPC --> puede tener diálogo */
 
     /* Motor interno del diálogo */
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Azul|Dialogue")
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialogue")
     UAzulDialogue* DialogueSystem;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Dialogue")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
     FGameplayTag NPCDialogueBaseTag;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Dialogue")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
     UAzulDialogueMappingDataAsset* DialogueMappingDataAsset;
 
     /* Widget blueprint que contiene la UI del diálogo */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Dialogue")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
     TSubclassOf<UUserWidget> DialogueWidgetClass;
 
     /* Instancia actual del widget de diálogo */

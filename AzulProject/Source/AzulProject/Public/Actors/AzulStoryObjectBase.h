@@ -17,17 +17,12 @@ class AZULPROJECT_API AAzulStoryObjectBase : public AAzulInteractuableBase
 
 public:
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Story")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Story")
     FGameplayTag VariantToSet;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Story")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Story")
     FGameplayTagContainer TagsToRemove;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Bolso")
-    FGameplayTag BolsoTag;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Azul|Bolso")
-    UTexture2D* Icon;
 
 
     virtual void Interactua_Implementation() override;

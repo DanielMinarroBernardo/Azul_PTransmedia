@@ -32,25 +32,25 @@ public:
 	virtual void UpdateSpline_Implementation(const FVector& TriggerPos) override;
 
 	// Llamado desde BP para aplicar puntos interpolados
-	UFUNCTION(BlueprintCallable, Category = "Azul|Hilo")
+	UFUNCTION(BlueprintCallable, Category = "Hilo")
 	void ApplyInterpolatedSplinePoints(const TArray<FVector>& Points);
 
 	// Evento para BP (Timeline)
-	UPROPERTY(BlueprintAssignable, Category = "Azul|Hilo")
+	UPROPERTY(BlueprintAssignable, Category = "Hilo")
 	FOnSplineRouteChanged OnSplineRouteChanged;
 
 	// Componentes
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Azul|Hilo")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	USplineComponent* SplineComp;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Azul|Hilo")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	UNiagaraComponent* NiagaraComp;
 
-	UPROPERTY(EditAnywhere, Category = "Azul|Hilo")
+	UPROPERTY(EditAnywhere)
 	UNiagaraSystem* NiagaraTemplate;
 
-	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Azul|Hilo")
-	AActor* HijoActor = nullptr;
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Hilo")
+	AAzulInteractuableBase* HijoActor = nullptr;
 
 
 private:
