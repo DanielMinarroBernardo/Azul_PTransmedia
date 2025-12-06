@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Actors/AzulStoryObjectBase.h"
@@ -9,50 +9,62 @@
 
 void AAzulStoryObjectBase::Interactua_Implementation()
 {
-    UE_LOG(LogTemp, Error, TEXT("STORYOBJECT: ¡Interactua se llamó correctamente!"));
-    Super::Interactua_Implementation();
+    UE_LOG(LogTemp, Error, TEXT("STORYOBJECT: Â¡Interactua se llamÃ³ correctamente!"));
 
-    // Obtener el PlayerCharacter
-    AAzulCharacterBase* Player = Cast<AAzulCharacterBase>(UGameplayStatics::GetPlayerCharacter(this, 0));
-
-    if (!Player)
+    if (!OverlappingCharacter)
     {
         UE_LOG(LogTemp, Error, TEXT("StoryObject: No se pudo obtener el PlayerCharacter"));
         return;
     }
 
-    for (const FGameplayTag& TagToRemove : TagsToRemove)
-    {
-        if (Player->ActiveStoryTags.HasTag(TagToRemove))
-        {
-            Player->ActiveStoryTags.RemoveTag(TagToRemove);
+    const bool bIsBolsoItem = BolsoTag.MatchesTag(FGameplayTag::RequestGameplayTag("Azul.StoryObject.CanPickup"));
 
-            UE_LOG(LogTemp, Warning,
-                TEXT("StoryObject %s ELIMINÓ TAG DEL PLAYER: %s"),
-                *GetName(), *TagToRemove.ToString());
-        }
-        else
-        {
-            UE_LOG(LogTemp, Warning,
-                TEXT("StoryObject %s intentó eliminar TAG %s, pero el jugador NO lo tiene"),
-                *GetName(), *TagToRemove.ToString());
-        }
-    }
-
-    // Comprobar que VariantToSet no está vacío
-    if (!VariantToSet.IsValid())
+    if (bIsBolsoItem)
     {
-        UE_LOG(LogTemp, Warning, TEXT("StoryObject %s: VariantToSet NO asignado"),
-            *GetName());
+        UE_LOG(LogTemp, Warning, TEXT("%s ES un ITEM DE BOLSO â†’ TryAddItem + Story Logic, SIN ocultar mesh"), *GetName());
+
+        // Primero intentamos meterlo en el bolso (esto incluye swap)
+        OverlappingCharacter->TryAddItem(this);
+
+        // AHORA ejecutamos lÃ³gica de historia
+        // --- Remover tags ---
+        for (const FGameplayTag& TagToRemove : TagsToRemove)
+        {
+            OverlappingCharacter->ActiveStoryTags.RemoveTag(TagToRemove);
+        }
+
+        // --- AÃ±adir variante ---
+        if (VariantToSet.IsValid())
+        {
+            OverlappingCharacter->ActiveStoryTags.AddTag(VariantToSet);
+        }
+
+        // â— IMPORTANTE: NO ocultar mesh ni destruirlo
+        // â— DEJAR visible el actor porque TryAddItem decide si ocultarlo temporalmente
+
+        OnExtraInteractBP();
         return;
     }
 
-    // AÑADIR EL TAG AL PLAYER
-    Player->ActiveStoryTags.AddTag(VariantToSet);
+    // ---------------------------------------------------------
+    // 2ï¸âƒ£ CASO: OBJETO DE HISTORIA (BolsoTag == None)
+    // Debe ejecutar lÃ³gica historia y OCULTAR mesh
+    // ---------------------------------------------------------
+    UE_LOG(LogTemp, Warning, TEXT("%s ES un OBJETO DE HISTORIA"), *GetName());
 
-    UE_LOG(LogTemp, Warning, TEXT("StoryObject %s AÑADIÓ TAG: %s"),
-        *GetName(), *VariantToSet.ToString());
+    // --- Remover tags ---
+    for (const FGameplayTag& TagToRemove : TagsToRemove)
+    {
+        OverlappingCharacter->ActiveStoryTags.RemoveTag(TagToRemove);
+    }
 
+    // --- AÃ±adir variante ---
+    if (VariantToSet.IsValid())
+    {
+        OverlappingCharacter->ActiveStoryTags.AddTag(VariantToSet);
+    }
+
+    // â— SOLO OBJETOS DE HISTORIA OCULTAN SU MESH
     MeshComp->SetVisibility(false, true);
 
     OnExtraInteractBP();
