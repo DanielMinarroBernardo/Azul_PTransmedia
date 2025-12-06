@@ -18,14 +18,14 @@ class AZULPROJECT_API UAzulWidgetDialogueBase : public UUserWidget
 public:
 
     /* Referencia al NPC que controla el diálogo */
-    UPROPERTY(BlueprintReadWrite, Category = "Dialogue")
+    UPROPERTY(BlueprintReadWrite, Category = "Azul|Dialogue")
     AAzulNPCBase* NPC;
 
     /* Llamado desde el botón continuar */
-    UFUNCTION(BlueprintCallable)
+    UFUNCTION(BlueprintCallable, Category = "Azul|Dialogue")
     void PressContinue();
 
-    UFUNCTION(BlueprintCallable)
+    UFUNCTION(BlueprintCallable, Category = "Azul|Dialogue")
     void PressChoice(int32 ChoiceIndex);
 
 	

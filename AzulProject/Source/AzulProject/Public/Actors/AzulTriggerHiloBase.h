@@ -25,7 +25,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Azul|Hilo")
 	USphereComponent* TriggerSphere;
 
 public:	
@@ -33,7 +33,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	// Referencia al actor del hilo (AzulHiloBase o su Blueprint)
-	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Hilo")
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Azul|Hilo")
 	AAzulHiloBase* HiloActor = nullptr;
 
 
