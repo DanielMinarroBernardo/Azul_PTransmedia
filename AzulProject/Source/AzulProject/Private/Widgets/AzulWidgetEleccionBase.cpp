@@ -40,7 +40,6 @@ void UAzulWidgetEleccionBase::OnSlot1Clicked()
     SlotButton3->SetStyle(Slot3BaseStyle);
 }
 
-
 void UAzulWidgetEleccionBase::OnSlot2Clicked()
 {
 
