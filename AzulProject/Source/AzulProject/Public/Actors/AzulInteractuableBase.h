@@ -24,7 +24,7 @@ public:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Azul")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Azul|Componentes")
 	USceneComponent* RootComp;
 
 	// Visual representation
@@ -45,7 +45,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Tags")
 	FGameplayTag InteractTag;
 
-
 	// Función llamada cuando ocurre overlap (debe ser UFUNCTION para AddDynamic)
 	UFUNCTION()
 	void OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
@@ -58,12 +57,12 @@ public:
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
+	UFUNCTION(BlueprintImplementableEvent, Category = "Azul|Interactuable")
 	void OnExtraInteractBP();
-
 
 	virtual void Interactua_Implementation() override;
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
 };
