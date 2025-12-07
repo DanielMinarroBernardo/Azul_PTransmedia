@@ -28,6 +28,7 @@ void AAzulTriggerHiloBase::BeginPlay()
 	if (TriggerSphere)
 	{
 		TriggerSphere->OnComponentBeginOverlap.AddDynamic(this, &AAzulTriggerHiloBase::OnBeginOverlap);
+		TriggerSphere->OnComponentEndOverlap.AddDynamic(this, &AAzulTriggerHiloBase::OnEndOverlap);
 	}
 }
 void AAzulTriggerHiloBase::Tick(float DeltaTime)
@@ -65,4 +66,16 @@ void AAzulTriggerHiloBase::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, A
 			// Llamar a la función UpdateSpline definida en la interfaz
 			IAzulHiloInterface::Execute_UpdateSpline(HiloActor, Pos);
 	}
+}
+
+void AAzulTriggerHiloBase::OnEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	UKismetSystemLibrary::PrintString(this, "SALE AL TRIGGER", true);
+	AAzulHiloBase* HiloBase = Cast<AAzulHiloBase>(HiloActor);
+	HiloBase->SetNiagaraLifeTime();
+}
+
+void AAzulTriggerHiloBase::UpdateSpline_Implementation(const FVector& TriggerPos)
+{
 }

@@ -1,158 +1,142 @@
 ﻿#include "Actors/AzulHiloBase.h"
+#include "Actors/AzulInteractuableBase.h"
+#include "Actors/AzulTriggerHiloBase.h"
 #include "Characters/AzulCharacterBase.h"
 #include "Kismet/GameplayStatics.h"
-#include "Engine/World.h"
 
 AAzulHiloBase::AAzulHiloBase()
 {
-	PrimaryActorTick.bCanEverTick = false;
+    SplineComp = CreateDefaultSubobject<USplineComponent>(TEXT("SplineComp"));
+    RootComponent = SplineComp;
 
-	SplineComp = CreateDefaultSubobject<USplineComponent>(TEXT("SplineComp"));
-	RootComponent = SplineComp;
+    NiagaraComp = CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraComp"));
+    NiagaraComp->SetupAttachment(SplineComp);
 }
 
 void AAzulHiloBase::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
 
-	CachedPlayer = Cast<AAzulCharacterBase>(UGameplayStatics::GetPlayerCharacter(this, 0));
+    if (NiagaraTemplate)
+    {
+        NiagaraComp->SetAsset(NiagaraTemplate);
+        NiagaraComp->Activate(true);
+    }
 }
 
-// --------------------------------------------------------------------------------------
-// GENERAR CURVA ENTRE PLAYER Y HIJOACTOR
-// --------------------------------------------------------------------------------------
+void AAzulHiloBase::SetNiagaraLifeTime()
+{
+    NiagaraComp->SetNiagaraVariableFloat("LifeTime", 2.0f);
+    UKismetSystemLibrary::PrintString(this, "CAMBIADO EL LIFE TIME", true);
+}
 
 TArray<FVector> AAzulHiloBase::GenerateCurvedRoute(const FVector& StartPos, const FVector& EndPos)
 {
-	TArray<FVector> FinalPoints;
+    TArray<FVector> FinalPoints;
 
-	FVector A(StartPos.X, StartPos.Y, StartPos.Z);
-	FVector B(EndPos.X, EndPos.Y, EndPos.Z);
+    // --------------------------
+    // 1) Preparamos A y B
+    // --------------------------
+    FVector A(StartPos.X, StartPos.Y, SueloZ);
+    FVector B(EndPos.X, EndPos.Y, SueloZ);
 
-	FVector AB = B - A;
-	float Dist = AB.Size();
+    FVector AB = (B - A);
+    float Dist = AB.Size();
 
-	if (Dist < KINDA_SMALL_NUMBER)
-	{
-		FinalPoints.Add(A);
-		FinalPoints.Add(B);
-		return FinalPoints;
-	}
+    if (Dist < KINDA_SMALL_NUMBER)
+    {
+        FinalPoints.Add(A);
+        FinalPoints.Add(B);
+        return FinalPoints;
+    }
 
-	FVector Dir = AB.GetSafeNormal();
-	FVector Perp(Dir.Y, -Dir.X, 0.f);
+    FVector Dir = AB.GetSafeNormal();
+    FVector Perp(Dir.Y, -Dir.X, 0.f); // perpendicular estable 2D
 
-	float CurveStrength = FMath::Clamp(Dist * 0.15f, 30.f, 150.f);
+    // Curvatura ligera
+    float CurveStrength = FMath::Clamp(Dist * 0.18f, 30.f, 120.f);
 
-	FVector C1 = A + Dir * (Dist * 0.25f) + Perp * CurveStrength;
-	FVector C2 = A + Dir * (Dist * 0.75f) + Perp * CurveStrength;
+    // --------------------------
+    // 2) Puntos de control Bezier
+    // --------------------------
+    FVector C1 = A + Dir * (Dist * 0.25f) + Perp * CurveStrength;
+    FVector C2 = A + Dir * (Dist * 0.75f) + Perp * CurveStrength;
 
-	const int32 Subdivisions = 32;
+    C1.Z = SueloZ;
+    C2.Z = SueloZ;
 
-	for (int32 i = 0; i <= Subdivisions; i++)
-	{
-		float t = (float)i / Subdivisions;
+    // --------------------------
+    // 3) Subdividir Bezier en 32 pasos
+    // --------------------------
+    const int32 Subdivisions = 32;
 
-		FVector P =
-			FMath::Pow(1 - t, 3) * A +
-			3 * FMath::Pow(1 - t, 2) * t * C1 +
-			3 * (1 - t) * FMath::Pow(t, 2) * C2 +
-			FMath::Pow(t, 3) * B;
+    for (int32 i = 0; i <= Subdivisions; i++)
+    {
+        float t = (float)i / (float)Subdivisions;
 
-		FinalPoints.Add(P);
-	}
+        FVector P =
+            FMath::Pow(1 - t, 3) * A +
+            3 * FMath::Pow(1 - t, 2) * t * C1 +
+            3 * (1 - t) * FMath::Pow(t, 2) * C2 +
+            FMath::Pow(t, 3) * B;
 
-	return FinalPoints;
+        FinalPoints.Add(P);
+    }
+
+    return FinalPoints;
 }
 
-// --------------------------------------------------------------------------------------
-// LLAMADO DESDE EL TRIGGER VIA INTERFAZ
-// --------------------------------------------------------------------------------------
 
-void AAzulHiloBase::UpdateSpline_Implementation(const FVector& TriggerPos)
+void AAzulHiloBase::UpdateSpline_Implementation(const UE::Math::TVector<double>& Posicion)
 {
-	if (!HijoActor) return;
+    NiagaraComp->SetNiagaraVariableFloat("LifeTime", 500.0f);
 
-	ACharacter* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-	if (!Player) return;
+    ACharacter* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+    if (!Player || !HijoActor) return;
 
-	FVector Start = Player->GetActorLocation();
-	FVector End = HijoActor->GetActorLocation();
+    FVector Start = Player->GetActorLocation();
+    Start.Z = 0.f;
 
-	// Generar curva
-	TArray<FVector> Points = GenerateCurvedRoute(Start, End);
+    FVector End = HijoActor->GetActorLocation();
+    End.Z = 0.f;
 
-	// Actualizar spline
-	ApplySplinePoints(Points);
+    TArray<FVector> NewPoints = GenerateCurvedRoute(Start, End);
+
+    if (PreviousPoints.Num() == 0)
+        PreviousPoints = NewPoints;
+
+    OnSplineRouteChanged.Broadcast(PreviousPoints, NewPoints);
+
+    PreviousPoints = NewPoints;
 }
 
-// --------------------------------------------------------------------------------------
-// ACTUALIZAR EL SPLINE CON LOS NUEVOS PUNTOS
-// --------------------------------------------------------------------------------------
 
-void AAzulHiloBase::ApplySplinePoints(const TArray<FVector>& Points)
+void AAzulHiloBase::ApplyInterpolatedSplinePoints(const TArray<FVector>& Points)
 {
-	SplineComp->ClearSplinePoints(true);
+    SplineComp->ClearSplinePoints(true);
 
-	for (const FVector& P : Points)
-	{
-		SplineComp->AddSplinePoint(P, ESplineCoordinateSpace::World);
-	}
+    for (int32 i = 0; i < Points.Num(); i++)
+    {
+        // Los puntos vienen ya en WORLD → usar WORLD
+        FVector Flat = FVector(Points[i].X, Points[i].Y, SueloZ);
 
-	SplineComp->SetClosedLoop(false);
-	SplineComp->UpdateSpline();
+        SplineComp->AddSplinePoint(Flat, ESplineCoordinateSpace::World);
+    }
 
-	UpdateSplineMeshes();
+    // Para evitar overshoot DEFINITIVAMENTE
+    for (int32 i = 0; i < Points.Num(); i++)
+    {
+       SplineComp->SetSplinePointType(i, ESplinePointType::CurveClamped, false);
+    }
+
+    // Actualizar spline
+    SplineComp->SetClosedLoop(false);
+    SplineComp->UpdateSpline();
+
+    // VFX
+    NiagaraComp->SetFloatParameter("SpawnRate", SplineComp->GetSplineLength());
+    NiagaraComp->ResetSystem();
 }
 
-// --------------------------------------------------------------------------------------
-// ACTUALIZAR LOS SEGMENTOS DE TUBERÍA (SPLINE MESH COMPONENTS)
-// --------------------------------------------------------------------------------------
 
-void AAzulHiloBase::UpdateSplineMeshes()
-{
-	int32 NumPoints = SplineComp->GetNumberOfSplinePoints();
-	if (!TuboMesh || NumPoints < 2)
-		return;
 
-	// Crear los segmentos necesarios
-	while (SplineMeshes.Num() < NumPoints - 1)
-	{
-		USplineMeshComponent* NewSeg = NewObject<USplineMeshComponent>(this);
-
-		NewSeg->SetStaticMesh(TuboMesh);
-		if (TuboMaterial)
-			NewSeg->SetMaterial(0, TuboMaterial);
-
-		// CRUCIAL: permitir que se mueva en runtime
-		NewSeg->SetMobility(EComponentMobility::Movable);
-
-		// Asegurar que la tubería queda tumbada
-		NewSeg->SetForwardAxis(ESplineMeshAxis::X);
-		NewSeg->SetStartRoll(90.f);
-		NewSeg->SetEndRoll(90.f);
-
-		NewSeg->RegisterComponent();
-		NewSeg->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
-
-		SplineMeshes.Add(NewSeg);
-	}
-
-	// Eliminar sobras
-	while (SplineMeshes.Num() > NumPoints - 1)
-	{
-		SplineMeshes.Pop()->DestroyComponent();
-	}
-
-	// Actualizar cada segmento con posición + tangente correctas
-	for (int32 i = 0; i < NumPoints - 1; i++)
-	{
-		FVector StartPos = SplineComp->GetLocationAtSplinePoint(i, ESplineCoordinateSpace::World);
-		FVector EndPos = SplineComp->GetLocationAtSplinePoint(i + 1, ESplineCoordinateSpace::World);
-
-		FVector StartTan = SplineComp->GetTangentAtSplinePoint(i, ESplineCoordinateSpace::World);
-		FVector EndTan = SplineComp->GetTangentAtSplinePoint(i + 1, ESplineCoordinateSpace::World);
-
-		SplineMeshes[i]->SetStartAndEnd(StartPos, StartTan, EndPos, EndTan);
-	}
-}

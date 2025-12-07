@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/SphereComponent.h"
-#include "AzulHiloBase.h"
+#include "Actors/AzulHiloBase.h"
 #include "Actors/AzulInteractuableBase.h"
 #include "Interfaces/AzulHiloInterface.h"
 #include "AzulTriggerHiloBase.generated.h"
@@ -13,7 +13,7 @@
 class AAzulCharacterBase;
 
 UCLASS()
-class AZULPROJECT_API AAzulTriggerHiloBase : public AActor
+class AZULPROJECT_API AAzulTriggerHiloBase : public AActor, public IAzulHiloInterface
 {
 	GENERATED_BODY()
 	
@@ -42,5 +42,14 @@ public:
 	void OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
 		const FHitResult& SweepResult);
+
+
+	// Función llamada cuando termina el overlap (debe ser UFUNCTION para AddDynamic)
+	UFUNCTION()
+	void OnEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	virtual void UpdateSpline_Implementation(const FVector& TriggerPos) override;
+
 
 };
