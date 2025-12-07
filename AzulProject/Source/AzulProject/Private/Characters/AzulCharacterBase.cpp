@@ -85,6 +85,9 @@ bool AAzulCharacterBase::TryAddItem(AAzulStoryObjectBase* WorldItem)
             BolsoWidgetInstance->SlotItems[i] = Bolso[i];
             BolsoWidgetInstance->UpdateUI();
 
+            if (Bolso.Num() == 2) {
+                CheckMision(8);
+            }
             return true;
         }
     }

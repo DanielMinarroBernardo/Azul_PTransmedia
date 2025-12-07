@@ -69,6 +69,10 @@ public:
 	UPROPERTY()
 	AAzulStoryObjectBase* PendingPhysicalPick;
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "Azul|Interactuable")
+	void CheckMision(int misionID);
+
+
 	// Inicializa inventario vacío
 	void InitializeBolso();
 
