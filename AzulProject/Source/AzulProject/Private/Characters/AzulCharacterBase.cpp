@@ -62,6 +62,8 @@ void AAzulCharacterBase::InitializeBolso()
 
 bool AAzulCharacterBase::TryAddItem(AAzulStoryObjectBase* WorldItem)
 {
+    BolsoWidgetInstance->SetButtonsEnabled(true);
+
     UE_LOG(LogTemp, Error, TEXT("TryAddItem: WorldItem = %s"), *GetNameSafe(WorldItem));
 
     if (!WorldItem) return false;
@@ -104,6 +106,9 @@ bool AAzulCharacterBase::TryAddItem(AAzulStoryObjectBase* WorldItem)
 
     BolsoWidgetInstance->ShowFullBolsoDialog();
     ActivateUIMode();
+
+
+
 
     return false;
 }
@@ -154,6 +159,8 @@ void AAzulCharacterBase::HandleSwapConfirmed(int32 SlotIndex)
     // 8. Actualizar interfaz del bolso
     BolsoWidgetInstance->ResetBolsoLayout();
     BolsoWidgetInstance->UpdateUI();
+
+    BolsoWidgetInstance->SetButtonsEnabled(false);
 
     // 9. Salir del modo UI
     DeactivateUIMode();
