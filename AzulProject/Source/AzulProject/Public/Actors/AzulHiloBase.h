@@ -3,17 +3,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/SplineComponent.h"
-#include "NiagaraSystem.h"
-#include "NiagaraComponent.h"
+#include "Components/SplineMeshComponent.h"
 #include "Interfaces/AzulHiloInterface.h"
 #include "AzulHiloBase.generated.h"
 
-class AAzulInteractuableBase;
-
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSplineRouteChanged,
-	const TArray<FVector>&, Previous,
-	const TArray<FVector>&, Target);
+class AAzulCharacterBase;
 
 UCLASS()
 class AZULPROJECT_API AAzulHiloBase : public AActor, public IAzulHiloInterface
@@ -28,37 +22,37 @@ protected:
 
 public:
 
-	// Interfaz
+	/** Llamado desde el trigger vía interfaz */
 	virtual void UpdateSpline_Implementation(const FVector& TriggerPos) override;
 
-	// Llamado desde BP para aplicar puntos interpolados
-	UFUNCTION(BlueprintCallable, Category = "Azul|Hilo")
-	void ApplyInterpolatedSplinePoints(const TArray<FVector>& Points);
+	/** Aplica puntos al spline */
+	void ApplySplinePoints(const TArray<FVector>& Points);
 
-	// Evento para BP (Timeline)
-	UPROPERTY(BlueprintAssignable, Category = "Azul|Hilo")
-	FOnSplineRouteChanged OnSplineRouteChanged;
+	/** Actualiza la tubería (SplineMesh) */
+	void UpdateSplineMeshes();
 
-	// Componentes
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Azul|Hilo")
+	/** Genera una curva suave entre Player y HijoActor */
+	TArray<FVector> GenerateCurvedRoute(const FVector& StartPos, const FVector& EndPos);
+
+	// --------- COMPONENTES ---------
+
+	UPROPERTY(VisibleAnywhere, Category = "Azul|Hilo")
 	USplineComponent* SplineComp;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Azul|Hilo")
-	UNiagaraComponent* NiagaraComp;
-
-	UPROPERTY(EditAnywhere, Category = "Azul|Hilo")
-	UNiagaraSystem* NiagaraTemplate;
-
-	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Azul|Hilo")
+	/** Actor destino al que va el hilo */
+	UPROPERTY(EditInstanceOnly, Category = "Azul|Hilo")
 	AActor* HijoActor = nullptr;
 
+	/** Mesh visual de la tubería */
+	UPROPERTY(EditAnywhere, Category = "Azul|Hilo")
+	UStaticMesh* TuboMesh;
+
+	UPROPERTY(EditAnywhere, Category = "Azul|Hilo")
+	UMaterialInterface* TuboMaterial;
+
+	UPROPERTY(VisibleAnywhere, Category = "Azul|Hilo")
+	TArray<USplineMeshComponent*> SplineMeshes;
 
 private:
-
-	TArray<FVector> PreviousPoints;
-	TArray<FVector> TargetPoints;
-
-	FVector CachedStartPos;
-
-	TArray<FVector> GenerateCurvedRoute(const FVector& StartPos, const FVector& EndPos);
+	AAzulCharacterBase* CachedPlayer = nullptr;
 };

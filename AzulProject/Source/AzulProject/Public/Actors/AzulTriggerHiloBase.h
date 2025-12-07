@@ -34,7 +34,7 @@ public:
 
 	// Referencia al actor del hilo (AzulHiloBase o su Blueprint)
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Azul|Hilo")
-	AAzulHiloBase* HiloActor = nullptr;
+	AActor* HiloActor = nullptr;
 
 
 	// Evento de solapamiento

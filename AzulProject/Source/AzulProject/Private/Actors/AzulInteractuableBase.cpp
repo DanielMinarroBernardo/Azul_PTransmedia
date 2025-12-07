@@ -1,9 +1,8 @@
 ﻿#include "Actors/AzulInteractuableBase.h"
-#include "Actors/AzulTriggerHiloBase.h"
 #include "Characters/AzulCharacterBase.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Engine/LatentActionManager.h"
-#include "Actors/AzulHiloBase.h"
+
 
 
 

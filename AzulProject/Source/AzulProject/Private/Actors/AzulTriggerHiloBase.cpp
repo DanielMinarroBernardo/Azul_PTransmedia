@@ -3,6 +3,7 @@
 #include "Components/SphereComponent.h"
 #include "Interfaces/AzulHiloInterface.h"
 #include "Characters/AzulCharacterBase.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "EngineUtils.h" // Para TActorIterator
 
 // Sets default values
@@ -40,6 +41,10 @@ void AAzulTriggerHiloBase::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, A
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	
+	UKismetSystemLibrary::PrintString(this, "ENTRE AL TRIGGER", true);
+	UKismetSystemLibrary::PrintString(this, "HiloActor es VALIDO", true);
+
+
 	// Verificar que el actor que entra sea del tipo AzulCharacterBase o derivado
 	AAzulCharacterBase* OverlappingCharacter = Cast<AAzulCharacterBase>(OtherActor);
 
