@@ -106,8 +106,9 @@ public:
 
     void ResetBolsoLayout();
 
-    UFUNCTION(BlueprintCallable)
     void UpdateUI();
+
+    void SetButtonsEnabled(bool bEnabled);
 
     UFUNCTION()
     void TickAnimation();

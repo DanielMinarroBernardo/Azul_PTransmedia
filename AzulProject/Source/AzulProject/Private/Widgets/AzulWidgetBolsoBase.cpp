@@ -11,6 +11,8 @@ void UAzulWidgetBolsoBase::NativeConstruct()
 {
     Super::NativeConstruct();
 
+    SetButtonsEnabled(false);
+
     //Guardar el estilo de los botones presionados
     if (SlotButton1) Slot1BaseStyle = SlotButton1->WidgetStyle;
     if (SlotButton2) Slot2BaseStyle = SlotButton2->WidgetStyle;
@@ -66,6 +68,13 @@ void UAzulWidgetBolsoBase::UpdateUI()
 
     if (SlotIcon2)
         SlotIcon2->SetBrushFromTexture(SlotItems[1].Icon);
+}
+
+void UAzulWidgetBolsoBase::SetButtonsEnabled(bool bEnabled)
+{
+    if (SlotButton1) SlotButton1->SetIsEnabled(bEnabled);
+    if (SlotButton2) SlotButton2->SetIsEnabled(bEnabled);
+    if (ConfirmButton) ConfirmButton->SetIsEnabled(bEnabled);
 }
 
 void UAzulWidgetBolsoBase::ShowFullBolsoDialog()
