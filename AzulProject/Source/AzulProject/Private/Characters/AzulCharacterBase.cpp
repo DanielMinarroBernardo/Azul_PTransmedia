@@ -28,7 +28,7 @@ void AAzulCharacterBase::BeginPlay()
         BolsoWidgetInstance = CreateWidget<UAzulWidgetBolsoBase>(GetWorld(), BolsoWidgetClass);
         if (!BolsoWidgetInstance->IsInViewport())
         {
-            BolsoWidgetInstance->AddToViewport();
+            //BolsoWidgetInstance->AddToViewport();
         }
 
         BolsoWidgetInstance->OwnerCharacter = this;

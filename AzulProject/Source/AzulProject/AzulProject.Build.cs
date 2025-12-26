@@ -8,7 +8,8 @@ public class AzulProject : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "EnhancedInput", "InputCore", "Niagara", "GameplayTags", "DeveloperSettings", "UMG" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "EnhancedInput", "InputCore", "Niagara", "GameplayTags", "DeveloperSettings", "UMG", 
+			"LevelSequence", "MovieScene", "MediaAssets", "Media", "MediaUtils" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "UMG", "Slate", "SlateCore" });
 
