@@ -16,6 +16,8 @@ AAzulCharacterBase::AAzulCharacterBase()
     PrimaryActorTick.bCanEverTick = true;
 
     BolsoComponent = CreateDefaultSubobject<UAzulBolsoComponent>(TEXT("BolsoComponent"));
+
+    CurrentInteractable = nullptr;
 }
 
 // Called when the game starts or when spawned
@@ -42,34 +44,44 @@ void AAzulCharacterBase::AddStoryTag(const FGameplayTag& NewTag)
 
 
 
-bool AAzulCharacterBase::IsLookingAtInteractable(UCameraComponent* Camera, float MinDot) const
+bool AAzulCharacterBase::IsLookingAtInteractable(UCameraComponent* Camera) const
 {
-
     if (!Camera || !CurrentInteractable.GetObject())
         return false;
 
-    AActor* RawActor = Cast<AActor>(CurrentInteractable.GetObject());
-    if (!RawActor)
+    AActor* InteractableActor = Cast<AActor>(CurrentInteractable.GetObject());
+    if (!InteractableActor)
         return false;
 
-    if (CurrentInteractableClass && CurrentInteractableClass->IsChildOf(AAzulAscensorBase::StaticClass()))
-    {
-        return true;
-    }
-
-    AAzulInteractuableBase* Interactable = Cast<AAzulInteractuableBase>(RawActor);
-    if (!Interactable)
+    AAzulInteractuableBase* Interactable =
+        Cast<AAzulInteractuableBase>(InteractableActor);
+    if (!Interactable || !Interactable->MeshComp)
         return false;
 
-    FVector TargetPoint = Interactable->MeshComp
-        ? Interactable->MeshComp->Bounds.Origin
-        : Interactable->GetActorLocation();
+    FVector Start = Camera->GetComponentLocation();
+    FVector End = Start + Camera->GetForwardVector() * 1000.f;
 
-    FVector ToTarget = (TargetPoint - Camera->GetComponentLocation()).GetSafeNormal();
-    float Dot = FVector::DotProduct(Camera->GetForwardVector(), ToTarget);
+    FHitResult Hit;
+    FCollisionQueryParams Params;
+    Params.AddIgnoredActor(this);
 
-    return Dot >= MinDot;
+    bool bHit = GetWorld()->LineTraceSingleByChannel(
+        Hit,
+        Start,
+        End,
+        ECC_Visibility,
+        Params
+    );
+
+    if (!bHit)
+        return false;
+
+    // comprobar que el HIT ES EL STATIC MESH
+    return Hit.GetComponent() == Interactable->MeshComp;
 }
+
+
+//------------------------------INPUT------------------------------
 
 void AAzulCharacterBase::SetControlMode(EAzulControlMode NewMode)
 {

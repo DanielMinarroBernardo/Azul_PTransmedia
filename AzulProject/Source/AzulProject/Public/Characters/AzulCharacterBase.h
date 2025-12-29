@@ -40,13 +40,17 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Azul|Hilo")
 	AAzulTriggerHiloBase* CurrentTrigger;
 
+	//-------------------------INTERACTUAR----------------------------------------------
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Interactuable")
 	TScriptInterface<IAzulInteractuableInterface> CurrentInteractable;
 
 	UFUNCTION(BlueprintCallable, Category = "Azul|Interactuable")
-	bool IsLookingAtInteractable(UCameraComponent* Camera, float MinDot = 0.75f) const;
+	bool IsLookingAtInteractable(UCameraComponent* Camera) const;
 
 	TSubclassOf<AActor> CurrentInteractableClass;
+
+	//---------------------------------
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Story")
 	FGameplayTagContainer ActiveStoryTags;
@@ -57,11 +61,11 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Azul|Story")
 	FString SonName;
 
-	//BOLSO
+	//---------------------------BOLSO
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Azul|Bolso")
 	UAzulBolsoComponent* BolsoComponent;
 
-	//INPUT
+	//----------------------------INPUT
 
 	// Input
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;

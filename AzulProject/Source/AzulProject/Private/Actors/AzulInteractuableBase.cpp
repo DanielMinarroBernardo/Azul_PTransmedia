@@ -28,7 +28,9 @@ AAzulInteractuableBase::AAzulInteractuableBase()
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
 	MeshComp->SetupAttachment(RootComponent);
 	// Dejar la colisión del mesh desactivada: la esfera manejará los overlaps
-	MeshComp->SetCollisionProfileName(TEXT("NoCollision"));
+	MeshComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	MeshComp->SetCollisionResponseToAllChannels(ECR_Ignore);
+	MeshComp->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	MeshComp->SetGenerateOverlapEvents(false);
 
 	// Widget component
@@ -79,15 +81,6 @@ void AAzulInteractuableBase::OnBeginOverlap(UPrimitiveComponent* OverlappedComp,
 	{
 		return; // Si no es un personaje AzulCharacterBase, no hacer nada
 	}
-
-	UKismetSystemLibrary::PrintString(
-		this,
-		TEXT("overlapando"),
-		true,        // Mostrar en pantalla
-		false,       // No imprimir en log
-		FLinearColor::Green,
-		2.0f         // Duración en segundos
-	);
 
 
 	// Mostrar widget si existe
