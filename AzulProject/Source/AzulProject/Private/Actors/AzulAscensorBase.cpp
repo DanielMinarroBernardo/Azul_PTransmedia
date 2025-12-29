@@ -1,7 +1,6 @@
 #include "Actors/AzulAscensorBase.h"
 #include "Engine/World.h"
-#include "EnhancedInputSubsystems.h"
-
+#include "TimerManager.h"
 
 AAzulAscensorBase::AAzulAscensorBase()
 {
@@ -32,16 +31,12 @@ void AAzulAscensorBase::MoveTick()
         GetWorld()->GetTimerManager().ClearTimer(MoveHandle);
         bIsMoving = false;
 
-
         UE_LOG(LogTemp, Warning, TEXT("ASCENSOR: FIN DEL MOVIMIENTO"));
         return;
     }
 
     FVector Direction = (Target - Current).GetSafeNormal();
-    FVector NewPos = Current + Direction * Step;
-
-    SetActorLocation(NewPos);
-
+    SetActorLocation(Current + Direction * Step);
 }
 
 void AAzulAscensorBase::Interactua_Implementation()
@@ -51,16 +46,15 @@ void AAzulAscensorBase::Interactua_Implementation()
     if (bIsMoving)
         return;
 
+    // Alinear personaje con el ascensor si está encima
     if (OverlappingCharacter)
     {
         FVector CharLocation = OverlappingCharacter->GetActorLocation();
-        CharLocation.Z = GetActorLocation().Z + 10.0f;     // subir 10 unidad exacta
+        CharLocation.Z = GetActorLocation().Z + 10.0f;
         OverlappingCharacter->SetActorLocation(CharLocation);
     }
 
     bIsMoving = true;
-
-    ActivateIMCLook();
 
     GetWorld()->GetTimerManager().SetTimer(
         MoveHandle,
@@ -70,22 +64,8 @@ void AAzulAscensorBase::Interactua_Implementation()
         true
     );
 
-    APlayerController* PC = GetWorld()->GetFirstPlayerController();
-    AAzulCharacterBase* Character = Cast<AAzulCharacterBase>(PC->GetPawn());
-
-    FTimerHandle DelayHandle;
-    GetWorld()->GetTimerManager().SetTimer(
-        DelayHandle,
-        [Character]() {
-            Character->DisableMappingContext(TEXT("IMC_Look"));
-            Character->EnableMappingContext(TEXT("IMC_Default"), 1);
-        },
-        2.0f,
-        false
-    );
-
+    // Mantener al personaje “pegado” al ascensor
     FTimerHandle MoveCharacterHandle;
-
     GetWorld()->GetTimerManager().SetTimer(
         MoveCharacterHandle,
         [this]()
@@ -101,23 +81,5 @@ void AAzulAscensorBase::Interactua_Implementation()
         true
     );
 
-
     bIsUp = !bIsUp;
 }
-
-void AAzulAscensorBase::ActivateIMCLook()
-{
-    if (!OverlappingCharacter) return;
-
-    OverlappingCharacter->DisableMappingContext(TEXT("IMC_Default"));
-    OverlappingCharacter->EnableMappingContext(TEXT("IMC_Look"), 2);
-}
-
-void AAzulAscensorBase::ActivateIMCDefault()
-{
-    if (!OverlappingCharacter) return;
-
-    OverlappingCharacter->DisableMappingContext(TEXT("IMC_Look"));
-    OverlappingCharacter->EnableMappingContext(TEXT("IMC_Default"), 1);
-}
-

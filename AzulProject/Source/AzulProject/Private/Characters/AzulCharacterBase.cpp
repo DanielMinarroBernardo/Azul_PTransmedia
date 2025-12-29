@@ -3,6 +3,7 @@
 #include "Widgets/AzulWidgetBolsoBase.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Interfaces/AzulInteractuableInterface.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
@@ -13,6 +14,8 @@
 AAzulCharacterBase::AAzulCharacterBase()
 {
     PrimaryActorTick.bCanEverTick = true;
+
+    BolsoComponent = CreateDefaultSubobject<UAzulBolsoComponent>(TEXT("BolsoComponent"));
 }
 
 // Called when the game starts or when spawned
@@ -20,21 +23,9 @@ void AAzulCharacterBase::BeginPlay()
 {
     Super::BeginPlay();
 
-    Bolso.SetNum(2);
-    InitializeBolso();
-
-    if (BolsoWidgetClass)
+    if (BolsoComponent)
     {
-        BolsoWidgetInstance = CreateWidget<UAzulWidgetBolsoBase>(GetWorld(), BolsoWidgetClass);
-        if (!BolsoWidgetInstance->IsInViewport())
-        {
-            //BolsoWidgetInstance->AddToViewport();
-        }
-
-        BolsoWidgetInstance->OwnerCharacter = this;
-
-        BolsoWidgetInstance->SlotItems.SetNum(2);
-        BolsoWidgetInstance->UpdateUI();
+        BolsoComponent->InitializeBolso(this);
     }
 }
 
@@ -49,152 +40,7 @@ void AAzulCharacterBase::AddStoryTag(const FGameplayTag& NewTag)
     ActiveStoryTags.AddTag(NewTag);
 }
 
-void AAzulCharacterBase::InitializeBolso()
-{
-    if (BolsoWidgetInstance)
-    {
-        BolsoWidgetInstance->ShowFullBolsoDialog();
-    }
 
-    Bolso[0] = FItemData();
-    Bolso[1] = FItemData();
-}
-
-bool AAzulCharacterBase::TryAddItem(AAzulStoryObjectBase* WorldItem)
-{
-    BolsoWidgetInstance->SetButtonsEnabled(true);
-
-    UE_LOG(LogTemp, Error, TEXT("TryAddItem: WorldItem = %s"), *GetNameSafe(WorldItem));
-
-    if (!WorldItem) return false;
-
-    // Crear FItemData del nuevo objeto
-    FItemData NewItem;
-    NewItem.Mesh = WorldItem->MeshComp->GetStaticMesh();
-    NewItem.Icon = WorldItem->Icon;
-
-    // Buscar hueco vacío
-    for (int i = 0; i < Bolso.Num(); i++)
-    {
-        if (!Bolso[i].IsValid())
-        {
-            Bolso[i] = NewItem;
-
-            // Guarda el objeto físico para destruirlo DESPUÉS
-            PendingPhysicalPick = WorldItem;
-            PendingPhysicalPick->Destroy();
-
-            BolsoWidgetInstance->SlotItems[i] = Bolso[i];
-            BolsoWidgetInstance->UpdateUI();
-
-            if (Bolso.Num() == 2) {
-                CheckMision(8);
-            }
-            return true;
-        }
-    }
-
-    // --- INVENTARIO LLENO → preparar swap ---
-    PendingBolsoItem = NewItem;
-    PendingBolsoItemWorldLocation = WorldItem->GetActorLocation();
-    PendingPhysicalPick = WorldItem; // este se destruye al confirmar
-
-    UE_LOG(LogTemp, Warning, TEXT("TryAddItem: Preparando swap, objeto físico = %s"), *GetNameSafe(WorldItem));
-
-    WorldItem->SetActorEnableCollision(false);
-    WorldItem->SetActorTickEnabled(false);
-
-    BolsoWidgetInstance->ShowFullBolsoDialog();
-    ActivateUIMode();
-
-
-
-
-    return false;
-}
-
-
-
-
-void AAzulCharacterBase::HandleSwapConfirmed(int32 SlotIndex)
-{
-    UE_LOG(LogTemp, Warning, TEXT("---- SWAP DEBUG ----"));
-    UE_LOG(LogTemp, Warning, TEXT("OldItem Mesh: %s"), *GetNameSafe(Bolso[SlotIndex].Mesh));
-    UE_LOG(LogTemp, Warning, TEXT("NewItem Mesh: %s"), *GetNameSafe(PendingBolsoItem.Mesh));
-    UE_LOG(LogTemp, Warning, TEXT("PendingPhysicalPick: %s"), *GetNameSafe(PendingPhysicalPick));
-
-    UE_LOG(LogTemp, Error, TEXT("HandleSwapConfirmed Slot=%d"), SlotIndex);
-
-    if (!PendingBolsoItem.IsValid() || SlotIndex < 0)
-        return;
-
-    // 1. Guardar el item antiguo ANTES de reemplazarlo
-    FItemData OldItem = Bolso[SlotIndex];
-
-    // 2. Guardar ubicación donde se soltará el viejo
-    FVector DropLocation = PendingBolsoItemWorldLocation;
-
-    // 3. Colocar el nuevo item en el bolso
-    Bolso[SlotIndex] = PendingBolsoItem;
-
-    // 4. Actualizar también los datos del widget ANTES del UpdateUI
-    if (BolsoWidgetInstance)
-    {
-        BolsoWidgetInstance->SlotItems[SlotIndex] = Bolso[SlotIndex];
-    }
-
-    // 5. Destruir SOLO una vez el objeto físico recién recogido
-    if (PendingPhysicalPick && !PendingPhysicalPick->IsPendingKillPending())
-    {
-        PendingPhysicalPick->Destroy();
-    }
-    PendingPhysicalPick = nullptr;
-
-    // 6. Soltar el objeto antiguo usando su mesh e icono correctos
-    SpawnDroppedItem(OldItem, DropLocation);
-
-    // 7. Limpiar datos temporales del swap
-    PendingBolsoItem = FItemData();
-
-    // 8. Actualizar interfaz del bolso
-    BolsoWidgetInstance->ResetBolsoLayout();
-    BolsoWidgetInstance->UpdateUI();
-
-    BolsoWidgetInstance->SetButtonsEnabled(false);
-
-    // 9. Salir del modo UI
-    DeactivateUIMode();
-
-    UE_LOG(LogTemp, Warning, TEXT("Swap finalizado correctamente"));
-}
-
-
-
-
-void AAzulCharacterBase::SpawnDroppedItem(const FItemData& Item, const FVector& Location)
-{
-    if (BolsoWidgetInstance)
-    {
-        BolsoWidgetInstance->ShowFullBolsoDialog();
-    }
-
-    
-    if (!Item.IsValid() || !ItemActorClass) return;
-
-    FActorSpawnParameters Params;
-
-    AAzulStoryObjectBase* Spawned =
-        GetWorld()->SpawnActor<AAzulStoryObjectBase>(ItemActorClass, Location, FRotator::ZeroRotator);
-
-    if (Spawned)
-    {
-        Spawned->MeshComp->SetStaticMesh(Item.Mesh);
-        UE_LOG(LogTemp, Warning, TEXT("Dropped item spawned with mesh: %s"),
-            *GetNameSafe(Item.Mesh));
-
-        Spawned->Icon = Item.Icon;
-    }
-}
 
 bool AAzulCharacterBase::IsLookingAtInteractable(UCameraComponent* Camera, float MinDot) const
 {
@@ -225,64 +71,78 @@ bool AAzulCharacterBase::IsLookingAtInteractable(UCameraComponent* Camera, float
     return Dot >= MinDot;
 }
 
-void AAzulCharacterBase::ActivateUIMode()
+void AAzulCharacterBase::SetControlMode(EAzulControlMode NewMode)
 {
-    APlayerController* PC = Cast<APlayerController>(GetController());
-    if (PC)
-    {
-        PC->SetShowMouseCursor(true);
-        PC->SetInputMode(FInputModeUIOnly());
-    }
-}
+    if (CurrentControlMode == NewMode)
+        return;
 
-void AAzulCharacterBase::DeactivateUIMode()
-{
-    APlayerController* PC = Cast<APlayerController>(GetController());
-    if (PC)
-    {
-        PC->SetShowMouseCursor(false);
-        PC->SetInputMode(FInputModeGameOnly());
-    }
-}
-
-void AAzulCharacterBase::EnableMappingContext(FName Name, int32 Priority)
-{
     APlayerController* PC = Cast<APlayerController>(GetController());
     if (!PC) return;
 
-    ULocalPlayer* LP = PC->GetLocalPlayer();
-    if (!LP) return;
+    ULocalPlayer* LocalPlayer = PC->GetLocalPlayer();
+    if (!LocalPlayer) return;
 
-    UEnhancedInputLocalPlayerSubsystem* Subsystem =
-        LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
-    if (!Subsystem) return;
+    UEnhancedInputLocalPlayerSubsystem* InputSubsystem =
+        LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
 
-    if (MappingContexts.Contains(Name))
+    if (!InputSubsystem) return;
+
+    // Quitar IMC anterior
+    if (MappingContexts.Contains(CurrentControlMode))
     {
-        Subsystem->AddMappingContext(MappingContexts[Name], Priority);
+        InputSubsystem->RemoveMappingContext(
+            MappingContexts[CurrentControlMode]
+        );
     }
+
+    // Añadir IMC nuevo
+    if (MappingContexts.Contains(NewMode))
+    {
+        InputSubsystem->AddMappingContext(
+            MappingContexts[NewMode],
+            0
+        );
+    }
+
+    CurrentControlMode = NewMode;
 }
 
 
-
-void AAzulCharacterBase::DisableMappingContext(FName Name)
+void AAzulCharacterBase::BlockPlayerControl()
 {
-    APlayerController* PC = Cast<APlayerController>(GetController());
-    if (!PC) return;
+    if (bIsBlocked) return;
+    bIsBlocked = true;
 
-    ULocalPlayer* LP = PC->GetLocalPlayer();
-    if (!LP) return;
+    // 1️⃣ Bloquear movimiento
+    GetCharacterMovement()->DisableMovement();
 
-    UEnhancedInputLocalPlayerSubsystem* Subsystem =
-        LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
-    if (!Subsystem) return;
-
-    if (MappingContexts.Contains(Name))
+    // 2️⃣ Bloquear input
+    if (APlayerController* PC = Cast<APlayerController>(GetController()))
     {
-        Subsystem->RemoveMappingContext(MappingContexts[Name]);
-        UE_LOG(LogTemp, Warning, TEXT("Disabled IMC: %s"), *Name.ToString());
+        DisableInput(PC);
     }
 }
+
+void AAzulCharacterBase::UnblockPlayerControl()
+{
+    if (!bIsBlocked) return;
+    bIsBlocked = false;
+
+    // 1️⃣ Restaurar movimiento
+    GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+
+    // 2️⃣ Restaurar input
+    if (APlayerController* PC = Cast<APlayerController>(GetController()))
+    {
+        EnableInput(PC);
+
+        // 🔑 ESTO ES CRÍTICO
+        FInputModeGameOnly InputMode;
+        PC->SetInputMode(InputMode);
+        PC->bShowMouseCursor = false;
+    }
+}
+
 
 
 // Input binding

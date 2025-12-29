@@ -167,7 +167,7 @@ void UAzulWidgetBolsoBase::OnConfirmClicked()
     if (SelectedSlot < 0)
         return;
 
-    OwnerCharacter->HandleSwapConfirmed(SelectedSlot);
+    OwnerCharacter->BolsoComponent->HandleSwapConfirmed(SelectedSlot);
     SelectedSlot = -1;
 
     SlotButton1->SetColorAndOpacity(FLinearColor::White);

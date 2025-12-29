@@ -1,72 +1,81 @@
 ﻿#include "AzulGameSubsystem.h"
-
 #include "Kismet/GameplayStatics.h"
+#include "Engine/Engine.h"
 #include "GameFramework/PlayerController.h"
-#include "Engine/World.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Characters/AzulCharacterBase.h"
 
-// Media
-#include "MediaPlayer.h"
+DEFINE_LOG_CATEGORY_STATIC(LogAzulCinematics, Log, All);
 
-// Level Sequence
-#include "LevelSequence.h"
-#include "LevelSequenceActor.h"
-#include "LevelSequencePlayer.h"
-
-void UAzulGameSubsystem::PlayLevelSequence(ULevelSequence* Sequence, UObject* WorldContext)
+void UAzulGameSubsystem::PlayLevelSequence(ULevelSequence* Sequence)
 {
-    if (!Sequence || bIsPlaying || !WorldContext)
+    if (!Sequence) return;
+
+    UWorld* World = GetWorld();
+    if (!World) return;
+
+    if (APlayerController* PC = World->GetFirstPlayerController())
     {
-        return;
+        APawn* Pawn = PC->GetPawn();
+        AAzulCharacterBase* Character = Pawn ? Cast<AAzulCharacterBase>(Pawn) : nullptr;
+
+        if (!Character)
+        {
+            UE_LOG(LogAzulCinematics, Warning,
+                TEXT("PlayLevelSequence: Pawn no es AAzulCharacterBase (%s)"),
+                *GetNameSafe(Pawn));
+            return;
+        }
+
+        Character->BlockPlayerControl();
     }
-
-    UWorld* World = WorldContext->GetWorld();
-    if (!World)
-    {
-        return;
-    }
-
-    EnterCinematicMode();
-
-    FMovieSceneSequencePlaybackSettings PlaybackSettings;
-    PlaybackSettings.bAutoPlay = false;
 
     ALevelSequenceActor* SequenceActor = nullptr;
 
-    ActiveSequencePlayer =
-        ULevelSequencePlayer::CreateLevelSequencePlayer(
-            World,
-            Sequence,
-            PlaybackSettings,
-            SequenceActor
-        );
-
-    if (!ActiveSequencePlayer)
-    {
-        ExitCinematicMode();
-        return;
-    }
-
-    bIsPlaying = true;
-
-    ActiveSequencePlayer->OnFinished.AddDynamic(
-        this,
-        &UAzulGameSubsystem::OnSequenceFinished
+    FMovieSceneSequencePlaybackSettings Settings;
+    SequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(
+        World,
+        Sequence,
+        Settings,
+        SequenceActor
     );
 
-    ActiveSequencePlayer->Play();
+    if (SequencePlayer)
+    {
+        SequencePlayer->OnFinished.AddDynamic(
+            this,
+            &UAzulGameSubsystem::OnSequenceFinished
+        );
+
+        SequencePlayer->Play();
+    }
 }
 
 void UAzulGameSubsystem::PlayVideo(UMediaPlayer* MediaPlayer)
 {
-    if (!MediaPlayer || bIsPlaying)
+    if (!MediaPlayer) return;
+
+    UWorld* World = GetWorld();
+    if (!World) return;
+
+    if (APlayerController* PC = World->GetFirstPlayerController())
     {
-        return;
+        APawn* Pawn = PC->GetPawn();
+        AAzulCharacterBase* Character = Pawn ? Cast<AAzulCharacterBase>(Pawn) : nullptr;
+
+        if (!Character)
+        {
+            UE_LOG(LogAzulCinematics, Warning,
+                TEXT("PlayVideo: Pawn no es AAzulCharacterBase (%s)"),
+                *GetNameSafe(Pawn));
+            return;
+        }
+
+        Character->BlockPlayerControl();
     }
 
-    EnterCinematicMode();
-
     ActiveMediaPlayer = MediaPlayer;
-    bIsPlaying = true;
 
     ActiveMediaPlayer->OnEndReached.AddDynamic(
         this,
@@ -78,72 +87,56 @@ void UAzulGameSubsystem::PlayVideo(UMediaPlayer* MediaPlayer)
 
 void UAzulGameSubsystem::OnSequenceFinished()
 {
-    ExitCinematicMode();
+    UWorld* World = GetWorld();
+    if (!World) return;
+
+    if (APlayerController* PC = World->GetFirstPlayerController())
+    {
+        APawn* Pawn = PC->GetPawn();
+        AAzulCharacterBase* Character = Pawn ? Cast<AAzulCharacterBase>(Pawn) : nullptr;
+
+        if (!Character)
+        {
+            UE_LOG(LogAzulCinematics, Warning,
+                TEXT("OnSequenceFinished: Pawn no es AAzulCharacterBase (%s)"),
+                *GetNameSafe(Pawn));
+            return;
+        }
+
+        Character->UnblockPlayerControl();
+    }
+
+    SequencePlayer = nullptr;
 }
 
 void UAzulGameSubsystem::OnVideoFinished()
 {
-    ExitCinematicMode();
-}
+    UWorld* World = GetWorld();
+    if (!World) return;
 
-void UAzulGameSubsystem::ForceEndCinematic()
-{
-    if (!bIsPlaying)
+    if (APlayerController* PC = World->GetFirstPlayerController())
     {
-        return;
-    }
+        APawn* Pawn = PC->GetPawn();
+        AAzulCharacterBase* Character = Pawn ? Cast<AAzulCharacterBase>(Pawn) : nullptr;
 
-    if (ActiveSequencePlayer)
-    {
-        ActiveSequencePlayer->Stop();
-        ActiveSequencePlayer = nullptr;
+        if (!Character)
+        {
+            UE_LOG(LogAzulCinematics, Warning,
+                TEXT("OnVideoFinished: Pawn no es AAzulCharacterBase (%s)"),
+                *GetNameSafe(Pawn));
+            return;
+        }
+
+        Character->UnblockPlayerControl();
     }
 
     if (ActiveMediaPlayer)
     {
-        ActiveMediaPlayer->Close();
-        ActiveMediaPlayer = nullptr;
+        ActiveMediaPlayer->OnEndReached.RemoveDynamic(
+            this,
+            &UAzulGameSubsystem::OnVideoFinished
+        );
     }
 
-    ExitCinematicMode();
-}
-
-void UAzulGameSubsystem::EnterCinematicMode()
-{
-    APlayerController* PC = GetPlayerController();
-    if (!PC)
-    {
-        return;
-    }
-
-    PC->SetShowMouseCursor(false);
-    PC->SetInputMode(FInputModeUIOnly());
-
-    // OJO: aquí NO tocamos bIsPlaying todavía
-}
-
-void UAzulGameSubsystem::ExitCinematicMode()
-{
-    APlayerController* PC = GetPlayerController();
-    if (PC)
-    {
-        PC->SetShowMouseCursor(false);
-        PC->SetInputMode(FInputModeGameOnly());
-    }
-
-    bIsPlaying = false;
-
-    ActiveSequencePlayer = nullptr;
     ActiveMediaPlayer = nullptr;
-}
-
-APlayerController* UAzulGameSubsystem::GetPlayerController() const
-{
-    UWorld* World = GetWorld();
-    if (!World)
-    {
-        return nullptr;
-    }
-
-    return UGameplayStatics::GetPlayerController(World, 0);
 }

@@ -5,13 +5,23 @@
 #include "Camera/CameraComponent.h"
 #include "GameplayTagContainer.h"
 #include "Actors/AzulStoryObjectBase.h"
-#include "Widgets/AzulWidgetBolsoBase.h"
 #include "Interfaces/AzulInteractuableInterface.h"
 #include "InputMappingContext.h"            
-#include "EnhancedInputSubsystems.h"          
+#include "EnhancedInputSubsystems.h" 
+#include "AzulComponentes/AzulBolsoComponent.h"
 #include "AzulCharacterBase.generated.h"
 
 class AAzulTriggerHiloBase;
+
+UENUM(BlueprintType)
+enum class EAzulControlMode : uint8
+{
+	Default,
+	Menu,
+	Look,
+	Disabled
+};
+
 
 UCLASS()
 class AZULPROJECT_API AAzulCharacterBase : public ACharacter, public IAzulInteractuableInterface
@@ -47,58 +57,31 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Azul|Story")
 	FString SonName;
 
-	//---------------------------BOLSO
-	UPROPERTY()
-	TArray<FItemData> Bolso;
-
-	UPROPERTY()
-	UAzulWidgetBolsoBase* BolsoWidgetInstance;
-
-	UPROPERTY(EditAnywhere, Category = "Azul|Bolso")
-	TSubclassOf<UAzulWidgetBolsoBase> BolsoWidgetClass;
-
-	UPROPERTY()
-	FItemData PendingBolsoItem;
-
-	UPROPERTY()
-	FVector PendingBolsoItemWorldLocation;
-
-	UPROPERTY(EditAnywhere, Category = "Azul|Bolso")
-	TSubclassOf<AAzulStoryObjectBase> ItemActorClass;
-
-	UPROPERTY()
-	AAzulStoryObjectBase* PendingPhysicalPick;
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "Azul|Interactuable")
-	void CheckMision(int misionID);
-
-
-	// Inicializa inventario vacío
-	void InitializeBolso();
-
-	UFUNCTION(BlueprintCallable, Category = "Azul|Bolso")
-	bool TryAddItem(AAzulStoryObjectBase* WorldItem);
-
-	UFUNCTION()
-	void HandleSwapConfirmed(int32 SlotIndex);
-
-	UFUNCTION()
-	void SpawnDroppedItem(const FItemData& Item, const FVector& Location);
+	//BOLSO
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Azul|Bolso")
+	UAzulBolsoComponent* BolsoComponent;
 
 	//INPUT
 
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	// Input
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
-	void ActivateUIMode();
-	void DeactivateUIMode();
+	// Control modes
+	void SetControlMode(EAzulControlMode NewMode);
 
-public:
+	// Estados
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Azul|Input")
+	EAzulControlMode CurrentControlMode = EAzulControlMode::Default;
 
-	void EnableMappingContext(FName Name, int32 Priority = 1);
+	// IMC preparados
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Azul|Input")
+	TMap<EAzulControlMode, UInputMappingContext*> MappingContexts;
 
-	void DisableMappingContext(FName Name);
+	//CONTROLES PARA CINEMÁTICAS
+	void BlockPlayerControl();
+	void UnblockPlayerControl();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Input")
-	TMap<FName, UInputMappingContext*> MappingContexts;
+private:
+	bool bIsBlocked = false;
 
 };

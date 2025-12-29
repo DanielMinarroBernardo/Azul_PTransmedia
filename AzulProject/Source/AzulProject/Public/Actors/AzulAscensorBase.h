@@ -5,25 +5,18 @@
 #include "Characters/AzulCharacterBase.h"
 #include "AzulAscensorBase.generated.h"
 
-
-/**
- * 
- */
 UCLASS()
 class AZULPROJECT_API AAzulAscensorBase : public AAzulInteractuableBase
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-
-	AAzulAscensorBase();
+    AAzulAscensorBase();
 
 protected:
-	virtual void BeginPlay() override;
+    virtual void BeginPlay() override;
 
 public:
-public:
-
     // Estado del movimiento
     bool bIsMoving = false;
     bool bIsUp = true;
@@ -36,14 +29,11 @@ public:
     FVector TargetLocationUp;
     FVector TargetLocationDown;
 
+    // Velocidad
     float Speed = 200.f;
 
     // Movimiento
     void MoveTick();
-
-    void ActivateIMCLook();
-    void ActivateIMCDefault();
-
 
     virtual void Interactua_Implementation() override;
 };

@@ -23,7 +23,7 @@ void AAzulStoryObjectBase::Interactua_Implementation()
         UE_LOG(LogTemp, Warning, TEXT("%s ES un ITEM DE BOLSO → TryAddItem + Story Logic, SIN ocultar mesh"), *GetName());
 
         // Primero intentamos meterlo en el bolso (esto incluye swap)
-        OverlappingCharacter->TryAddItem(this);
+        OverlappingCharacter->BolsoComponent->TryAddItem(this);
 
         // AHORA ejecutamos lógica de historia
         // --- Remover tags ---
