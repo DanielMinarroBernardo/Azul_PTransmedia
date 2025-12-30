@@ -48,9 +48,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Azul|Interactuable")
 	bool IsLookingAtInteractable(UCameraComponent* Camera) const;
 
-	TSubclassOf<AActor> CurrentInteractableClass;
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	bool HasInteractable() const;
 
-	//---------------------------------
+	//---------------------------BIBERÓN-----------------------------------------
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Biberon")
+	bool bHasBiberon = false;
+	//---------------------------------STORY--------------------------------------
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Story")
 	FGameplayTagContainer ActiveStoryTags;

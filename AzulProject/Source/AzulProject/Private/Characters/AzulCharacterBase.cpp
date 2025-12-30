@@ -80,6 +80,12 @@ bool AAzulCharacterBase::IsLookingAtInteractable(UCameraComponent* Camera) const
     return Hit.GetComponent() == Interactable->MeshComp;
 }
 
+bool AAzulCharacterBase::HasInteractable() const
+{
+    return CurrentInteractable != nullptr;
+}
+
+
 
 //------------------------------INPUT------------------------------
 

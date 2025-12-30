@@ -5,15 +5,24 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Characters/AzulCharacterBase.h"
+#include "Dialogos/AzulDialogue.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogAzulCinematics, Log, All);
 
-void UAzulGameSubsystem::PlayLevelSequence(ULevelSequence* Sequence)
+void UAzulGameSubsystem::PlayLevelSequence(
+    ULevelSequence* Sequence,
+    bool bRestoreControlOnFinish,
+    bool bHideCharacterMesh
+)
 {
     if (!Sequence) return;
 
     UWorld* World = GetWorld();
     if (!World) return;
+
+    // 🔹 Guardamos los valores recibidos desde Blueprint
+    bRestoreControlAfterSequence = bRestoreControlOnFinish;
+    bHideCharacterMeshDuringSequence = bHideCharacterMesh;
 
     if (APlayerController* PC = World->GetFirstPlayerController())
     {
@@ -22,13 +31,26 @@ void UAzulGameSubsystem::PlayLevelSequence(ULevelSequence* Sequence)
 
         if (!Character)
         {
-            UE_LOG(LogAzulCinematics, Warning,
+            UE_LOG(
+                LogAzulCinematics,
+                Warning,
                 TEXT("PlayLevelSequence: Pawn no es AAzulCharacterBase (%s)"),
-                *GetNameSafe(Pawn));
+                *GetNameSafe(Pawn)
+            );
             return;
         }
 
+        // 🔒 Bloqueamos control
         Character->BlockPlayerControl();
+
+        // 👻 Ocultamos mesh si procede
+        if (bHideCharacterMeshDuringSequence)
+        {
+            if (USkeletalMeshComponent* Mesh = Character->GetMesh())
+            {
+                Mesh->SetVisibility(false, true);
+            }
+        }
     }
 
     ALevelSequenceActor* SequenceActor = nullptr;
@@ -52,6 +74,7 @@ void UAzulGameSubsystem::PlayLevelSequence(ULevelSequence* Sequence)
     }
 }
 
+
 void UAzulGameSubsystem::PlayVideo(UMediaPlayer* MediaPlayer)
 {
     if (!MediaPlayer) return;
@@ -66,9 +89,12 @@ void UAzulGameSubsystem::PlayVideo(UMediaPlayer* MediaPlayer)
 
         if (!Character)
         {
-            UE_LOG(LogAzulCinematics, Warning,
+            UE_LOG(
+                LogAzulCinematics,
+                Warning,
                 TEXT("PlayVideo: Pawn no es AAzulCharacterBase (%s)"),
-                *GetNameSafe(Pawn));
+                *GetNameSafe(Pawn)
+            );
             return;
         }
 
@@ -97,17 +123,34 @@ void UAzulGameSubsystem::OnSequenceFinished()
 
         if (!Character)
         {
-            UE_LOG(LogAzulCinematics, Warning,
+            UE_LOG(
+                LogAzulCinematics,
+                Warning,
                 TEXT("OnSequenceFinished: Pawn no es AAzulCharacterBase (%s)"),
-                *GetNameSafe(Pawn));
+                *GetNameSafe(Pawn)
+            );
             return;
         }
 
-        Character->UnblockPlayerControl();
+        // Devolvemos control solo si procede
+        if (bRestoreControlAfterSequence)
+        {
+            Character->UnblockPlayerControl();
+        }
+
+        // Volvemos a mostrar el mesh si se ocultó
+        if (bHideCharacterMeshDuringSequence)
+        {
+            if (USkeletalMeshComponent* Mesh = Character->GetMesh())
+            {
+                Mesh->SetVisibility(true, true);
+            }
+        }
     }
 
     SequencePlayer = nullptr;
 }
+
 
 void UAzulGameSubsystem::OnVideoFinished()
 {
@@ -121,9 +164,12 @@ void UAzulGameSubsystem::OnVideoFinished()
 
         if (!Character)
         {
-            UE_LOG(LogAzulCinematics, Warning,
+            UE_LOG(
+                LogAzulCinematics,
+                Warning,
                 TEXT("OnVideoFinished: Pawn no es AAzulCharacterBase (%s)"),
-                *GetNameSafe(Pawn));
+                *GetNameSafe(Pawn)
+            );
             return;
         }
 
@@ -139,4 +185,22 @@ void UAzulGameSubsystem::OnVideoFinished()
     }
 
     ActiveMediaPlayer = nullptr;
+}
+
+void UAzulGameSubsystem::RegisterDialogue(UAzulDialogue* Dialogue)
+{
+    ActiveDialogue = Dialogue;
+}
+
+void UAzulGameSubsystem::ClearDialogue()
+{
+    ActiveDialogue = nullptr;
+}
+
+void UAzulGameSubsystem::RequestAdvanceDialogue()
+{
+    if (!ActiveDialogue)
+        return;
+
+    ActiveDialogue->ContinueDialogue();
 }

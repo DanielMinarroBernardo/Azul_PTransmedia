@@ -39,6 +39,8 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Azul|UI", meta = (AllowPrivateAccess = "true"))
 	UWidgetComponent* WidgetComp;
 
+	//
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Character")
 	AAzulCharacterBase* OverlappingCharacter;
 
@@ -55,7 +57,6 @@ public:
 	UFUNCTION()
 	void OnEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Azul|Interactuable")
 	void OnExtraInteractBP();
