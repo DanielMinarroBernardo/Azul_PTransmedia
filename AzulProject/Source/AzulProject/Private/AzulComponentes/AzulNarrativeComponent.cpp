@@ -5,7 +5,7 @@
 #include "Dialogos/AzulDialogue.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
-#include "AzulGameSubsystem.h"
+#include "AzulSubsystem/AzulGameSubsystem.h"
 
 // Sets default values for this component's properties
 UAzulNarrativeComponent::UAzulNarrativeComponent()
