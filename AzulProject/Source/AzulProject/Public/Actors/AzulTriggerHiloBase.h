@@ -1,55 +1,55 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
-
-#include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
-#include "Components/SphereComponent.h"
-#include "Actors/AzulHiloBase.h"
-#include "Actors/AzulInteractuableBase.h"
-#include "Interfaces/AzulHiloInterface.h"
-#include "AzulTriggerHiloBase.generated.h"
-
-class AAzulCharacterBase;
-
-UCLASS()
-class AZULPROJECT_API AAzulTriggerHiloBase : public AActor, public IAzulHiloInterface
-{
-	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
-	AAzulTriggerHiloBase();
-
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-	UPROPERTY(VisibleAnywhere, Category = "Azul|Hilo")
-	USphereComponent* TriggerSphere;
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	// Referencia al actor del hilo (AzulHiloBase o su Blueprint)
-	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Azul|Hilo")
-	AActor* HiloActor = nullptr;
-
-
-	// Evento de solapamiento
-	UFUNCTION()
-	void OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
-		const FHitResult& SweepResult);
-
-
-	// Función llamada cuando termina el overlap (debe ser UFUNCTION para AddDynamic)
-	UFUNCTION()
-	void OnEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
-	virtual void UpdateSpline_Implementation(const FVector& TriggerPos) override;
-
-
-};
+//// Fill out your copyright notice in the Description page of Project Settings.
+//
+//#pragma once
+//
+//#include "CoreMinimal.h"
+//#include "GameFramework/Actor.h"
+//#include "Components/SphereComponent.h"
+//#include "Actors/AzulHiloBase.h"
+//#include "Actors/AzulInteractuableBase.h"
+//#include "Interfaces/AzulHiloInterface.h"
+//#include "AzulTriggerHiloBase.generated.h"
+//
+//class AAzulCharacterBase;
+//
+//UCLASS()
+//class AZULPROJECT_API AAzulTriggerHiloBase : public AActor, public IAzulHiloInterface
+//{
+//	GENERATED_BODY()
+//	
+//public:	
+//	// Sets default values for this actor's properties
+//	AAzulTriggerHiloBase();
+//
+//protected:
+//	// Called when the game starts or when spawned
+//	virtual void BeginPlay() override;
+//
+//	UPROPERTY(VisibleAnywhere, Category = "Azul|Hilo")
+//	USphereComponent* TriggerSphere;
+//
+//public:	
+//	// Called every frame
+//	virtual void Tick(float DeltaTime) override;
+//
+//	// Referencia al actor del hilo (AzulHiloBase o su Blueprint)
+//	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Azul|Hilo")
+//	AActor* HiloActor = nullptr;
+//
+//
+//	// Evento de solapamiento
+//	UFUNCTION()
+//	void OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+//		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
+//		const FHitResult& SweepResult);
+//
+//
+//	// Función llamada cuando termina el overlap (debe ser UFUNCTION para AddDynamic)
+//	UFUNCTION()
+//	void OnEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+//		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+//
+//	virtual void UpdateSpline_Implementation(const FVector& TriggerPos) override;
+//
+//
+//};

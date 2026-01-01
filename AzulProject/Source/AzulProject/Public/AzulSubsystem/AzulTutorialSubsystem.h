@@ -3,6 +3,9 @@
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "GameplayTagContainer.h"
+#include "Components/TextBlock.h"
+#include "Components/Button.h"
+#include "Components/VerticalBox.h"
 #include "AzulTutorialSubsystem.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
@@ -43,7 +46,17 @@ public:
     UPROPERTY(BlueprintAssignable)
     FTutorialSectionCompleted OnTutorialSectionCompleted;
 
+    UFUNCTION(BlueprintCallable, Category = "Azul|Tutorial")
+    void StartTutorial();
+
+    UFUNCTION(BlueprintCallable, Category = "Azul|Tutorial")
+    bool IsTutorialActive() const;
+
+
 private:
+
+    UPROPERTY()
+    bool bTutorialActive = false;
 
     /* Acciones individuales completadas */
     UPROPERTY()
@@ -54,4 +67,5 @@ private:
     FGameplayTagContainer CompletedSections;
 
     void CheckSectionCompletion(FGameplayTag ActionTag);
+
 };

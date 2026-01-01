@@ -9,9 +9,11 @@
 #include "InputMappingContext.h"            
 #include "EnhancedInputSubsystems.h" 
 #include "AzulComponentes/AzulBolsoComponent.h"
+#include "Actors/AzulHiloBase.h"
+#include "AzulComponentes/AzulHiloComponent.h"
+#include "InputAction.h"
 #include "AzulCharacterBase.generated.h"
 
-class AAzulTriggerHiloBase;
 
 UENUM(BlueprintType)
 enum class EAzulControlMode : uint8
@@ -37,9 +39,6 @@ protected:
 public:	
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Azul|Hilo")
-	AAzulTriggerHiloBase* CurrentTrigger;
-
 	//-------------------------INTERACTUAR----------------------------------------------
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Interactuable")
@@ -54,6 +53,7 @@ public:
 	//---------------------------BIBERÓN-----------------------------------------
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Biberon")
 	bool bHasBiberon = false;
+
 	//---------------------------------STORY--------------------------------------
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Story")
@@ -65,11 +65,34 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Azul|Story")
 	FString SonName;
 
-	//---------------------------BOLSO
+	//---------------------------BOLSO---------------------------------------------
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Azul|Bolso")
 	UAzulBolsoComponent* BolsoComponent;
 
-	//----------------------------INPUT
+	//---------------------------HILO--------------------------------------------
+
+	/*UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Azul|Hilo")
+	UAzulHiloComponent* HiloComponent;*/
+
+	UFUNCTION()
+	void OnSpacePressed();
+
+	UPROPERTY(EditDefaultsOnly, Category = "Azul|Input")
+	UInputAction* IA_MostrarHilo;
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Azul|Hilo")
+	void BP_OnHiloShown();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Azul|Hilo")
+	void BP_OnHiloHidden();
+
+	// Llamadas desde componentes
+	void NotifyHiloShown();
+	void NotifyHiloHidden();
+
+
+
+	//----------------------------INPUT-------------------------------------------
 
 	// Input
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
@@ -88,6 +111,7 @@ public:
 	//CONTROLES PARA CINEMÁTICAS
 	void BlockPlayerControl();
 	void UnblockPlayerControl();
+
 
 private:
 	bool bIsBlocked = false;

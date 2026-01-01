@@ -20,6 +20,8 @@ void UAzulGameSubsystem::PlayLevelSequence(
     UWorld* World = GetWorld();
     if (!World) return;
 
+    CurrentSequence = Sequence;
+
     // 🔹 Guardamos los valores recibidos desde Blueprint
     bRestoreControlAfterSequence = bRestoreControlOnFinish;
     bHideCharacterMeshDuringSequence = bHideCharacterMesh;
@@ -147,6 +149,11 @@ void UAzulGameSubsystem::OnSequenceFinished()
             }
         }
     }
+
+    // Avisar a Blueprint de QUÉ secuencia ha terminado
+    OnLevelSequenceFinished.Broadcast(CurrentSequence);
+
+    CurrentSequence = nullptr;
 
     SequencePlayer = nullptr;
 }

@@ -9,6 +9,11 @@
 #include "InputMappingContext.h"
 #include "GameFramework/PlayerController.h"
 #include "Actors/AzulAscensorBase.h"
+#include "EngineUtils.h"
+#include "EnhancedInputComponent.h"
+#include "AzulSubsystem/AzulTutorialSubsystem.h"
+#include "GameplayTagContainer.h"
+
 
 // Sets default values
 AAzulCharacterBase::AAzulCharacterBase()
@@ -16,6 +21,8 @@ AAzulCharacterBase::AAzulCharacterBase()
     PrimaryActorTick.bCanEverTick = true;
 
     BolsoComponent = CreateDefaultSubobject<UAzulBolsoComponent>(TEXT("BolsoComponent"));
+
+    //HiloComponent = CreateDefaultSubobject<UAzulHiloComponent>(TEXT("HiloComponent"));
 
     CurrentInteractable = nullptr;
 }
@@ -137,7 +144,9 @@ void AAzulCharacterBase::BlockPlayerControl()
     // 2️⃣ Bloquear input
     if (APlayerController* PC = Cast<APlayerController>(GetController()))
     {
-        DisableInput(PC);
+        PC->SetIgnoreLookInput(true); // Bloquea rotación
+
+    //    DisableInput(PC);
     }
 }
 
@@ -146,15 +155,15 @@ void AAzulCharacterBase::UnblockPlayerControl()
     if (!bIsBlocked) return;
     bIsBlocked = false;
 
-    // 1️⃣ Restaurar movimiento
+    // 1Restaurar movimiento
     GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 
-    // 2️⃣ Restaurar input
+    // 2Restaurar input
     if (APlayerController* PC = Cast<APlayerController>(GetController()))
     {
-        EnableInput(PC);
+        PC->SetIgnoreLookInput(false);
+    //    EnableInput(PC);
 
-        // 🔑 ESTO ES CRÍTICO
         FInputModeGameOnly InputMode;
         PC->SetInputMode(InputMode);
         PC->bShowMouseCursor = false;
@@ -163,8 +172,72 @@ void AAzulCharacterBase::UnblockPlayerControl()
 
 
 
-// Input binding
 void AAzulCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+    UE_LOG(LogTemp, Warning, TEXT("SetupPlayerInputComponent CALLED"));
+
+     if (UEnhancedInputComponent* EIC =
+        Cast<UEnhancedInputComponent>(PlayerInputComponent))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("EnhancedInputComponent FOUND"));
+
+        EIC->BindAction(
+            IA_MostrarHilo,
+            ETriggerEvent::Started,
+            this,
+            &AAzulCharacterBase::OnSpacePressed
+        );
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("EnhancedInputComponent NOT FOUND"));
+    }
+
+
+}
+
+
+
+void AAzulCharacterBase::OnSpacePressed()
+{
+    UE_LOG(LogTemp, Error, TEXT("CHARACTER: ESPACIO PRESIONADO"));
+
+    /*if (HiloComponent)
+    {
+        HiloComponent->ToggleHilo();
+    }*/
+
+    //--- TUTORIAL
+    if (UGameInstance* GI = GetGameInstance())
+    {
+        if (UAzulTutorialSubsystem* TutorialSubsystem =
+            GI->GetSubsystem<UAzulTutorialSubsystem>())
+        {
+            if (TutorialSubsystem->IsTutorialActive())
+            {
+                const FGameplayTag SpaceTag =
+                    FGameplayTag::RequestGameplayTag(TEXT("Tutorial.First.Space"));
+
+                if (!TutorialSubsystem->IsActionCompleted(SpaceTag)) {
+                    TutorialSubsystem->NotifyActionCompleted(
+                        FGameplayTag::RequestGameplayTag("Tutorial.First.Space")
+                    );
+                }
+            }
+        }
+    }
+}
+
+//----------------------------------------------HILO
+
+void AAzulCharacterBase::NotifyHiloShown()
+{
+    BP_OnHiloShown();
+}
+
+void AAzulCharacterBase::NotifyHiloHidden()
+{
+    BP_OnHiloHidden();
 }

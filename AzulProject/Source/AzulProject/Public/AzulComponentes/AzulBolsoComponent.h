@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Widgets/AzulWidgetBolsoBase.h" // 🔑 AQUÍ ESTÁ FItemData
+#include "Widgets/AzulWidgetBolsoBase.h"
 #include "AzulBolsoComponent.generated.h"
 
 class AAzulStoryObjectBase;
