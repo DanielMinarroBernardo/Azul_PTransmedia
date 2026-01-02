@@ -204,10 +204,11 @@ void AAzulCharacterBase::OnSpacePressed()
 {
     UE_LOG(LogTemp, Error, TEXT("CHARACTER: ESPACIO PRESIONADO"));
 
-    /*if (HiloComponent)
+    for (TActorIterator<AAzulHiloBase> It(GetWorld()); It; ++It)
     {
-        HiloComponent->ToggleHilo();
-    }*/
+        It->RecalculateHiloFromInput();
+        NotifyHiloShown();
+    }
 
     //--- TUTORIAL
     if (UGameInstance* GI = GetGameInstance())

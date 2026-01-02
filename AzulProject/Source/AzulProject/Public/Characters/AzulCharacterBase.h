@@ -74,8 +74,8 @@ public:
 	/*UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Azul|Hilo")
 	UAzulHiloComponent* HiloComponent;*/
 
-	UFUNCTION()
-	void OnSpacePressed();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Hilo")
+	AAzulHiloBase* HiloActor = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Azul|Input")
 	UInputAction* IA_MostrarHilo;
@@ -91,6 +91,8 @@ public:
 	void NotifyHiloHidden();
 
 
+	UFUNCTION()
+	void OnSpacePressed();
 
 	//----------------------------INPUT-------------------------------------------
 

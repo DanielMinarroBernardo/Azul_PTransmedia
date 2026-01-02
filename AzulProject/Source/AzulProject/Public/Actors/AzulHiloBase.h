@@ -5,10 +5,10 @@
 #include "Components/SplineComponent.h"
 #include "NiagaraSystem.h"
 #include "NiagaraComponent.h"
-#include "Interfaces/AzulHiloInterface.h"
 #include "AzulHiloBase.generated.h"
 
 class AAzulInteractuableBase;
+class AAzulCharacterBase;
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSplineRouteChanged,
@@ -16,7 +16,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSplineRouteChanged,
 	const TArray<FVector>&, Target);
 
 UCLASS()
-class AZULPROJECT_API AAzulHiloBase : public AActor, public IAzulHiloInterface
+class AZULPROJECT_API AAzulHiloBase : public AActor
 {
 	GENERATED_BODY()
 
@@ -28,17 +28,6 @@ protected:
 
 public:
 
-	// Interfaz
-	virtual void UpdateSpline_Implementation(const FVector& TriggerPos) override;
-
-	// Llamado desde BP para aplicar puntos interpolados
-	UFUNCTION(BlueprintCallable, Category = "Azul|Hilo")
-	void ApplyInterpolatedSplinePoints(const TArray<FVector>& Points);
-
-	// Evento para BP (Timeline)
-	UPROPERTY(BlueprintAssignable, Category = "Azul|Hilo")
-	FOnSplineRouteChanged OnSplineRouteChanged;
-
 	// Componentes
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	USplineComponent* SplineComp;
@@ -49,20 +38,49 @@ public:
 	UPROPERTY(EditAnywhere)
 	UNiagaraSystem* NiagaraTemplate;
 
+
+
+	// Evento para BP (Timeline)
+	UPROPERTY(BlueprintAssignable, Category = "Azul|Hilo")
+	FOnSplineRouteChanged OnSplineRouteChanged;
+
+
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Azul|Hilo")
 	AAzulInteractuableBase* HijoActor = nullptr;
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Azul|Hilo")
-	float SueloZ = 165.0f;
+	ACharacter* CachedPlayer = nullptr;
 
-	void SetNiagaraLifeTime();
+	UFUNCTION(BlueprintCallable, Category = "Azul|Hilo")
+	void RecalculateHiloFromInput();
+
+	// Llamado desde BP para aplicar puntos interpolados
+	UFUNCTION(BlueprintCallable, Category = "Azul|Hilo")
+	void ApplyInterpolatedSplinePoints(const TArray<FVector>& Points);
 
 private:
+	void SetNiagaraLifeTime();
+
+	// Estado
+	bool bHiloVisible = false;
+
+	// Timer
+	FTimerHandle Timer_HideHilo;
+
+	// Tiempo visible
+	UPROPERTY(EditAnywhere, Category = "Azul|Hilo")
+	float HiloVisibleTime = 6.0f;
+
+	// Función interna de apagado
+	void HideHilo();
+
+
 
 	TArray<FVector> PreviousPoints;
 	TArray<FVector> TargetPoints;
 
 	FVector CachedStartPos;
 
-	TArray<FVector> GenerateCurvedRoute(const FVector& StartPos, const FVector& EndPos);
+
+	TArray<FVector> GenerateCurvedRoute(const FVector& StartPos, const FVector& StartTangentDir, const FVector& EndPos);
 };
