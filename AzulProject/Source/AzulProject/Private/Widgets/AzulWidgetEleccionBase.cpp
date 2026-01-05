@@ -4,9 +4,9 @@
 void UAzulWidgetEleccionBase::NativeConstruct()
 {
     //Guardar el estilo de los botones presionados
-    if (SlotButton1) Slot1BaseStyle = SlotButton1->WidgetStyle;
-    if (SlotButton2) Slot2BaseStyle = SlotButton2->WidgetStyle;
-    if (SlotButton3) Slot3BaseStyle = SlotButton3->WidgetStyle;
+    if (SlotButton1) Slot1BaseStyle = SlotButton1->GetStyle();
+    if (SlotButton2) Slot2BaseStyle = SlotButton2->GetStyle();
+    if (SlotButton3) Slot3BaseStyle = SlotButton3->GetStyle();
 
     if (SlotButton1 && !SlotButton1->OnClicked.IsAlreadyBound(this, &UAzulWidgetEleccionBase::OnSlot1Clicked))
     {

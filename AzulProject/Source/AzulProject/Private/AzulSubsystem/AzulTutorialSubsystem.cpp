@@ -1,70 +1,84 @@
 ﻿#include "AzulSubsystem/AzulTutorialSubsystem.h"
-#include "Components/HorizontalBox.h"
-#include "Components/CheckBox.h"
 #include "GameplayTagContainer.h"
-#include "GameFramework/PlayerController.h"
-#include "Characters/AzulCharacterBase.h"
 #include "Engine/Engine.h"
+
+void UAzulTutorialSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+    Super::Initialize(Collection);
+
+    /* Requisitos para terminar el tutorial */
+    TutorialCompletionRequirements.AddTag(
+        FGameplayTag::RequestGameplayTag("Tutorial.First.Space")
+    );
+
+    TutorialCompletionRequirements.AddTag(
+        FGameplayTag::RequestGameplayTag("Tutorial.First.Move")
+    );
+
+    TutorialCompletionRequirements.AddTag(
+        FGameplayTag::RequestGameplayTag("Tutorial.First.Look")
+    );
+
+    TutorialCompletionRequirements.AddTag(
+        FGameplayTag::RequestGameplayTag("Tutorial.Interact")
+    );
+
+    UE_LOG(LogTemp, Warning, TEXT("Tutorial Subsystem initialized with %d completion requirements"),
+        TutorialCompletionRequirements.Num());
+}
 
 void UAzulTutorialSubsystem::NotifyActionCompleted(FGameplayTag ActionTag)
 {
+    UE_LOG(LogTemp, Log, TEXT("NotifyActionCompleted called"));
+
     if (!ActionTag.IsValid())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("ActionTag is NOT valid"));
         return;
+    }
+
+    UE_LOG(LogTemp, Log, TEXT("ActionTag received: %s"), *ActionTag.ToString());
 
     if (CompletedActions.HasTag(ActionTag))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("ActionTag %s already completed"), *ActionTag.ToString());
         return;
+    }
 
     CompletedActions.AddTag(ActionTag);
 
+    UE_LOG(LogTemp, Log, TEXT("ActionTag %s added to CompletedActions"), *ActionTag.ToString());
+
     OnTutorialStepUpdated.Broadcast(ActionTag, true);
 
-    CheckSectionCompletion(ActionTag);
+    CheckTutorialCompletion();
 }
-
-
 
 bool UAzulTutorialSubsystem::IsActionCompleted(FGameplayTag ActionTag) const
 {
     return CompletedActions.HasTag(ActionTag);
 }
 
-bool UAzulTutorialSubsystem::IsSectionCompleted(FGameplayTag SectionTag) const
+bool UAzulTutorialSubsystem::IsTutorialCompleted() const
 {
-    return CompletedSections.HasTag(SectionTag);
+    return bTutorialCompleted;
 }
 
-void UAzulTutorialSubsystem::CheckSectionCompletion(FGameplayTag ActionTag)
+void UAzulTutorialSubsystem::CheckTutorialCompletion()
 {
-    if (
-        ActionTag.MatchesTag(FGameplayTag::RequestGameplayTag("Tutorial.First.Space")) ||
-        ActionTag.MatchesTag(FGameplayTag::RequestGameplayTag("Tutorial.First.Move.W")) ||
-        ActionTag.MatchesTag(FGameplayTag::RequestGameplayTag("Tutorial.First.Move.A")) ||
-        ActionTag.MatchesTag(FGameplayTag::RequestGameplayTag("Tutorial.First.Move.S")) ||
-        ActionTag.MatchesTag(FGameplayTag::RequestGameplayTag("Tutorial.First.Move.D")) ||
-        ActionTag.MatchesTag(FGameplayTag::RequestGameplayTag("Tutorial.First.Look"))
-        )
+    if (bTutorialCompleted)
+        return;
+
+    if (CompletedActions.HasAll(TutorialCompletionRequirements))
     {
-        if (
-            CompletedActions.HasTag(FGameplayTag::RequestGameplayTag("Tutorial.First.Space")) &&
-            CompletedActions.HasTag(FGameplayTag::RequestGameplayTag("Tutorial.First.Move.W")) &&
-            CompletedActions.HasTag(FGameplayTag::RequestGameplayTag("Tutorial.First.Move.A")) &&
-            CompletedActions.HasTag(FGameplayTag::RequestGameplayTag("Tutorial.First.Move.S")) &&
-            CompletedActions.HasTag(FGameplayTag::RequestGameplayTag("Tutorial.First.Move.D")) &&
-            CompletedActions.HasTag(FGameplayTag::RequestGameplayTag("Tutorial.First.Look"))
-            )
-        {
-            FGameplayTag SectionTag =
-                FGameplayTag::RequestGameplayTag("Tutorial.First");
+        bTutorialCompleted = true;
 
-            if (!CompletedSections.HasTag(SectionTag))
-            {
-                CompletedSections.AddTag(SectionTag);
+        FGameplayTag CompletedTag =
+            FGameplayTag::RequestGameplayTag("Tutorial.Completed");
 
-                UE_LOG(LogTemp, Warning, TEXT("Tutorial section completed: %s"), *SectionTag.ToString());
+        UE_LOG(LogTemp, Warning, TEXT("=== TUTORIAL COMPLETED ==="));
 
-                OnTutorialSectionCompleted.Broadcast(SectionTag);
-            }
-        }
+        OnTutorialCompleted.Broadcast(CompletedTag);
     }
 }
 

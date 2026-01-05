@@ -3,9 +3,6 @@
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "GameplayTagContainer.h"
-#include "Components/TextBlock.h"
-#include "Components/Button.h"
-#include "Components/VerticalBox.h"
 #include "AzulTutorialSubsystem.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
@@ -15,8 +12,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
 );
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
-    FTutorialSectionCompleted,
-    FGameplayTag, SectionTag
+    FTutorialCompleted,
+    FGameplayTag, CompletedTag
 );
 
 UCLASS()
@@ -34,17 +31,17 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Azul|Tutorial")
     bool IsActionCompleted(FGameplayTag ActionTag) const;
 
-    /* ¿Está una sección completa? */
+    /* ¿El tutorial ya ha terminado? */
     UFUNCTION(BlueprintCallable, Category = "Azul|Tutorial")
-    bool IsSectionCompleted(FGameplayTag SectionTag) const;
+    bool IsTutorialCompleted() const;
 
-    /* Evento: un paso se completa */
+    /* Evento: un paso individual se completa */
     UPROPERTY(BlueprintAssignable)
     FTutorialStepUpdated OnTutorialStepUpdated;
 
-    /* Evento: una sección se completa */
+    /* Evento: tutorial COMPLETADO */
     UPROPERTY(BlueprintAssignable)
-    FTutorialSectionCompleted OnTutorialSectionCompleted;
+    FTutorialCompleted OnTutorialCompleted;
 
     UFUNCTION(BlueprintCallable, Category = "Azul|Tutorial")
     void StartTutorial();
@@ -52,6 +49,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Azul|Tutorial")
     bool IsTutorialActive() const;
 
+protected:
+
+    virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
 private:
 
@@ -62,10 +62,13 @@ private:
     UPROPERTY()
     FGameplayTagContainer CompletedActions;
 
-    /* Secciones completadas */
+    /* Tags necesarios para terminar el tutorial */
     UPROPERTY()
-    FGameplayTagContainer CompletedSections;
+    FGameplayTagContainer TutorialCompletionRequirements;
 
-    void CheckSectionCompletion(FGameplayTag ActionTag);
+    /* Flag interno de tutorial terminado */
+    UPROPERTY()
+    bool bTutorialCompleted = false;
 
+    void CheckTutorialCompletion();
 };

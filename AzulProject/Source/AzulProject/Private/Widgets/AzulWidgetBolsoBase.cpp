@@ -14,8 +14,8 @@ void UAzulWidgetBolsoBase::NativeConstruct()
     SetButtonsEnabled(false);
 
     //Guardar el estilo de los botones presionados
-    if (SlotButton1) Slot1BaseStyle = SlotButton1->WidgetStyle;
-    if (SlotButton2) Slot2BaseStyle = SlotButton2->WidgetStyle;
+    if (SlotButton1) Slot1BaseStyle = SlotButton1->GetStyle();
+    if (SlotButton2) Slot2BaseStyle = SlotButton2->GetStyle();
 
     // Ocultar elementos
     if (FullText) FullText->SetVisibility(ESlateVisibility::Hidden);

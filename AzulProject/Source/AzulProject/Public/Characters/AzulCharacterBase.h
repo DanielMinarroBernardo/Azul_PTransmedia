@@ -12,6 +12,7 @@
 #include "Actors/AzulHiloBase.h"
 #include "AzulComponentes/AzulHiloComponent.h"
 #include "InputAction.h"
+#include "Widgets/AzulWidgetMirilla.h"
 #include "AzulCharacterBase.generated.h"
 
 
@@ -90,9 +91,44 @@ public:
 	void NotifyHiloShown();
 	void NotifyHiloHidden();
 
+	FTimerHandle HiloTimer;
 
 	UFUNCTION()
 	void OnSpacePressed();
+
+	//-----------------------------MIRILLA--------------------------------------
+	// Instancia real del widget
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Azul|Mirilla")
+	UAzulWidgetMirilla* MirillaWidget;
+	
+	UFUNCTION()
+	void OpenMirilla();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Azul|Hilo")
+	void BP_OpenMirilla();
+
+	UFUNCTION()
+	void UpdatedMirillaUI(bool bInRange, bool bLooking);
+
+	FTimerHandle InteractTraceTimer;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Azul|Mirilla")
+	float InteractTraceInterval = 0.05f; // 20 veces por segundo
+
+	UPROPERTY(EditDefaultsOnly, Category = "Azul|Mirilla")
+	float InteractTraceDistance = 1000.0f;
+
+	UFUNCTION()
+	void StartInteractTrace();
+
+	UFUNCTION()
+	void StopInteractTrace();
+
+	UFUNCTION()
+	void PerformInteractTrace();
+
+	UPROPERTY(BlueprintReadOnly, Category = "Azul|Interaction")
+	bool bCanInteract = false;
 
 	//----------------------------INPUT-------------------------------------------
 

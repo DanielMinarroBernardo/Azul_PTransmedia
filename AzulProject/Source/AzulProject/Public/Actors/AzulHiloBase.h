@@ -59,7 +59,7 @@ public:
 	void ApplyInterpolatedSplinePoints(const TArray<FVector>& Points);
 
 private:
-	void SetNiagaraLifeTime();
+	void SetNiagaraLifeTime(float Value);
 
 	// Estado
 	bool bHiloVisible = false;
@@ -73,7 +73,6 @@ private:
 
 	// Función interna de apagado
 	void HideHilo();
-
 
 
 	TArray<FVector> PreviousPoints;

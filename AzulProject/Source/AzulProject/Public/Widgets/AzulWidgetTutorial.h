@@ -59,9 +59,33 @@ protected:
     UPROPERTY(meta = (BindWidget))
     UTextBlock* TutorialText;
 
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* TareaText_1;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* TareaText_2;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* TareaText_3;
+
+    UPROPERTY()
+    FString MainText;
+
     UFUNCTION()
     void OnContinueButtonPressed();
 
+    UFUNCTION()
+    void SetCheckBoxsForSecondPart();
+
+    UFUNCTION()
+    void SetTutorialText(const FString& NewText);
+
+    void ApplyTutorialText();
+
+    void EnableContinueButton();
+
+    FTimerHandle TextTimer;
+    FTimerHandle ButtonTimer;
 
 private:
 

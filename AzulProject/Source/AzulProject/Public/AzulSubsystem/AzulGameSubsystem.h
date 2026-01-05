@@ -54,6 +54,10 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Azul|Cinematics")
     void PlayVideo(UMediaPlayer* MediaPlayer);
 
+    UFUNCTION()
+    bool IsSequenceActive();
+
+
 private:
 
     UPROPERTY()
@@ -72,7 +76,8 @@ private:
     bool bHideCharacterMeshDuringSequence = true;
 
     UPROPERTY()
-    bool bEnableLookAfterSequence = false;
+    bool bEnableMoveLookAfterSequence = true;
+
 
 
     UFUNCTION()

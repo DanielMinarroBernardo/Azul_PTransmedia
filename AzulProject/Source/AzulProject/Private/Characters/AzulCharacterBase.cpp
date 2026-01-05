@@ -10,8 +10,10 @@
 #include "GameFramework/PlayerController.h"
 #include "Actors/AzulAscensorBase.h"
 #include "EngineUtils.h"
+#include "Kismet/GameplayStatics.h"
 #include "EnhancedInputComponent.h"
 #include "AzulSubsystem/AzulTutorialSubsystem.h"
+#include "AzulSubsystem/AzulGameSubsystem.h"
 #include "GameplayTagContainer.h"
 
 
@@ -202,14 +204,6 @@ void AAzulCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 void AAzulCharacterBase::OnSpacePressed()
 {
-    UE_LOG(LogTemp, Error, TEXT("CHARACTER: ESPACIO PRESIONADO"));
-
-    for (TActorIterator<AAzulHiloBase> It(GetWorld()); It; ++It)
-    {
-        It->RecalculateHiloFromInput();
-        NotifyHiloShown();
-    }
-
     //--- TUTORIAL
     if (UGameInstance* GI = GetGameInstance())
     {
@@ -229,6 +223,46 @@ void AAzulCharacterBase::OnSpacePressed()
             }
         }
     }
+
+    if (UGameInstance* GI = GetGameInstance())
+    {
+        if (UAzulGameSubsystem* GameSubsystem =
+            GI->GetSubsystem<UAzulGameSubsystem>())
+        {
+            if (!GameSubsystem->IsSequenceActive())
+            {
+                //for (TActorIterator<AAzulHiloBase> It(GetWorld()); It; ++It)
+                //{
+                    // Si el timer está activo, NO han pasado 6 segundos
+                    if (GetWorld()->GetTimerManager().IsTimerActive(HiloTimer))
+                    {
+                        // Esconder hilo
+                        NotifyHiloHidden();
+
+                        // Cancelar timer
+                        GetWorld()->GetTimerManager().ClearTimer(HiloTimer);
+                    }
+
+                    else
+                    {
+                        // Mostrar hilo
+                        HiloActor->RecalculateHiloFromInput();
+                        NotifyHiloShown();
+
+                        // Arrancar timer de 6 segundos y luego ocultar
+                        GetWorld()->GetTimerManager().SetTimer(
+                            HiloTimer,
+                            this,
+                            &AAzulCharacterBase::NotifyHiloHidden,
+                            6.0f,
+                            false
+                        );
+                    }
+                    
+                //}
+            }
+        }
+    }
 }
 
 //----------------------------------------------HILO
@@ -242,3 +276,144 @@ void AAzulCharacterBase::NotifyHiloHidden()
 {
     BP_OnHiloHidden();
 }
+
+//------------------------------------MIRILLA
+
+void AAzulCharacterBase::OpenMirilla()
+{
+    BP_OpenMirilla();
+}
+
+
+
+void AAzulCharacterBase::UpdatedMirillaUI(bool bInRange, bool bLooking)
+{
+    if (!MirillaWidget) return;
+
+    if (!bInRange)
+    {
+        MirillaWidget->SetUIState(EInteractUIState::Default);
+    }
+    else if (bInRange && !bLooking)
+    {
+        MirillaWidget->SetUIState(EInteractUIState::InRange);
+    }
+    else
+    {
+        MirillaWidget->SetUIState(EInteractUIState::InRangeAndLooking);
+    }
+}
+
+void AAzulCharacterBase::StartInteractTrace()
+{
+    UE_LOG(LogTemp, Warning, TEXT("[INTERACT] StartInteractTrace"));
+
+    if (GetWorld()->GetTimerManager().IsTimerActive(InteractTraceTimer))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[INTERACT] Trace already active"));
+        return;
+    }
+
+    GetWorld()->GetTimerManager().SetTimer(
+        InteractTraceTimer,
+        this,
+        &AAzulCharacterBase::PerformInteractTrace,
+        InteractTraceInterval,
+        true
+    );
+}
+
+
+void AAzulCharacterBase::StopInteractTrace()
+{
+    UE_LOG(LogTemp, Warning, TEXT("[INTERACT] StopInteractTrace"));
+
+    GetWorld()->GetTimerManager().ClearTimer(InteractTraceTimer);
+
+    bCanInteract = false;
+    UpdatedMirillaUI(false, false);
+}
+
+
+void AAzulCharacterBase::PerformInteractTrace()
+{
+    UE_LOG(LogTemp, Verbose, TEXT("[INTERACT] PerformInteractTrace"));
+
+    if (!CurrentInteractable.GetObject())
+    {
+        UE_LOG(LogTemp, Verbose, TEXT("[INTERACT] No CurrentInteractable"));
+        bCanInteract = false;
+        UpdatedMirillaUI(false, false);
+        return;
+    }
+
+    if (!MirillaWidget)
+    {
+        UE_LOG(LogTemp, Error, TEXT("[INTERACT] MirillaWidget is NULL"));
+        bCanInteract = false;
+        return;
+    }
+
+    AAzulInteractuableBase* Interactable =
+        Cast<AAzulInteractuableBase>(CurrentInteractable.GetObject());
+
+    if (!Interactable || !Interactable->MeshComp)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[INTERACT] Interactable or MeshComp invalid"));
+        bCanInteract = false;
+        UpdatedMirillaUI(true, false);
+        return;
+    }
+
+    APlayerController* PC = Cast<APlayerController>(GetController());
+    if (!PC)
+    {
+        bCanInteract = false;
+        return;
+    }
+
+    FVector WorldLocation;
+    FVector WorldDirection;
+
+    const FVector2D ViewportSize = FVector2D(GEngine->GameViewport->Viewport->GetSizeXY());
+    const FVector2D ScreenCenter(ViewportSize.X * 0.5f, ViewportSize.Y * 0.5f);
+
+    if (!PC->DeprojectScreenPositionToWorld(
+        ScreenCenter.X,
+        ScreenCenter.Y,
+        WorldLocation,
+        WorldDirection))
+    {
+        bCanInteract = false;
+        return;
+    }
+
+    FVector Start = WorldLocation;
+    FVector End = Start + WorldDirection * InteractTraceDistance;
+
+    FHitResult Hit;
+    FCollisionQueryParams Params;
+    Params.AddIgnoredActor(this);
+
+    bool bHit = GetWorld()->LineTraceSingleByChannel(
+        Hit,
+        Start,
+        End,
+        ECC_Visibility,
+        Params
+    );
+
+    const bool bLookingAtInteractable =
+        bHit && Hit.GetComponent() == Interactable->MeshComp;
+
+    bCanInteract = bLookingAtInteractable;
+
+    UpdatedMirillaUI(true, bLookingAtInteractable);
+
+    if (bLookingAtInteractable)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[INTERACT] LOOKING at interactable"));
+    }
+}
+
+

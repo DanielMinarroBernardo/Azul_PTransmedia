@@ -5,12 +5,18 @@
 
 AAzulHiloBase::AAzulHiloBase()
 {
+    bHiloVisible = false;
+
     SplineComp = CreateDefaultSubobject<USplineComponent>(TEXT("SplineComp"));
     RootComponent = SplineComp;
 
     NiagaraComp = CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraComp"));
     NiagaraComp->SetupAttachment(SplineComp);
+
+    NiagaraComp->SetVisibility(false, true);
+    NiagaraComp->SetAutoActivate(false);
 }
+
 
 void AAzulHiloBase::BeginPlay()
 {
@@ -21,18 +27,19 @@ void AAzulHiloBase::BeginPlay()
     if (NiagaraTemplate)
     {
         NiagaraComp->SetAsset(NiagaraTemplate);
-        NiagaraComp->Activate(true);
     }
-
-    //SplineComp->SetVisibility(false, true);
-    //NiagaraComp->SetVisibility(false, true);
 }
 
-void AAzulHiloBase::SetNiagaraLifeTime()
+
+void AAzulHiloBase::SetNiagaraLifeTime(float Value)
 {
-    NiagaraComp->SetNiagaraVariableFloat("LifeTime", 2.0f);
-    UKismetSystemLibrary::PrintString(this, "CAMBIADO EL LIFE TIME", true);
+    static const FName LifeTimeName(TEXT("LifeTime"));
+    NiagaraComp->SetVariableFloat(LifeTimeName, Value);
+
+    //UKismetSystemLibrary::PrintString(this, TEXT("CAMBIADO EL LIFE TIME"), true);
 }
+
+
 
 TArray<FVector> AAzulHiloBase::GenerateCurvedRoute(
     const FVector& StartPos,
@@ -42,7 +49,7 @@ TArray<FVector> AAzulHiloBase::GenerateCurvedRoute(
 {
     TArray<FVector> Result;
 
-    const int32 NumPoints = 12;
+    const int32 NumPoints = 20;
 
     // Control point alineado con el tramo recto
     FVector ControlPoint = StartPos + StartTangentDir * 60.0f;
@@ -66,6 +73,12 @@ TArray<FVector> AAzulHiloBase::GenerateCurvedRoute(
 
 void AAzulHiloBase::ApplyInterpolatedSplinePoints(const TArray<FVector>& Points)
 {
+    //UKismetSystemLibrary::PrintString(
+    //    this,
+    //    TEXT(">>> ClearSplinePoints CALLED <<<"),
+    //    true
+    //);
+
     SplineComp->ClearSplinePoints(true);
 
     for (int32 i = 0; i < Points.Num(); i++)
@@ -84,83 +97,87 @@ void AAzulHiloBase::ApplyInterpolatedSplinePoints(const TArray<FVector>& Points)
     SplineComp->SetClosedLoop(false);
     SplineComp->UpdateSpline();
 
+    //UKismetSystemLibrary::PrintString(
+    //    this,
+    //    FString::Printf(
+    //        TEXT("SplinePoints: %d | Length: %.2f"),
+    //        SplineComp->GetNumberOfSplinePoints(),
+    //        SplineComp->GetSplineLength()
+    //    ),
+    //    true
+    //);
+
+
     // VFX
-    NiagaraComp->SetFloatParameter("SpawnRate", SplineComp->GetSplineLength());
+    static const FName SpawnRateName(TEXT("SpawnRate"));
+    NiagaraComp->SetFloatParameter(SpawnRateName, SplineComp->GetSplineLength());
+
+    NiagaraComp->SetVisibility(true, true);
+    NiagaraComp->ReinitializeSystem();
     NiagaraComp->ResetSystem();
+    NiagaraComp->Activate(true);
 }
 
 void AAzulHiloBase::RecalculateHiloFromInput()
 {
+    //UKismetSystemLibrary::PrintString(
+    //    this,
+    //    TEXT(">>> RecalculateHiloFromInput CALLED <<<"),
+    //    true
+    //);
+
     if (!CachedPlayer || !HijoActor)
     {
-        return;
+        //UKismetSystemLibrary::PrintString(
+        //    this,
+        //    TEXT("EARLY RETURN: CachedPlayer or HijoActor NULL"),
+        //    true
+        //);
+        //return;
     }
 
-    // Altura solo para el inicio del hilo
+    SplineComp->SetVisibility(true, true);
+
+    //UKismetSystemLibrary::PrintString(
+    //    this,
+    //    FString::Printf(
+    //        TEXT("bHiloVisible cambiado: %s"),
+    //        bHiloVisible ? TEXT("true") : TEXT("false")
+    //    ),
+    //    true
+    //);
+
     const float HiloZ = CachedPlayer->GetActorLocation().Z - 20.0f;
 
-    // =========================
-    // START
-    // =========================
     FVector StartPos = CachedPlayer->GetActorLocation();
     StartPos.Z = HiloZ;
 
-    // =========================
-    // TRAMO RECTO INICIAL
-    // =========================
     const FVector ForwardDir = CachedPlayer->GetActorForwardVector();
 
     FVector SecondPoint = StartPos + ForwardDir * 50.0f;
     SecondPoint.Z = HiloZ;
 
-    // =========================
-    // END (usar Z real del hijo)
-    // =========================
     FVector EndPos = HijoActor->GetActorLocation();
 
-    // =========================
-    // ESTADO ANTERIOR
-    // =========================
     PreviousPoints = TargetPoints;
     TargetPoints.Empty();
 
-    // =========================
-    // CONSTRUCCIÓN DE RUTA
-    // =========================
-
-    // Tramo recto
     TargetPoints.Add(StartPos);
     TargetPoints.Add(SecondPoint);
 
-    // Curva continua heredando la tangente del tramo recto
     const TArray<FVector> CurvedPoints =
-        GenerateCurvedRoute(
-            SecondPoint,   // Inicio real de la curva
-            ForwardDir,    // Tangente inicial (continuidad)
-            EndPos         // Destino final
-        );
+        GenerateCurvedRoute(SecondPoint, ForwardDir, EndPos);
 
     TargetPoints.Append(CurvedPoints);
 
-    // =========================
-    // NOTIFICAR CAMBIO DE SPLINE
-    // =========================
     OnSplineRouteChanged.Broadcast(PreviousPoints, TargetPoints);
 
-    // =========================
-    // VISIBILIDAD
-    // =========================
+    ApplyInterpolatedSplinePoints(TargetPoints);
+
     bHiloVisible = true;
 
-    if (NiagaraComp)
-    {
-        NiagaraComp->SetVisibility(true);
-        NiagaraComp->Activate(true);
-    }
+    SetNiagaraLifeTime(100.0f);
 
-    // =========================
-    // TIMER DE OCULTADO
-    // =========================
     if (GetWorld())
     {
         GetWorld()->GetTimerManager().ClearTimer(Timer_HideHilo);
@@ -173,6 +190,8 @@ void AAzulHiloBase::RecalculateHiloFromInput()
         );
     }
 }
+
+
 
 
 

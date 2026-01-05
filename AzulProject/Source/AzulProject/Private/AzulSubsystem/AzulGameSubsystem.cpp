@@ -113,6 +113,11 @@ void UAzulGameSubsystem::PlayVideo(UMediaPlayer* MediaPlayer)
     ActiveMediaPlayer->Play();
 }
 
+bool UAzulGameSubsystem::IsSequenceActive()
+{
+    return SequencePlayer != nullptr;
+}
+
 void UAzulGameSubsystem::OnSequenceFinished()
 {
     UWorld* World = GetWorld();
@@ -135,7 +140,7 @@ void UAzulGameSubsystem::OnSequenceFinished()
         }
 
         // Devolvemos control solo si procede
-        if (bRestoreControlAfterSequence)
+        if (bRestoreControlAfterSequence && bEnableMoveLookAfterSequence)
         {
             Character->UnblockPlayerControl();
         }
