@@ -52,50 +52,6 @@ void AAzulCharacterBase::AddStoryTag(const FGameplayTag& NewTag)
 }
 
 
-
-bool AAzulCharacterBase::IsLookingAtInteractable(UCameraComponent* Camera) const
-{
-    if (!Camera || !CurrentInteractable.GetObject())
-        return false;
-
-    AActor* InteractableActor = Cast<AActor>(CurrentInteractable.GetObject());
-    if (!InteractableActor)
-        return false;
-
-    AAzulInteractuableBase* Interactable =
-        Cast<AAzulInteractuableBase>(InteractableActor);
-    if (!Interactable || !Interactable->MeshComp)
-        return false;
-
-    FVector Start = Camera->GetComponentLocation();
-    FVector End = Start + Camera->GetForwardVector() * 1000.f;
-
-    FHitResult Hit;
-    FCollisionQueryParams Params;
-    Params.AddIgnoredActor(this);
-
-    bool bHit = GetWorld()->LineTraceSingleByChannel(
-        Hit,
-        Start,
-        End,
-        ECC_Visibility,
-        Params
-    );
-
-    if (!bHit)
-        return false;
-
-    // comprobar que el HIT ES EL STATIC MESH
-    return Hit.GetComponent() == Interactable->MeshComp;
-}
-
-bool AAzulCharacterBase::HasInteractable() const
-{
-    return CurrentInteractable != nullptr;
-}
-
-
-
 //------------------------------INPUT------------------------------
 
 void AAzulCharacterBase::SetControlMode(EAzulControlMode NewMode)
@@ -339,44 +295,48 @@ void AAzulCharacterBase::PerformInteractTrace()
 {
     UE_LOG(LogTemp, Verbose, TEXT("[INTERACT] PerformInteractTrace"));
 
-    if (!CurrentInteractable.GetObject())
+    // 1️⃣ Si no hay interactuables en rango, no tiene sentido trazar
+    if (OverlappingInteractables.Num() == 0)
     {
-        UE_LOG(LogTemp, Verbose, TEXT("[INTERACT] No CurrentInteractable"));
+        UE_LOG(LogTemp, Verbose, TEXT("[INTERACT] No overlapping interactables"));
+
+        CurrentInteractable = nullptr;
         bCanInteract = false;
         UpdatedMirillaUI(false, false);
         return;
     }
 
+    // 2️⃣ Mirilla obligatoria
     if (!MirillaWidget)
     {
         UE_LOG(LogTemp, Error, TEXT("[INTERACT] MirillaWidget is NULL"));
+
+        CurrentInteractable = nullptr;
         bCanInteract = false;
         return;
     }
 
-    AAzulInteractuableBase* Interactable =
-        Cast<AAzulInteractuableBase>(CurrentInteractable.GetObject());
-
-    if (!Interactable || !Interactable->MeshComp)
+    // 3️⃣ PlayerController necesario para el deproject
+    APlayerController* PC = Cast<APlayerController>(GetController());
+    if (!PC)
     {
-        UE_LOG(LogTemp, Warning, TEXT("[INTERACT] Interactable or MeshComp invalid"));
+        CurrentInteractable = nullptr;
         bCanInteract = false;
         UpdatedMirillaUI(true, false);
         return;
     }
 
-    APlayerController* PC = Cast<APlayerController>(GetController());
-    if (!PC)
-    {
-        bCanInteract = false;
-        return;
-    }
-
+    // 4️⃣ Obtener rayo desde el centro de la pantalla
     FVector WorldLocation;
     FVector WorldDirection;
 
-    const FVector2D ViewportSize = FVector2D(GEngine->GameViewport->Viewport->GetSizeXY());
-    const FVector2D ScreenCenter(ViewportSize.X * 0.5f, ViewportSize.Y * 0.5f);
+    const FVector2D ViewportSize =
+        FVector2D(GEngine->GameViewport->Viewport->GetSizeXY());
+
+    const FVector2D ScreenCenter(
+        ViewportSize.X * 0.5f,
+        ViewportSize.Y * 0.5f
+    );
 
     if (!PC->DeprojectScreenPositionToWorld(
         ScreenCenter.X,
@@ -384,18 +344,21 @@ void AAzulCharacterBase::PerformInteractTrace()
         WorldLocation,
         WorldDirection))
     {
+        CurrentInteractable = nullptr;
         bCanInteract = false;
+        UpdatedMirillaUI(true, false);
         return;
     }
 
     FVector Start = WorldLocation;
     FVector End = Start + WorldDirection * InteractTraceDistance;
 
+    // 5️⃣ LineTrace
     FHitResult Hit;
     FCollisionQueryParams Params;
     Params.AddIgnoredActor(this);
 
-    bool bHit = GetWorld()->LineTraceSingleByChannel(
+    const bool bHit = GetWorld()->LineTraceSingleByChannel(
         Hit,
         Start,
         End,
@@ -403,17 +366,83 @@ void AAzulCharacterBase::PerformInteractTrace()
         Params
     );
 
-    const bool bLookingAtInteractable =
-        bHit && Hit.GetComponent() == Interactable->MeshComp;
+    // 6️⃣ Buscar si el hit corresponde a ALGUNO de los interactuables en rango
+    AAzulInteractuableBase* HitInteractable = nullptr;
 
-    bCanInteract = bLookingAtInteractable;
-
-    UpdatedMirillaUI(true, bLookingAtInteractable);
-
-    if (bLookingAtInteractable)
+    if (bHit)
     {
-        UE_LOG(LogTemp, Warning, TEXT("[INTERACT] LOOKING at interactable"));
+        for (const TScriptInterface<IAzulInteractuableInterface>& Interactable : OverlappingInteractables)
+        {
+            if (!Interactable.GetObject())
+                continue;
+
+            AAzulInteractuableBase* Candidate =
+                Cast<AAzulInteractuableBase>(Interactable.GetObject());
+
+            if (!Candidate || !Candidate->MeshComp)
+                continue;
+
+            if (Hit.GetComponent() == Candidate->MeshComp)
+            {
+                HitInteractable = Candidate;
+                break;
+            }
+        }
+    }
+
+    // 7️⃣ Resultado final del sistema
+    if (HitInteractable)
+    {
+        CurrentInteractable =
+            TScriptInterface<IAzulInteractuableInterface>(HitInteractable);
+
+        bCanInteract = true;
+        UpdatedMirillaUI(true, true);
+
+        UE_LOG(
+            LogTemp,
+            Verbose,
+            TEXT("[INTERACT] Looking at interactable: %s"),
+            *HitInteractable->GetName()
+        );
+    }
+    else
+    {
+        CurrentInteractable = nullptr;
+        bCanInteract = false;
+        UpdatedMirillaUI(true, false);
     }
 }
+
+
+void AAzulCharacterBase::AddInteractable(
+    TScriptInterface<IAzulInteractuableInterface> Interactable)
+{
+    if (!Interactable.GetObject())
+        return;
+
+    OverlappingInteractables.AddUnique(Interactable);
+
+    if (OverlappingInteractables.Num() == 1)
+    {
+        StartInteractTrace();
+    }
+}
+
+void AAzulCharacterBase::RemoveInteractable(
+    TScriptInterface<IAzulInteractuableInterface> Interactable)
+{
+    if (!Interactable.GetObject())
+        return;
+
+    OverlappingInteractables.Remove(Interactable);
+
+    if (OverlappingInteractables.Num() == 0)
+    {
+        CurrentInteractable = nullptr;
+        StopInteractTrace();
+    }
+}
+
 
 

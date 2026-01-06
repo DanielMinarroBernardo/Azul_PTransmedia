@@ -15,6 +15,11 @@ void UAzulWidgetTutorial::NativeConstruct()
         );
 
         ContinueButton->SetIsEnabled(false);
+
+        CheckBox_1->SetVisibility(ESlateVisibility::HitTestInvisible);
+        CheckBox_2->SetVisibility(ESlateVisibility::HitTestInvisible);
+        CheckBox_3->SetVisibility(ESlateVisibility::HitTestInvisible);
+
     }
 }
 
@@ -31,6 +36,8 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag)
         CheckBox_1->SetIsChecked(true);
 
         MainText = TEXT("This is the thread that will always take you to your child whenever you need it. It lasts 6 seconds, but you can remove it before that time by pressing the space bar again.");
+        GetWorld()->GetTimerManager().ClearTimer(TextTimer);
+        
         //Pasa 2 segundos y cambiamos texto
         GetWorld()->GetTimerManager().SetTimer(
             TextTimer,
@@ -53,7 +60,7 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag)
         CheckBox_2->SetIsChecked(true);
 
         MainText = TEXT("There you are, now you can move in all directions and explore every location.");
-
+        GetWorld()->GetTimerManager().ClearTimer(TextTimer);
         GetWorld()->GetTimerManager().SetTimer(
             TextTimer,
             this,
@@ -74,7 +81,7 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag)
         ContinueButton->SetVisibility(ESlateVisibility::Hidden);
 
         MainText = TEXT("Great, now you can see everything you want by turning your character's head.");
-
+        GetWorld()->GetTimerManager().ClearTimer(TextTimer);
         GetWorld()->GetTimerManager().SetTimer(
             TextTimer,
             this,
@@ -83,12 +90,13 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag)
             false
         );
 
+        GetWorld()->GetTimerManager().ClearTimer(ButtonTimer);
         //Cambiar los checkbox después de delay
         GetWorld()->GetTimerManager().SetTimer(
             ButtonTimer,
             this,
             &UAzulWidgetTutorial::SetCheckBoxsForSecondPart,
-            7.0f,
+            1.0f,
             false
         );
 
@@ -102,8 +110,8 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag)
     {
         CheckBox_1->SetIsChecked(true);
         
-        MainText = TEXT("Very well,");
-
+        //MainText = TEXT("Very well,");
+        GetWorld()->GetTimerManager().ClearTimer(ButtonTimer);
         GetWorld()->GetTimerManager().SetTimer(
             TextTimer,
             this,

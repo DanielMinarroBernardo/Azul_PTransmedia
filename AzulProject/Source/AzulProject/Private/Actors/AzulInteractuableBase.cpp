@@ -90,10 +90,10 @@ void AAzulInteractuableBase::OnBeginOverlap(UPrimitiveComponent* OverlappedComp,
 		WidgetComp->SetVisibility(true);
 	}
 
-	//Asignar a sí mismo como el interactuable del Character cuando overlapa
-	OverlappingCharacter->CurrentInteractable = TScriptInterface<IAzulInteractuableInterface>(this);
+	OverlappingCharacter->AddInteractable(
+		TScriptInterface<IAzulInteractuableInterface>(this)
+	);
 
-	OverlappingCharacter->StartInteractTrace();
 }
 
 void AAzulInteractuableBase::OnEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
@@ -113,13 +113,10 @@ void AAzulInteractuableBase::OnEndOverlap(UPrimitiveComponent* OverlappedComp, A
 		WidgetComp->SetVisibility(false);
 	}
 
-	// Limpiar la referencia al interactuable en el Character cuando deja de overlapar
-	if (OverlappingCharacter->CurrentInteractable.GetObject() == this)
-	{
-		OverlappingCharacter->CurrentInteractable = nullptr;
-	}
+	OverlappingCharacter->RemoveInteractable(
+		TScriptInterface<IAzulInteractuableInterface>(this)
+	);
 
-	OverlappingCharacter->StopInteractTrace();
 }
 
 

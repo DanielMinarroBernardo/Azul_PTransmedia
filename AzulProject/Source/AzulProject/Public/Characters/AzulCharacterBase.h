@@ -45,15 +45,36 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Interactuable")
 	TScriptInterface<IAzulInteractuableInterface> CurrentInteractable;
 
-	UFUNCTION(BlueprintCallable, Category = "Azul|Interactuable")
-	bool IsLookingAtInteractable(UCameraComponent* Camera) const;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Interactuable")
+	TArray<TScriptInterface<IAzulInteractuableInterface>> OverlappingInteractables;
 
-	UFUNCTION(BlueprintCallable, Category = "Interaction")
-	bool HasInteractable() const;
+	void AddInteractable(TScriptInterface<IAzulInteractuableInterface> Interactable);
+	void RemoveInteractable(TScriptInterface<IAzulInteractuableInterface> Interactable);
+
+
+	UFUNCTION()
+	void StartInteractTrace();
+
+	UFUNCTION()
+	void StopInteractTrace();
+
+	UFUNCTION()
+	void PerformInteractTrace();
+
+	UPROPERTY(BlueprintReadOnly, Category = "Azul|Interactuable")
+	bool bCanInteract = false;
+
 
 	//---------------------------BIBERÓN-----------------------------------------
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Biberon")
 	bool bHasBiberon = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Biberon")
+	bool bDoneBiberon = false;
+
+	//------------------------JUGUETE-------------------------
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Juguete")
+	bool bHasJuguete = false;
 
 	//---------------------------------STORY--------------------------------------
 
@@ -117,18 +138,6 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Azul|Mirilla")
 	float InteractTraceDistance = 1000.0f;
-
-	UFUNCTION()
-	void StartInteractTrace();
-
-	UFUNCTION()
-	void StopInteractTrace();
-
-	UFUNCTION()
-	void PerformInteractTrace();
-
-	UPROPERTY(BlueprintReadOnly, Category = "Azul|Interaction")
-	bool bCanInteract = false;
 
 	//----------------------------INPUT-------------------------------------------
 

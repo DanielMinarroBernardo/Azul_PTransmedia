@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "GameplayTagContainer.h"
+#include "Widgets/AzulWidgetTutorial.h"
 #include "AzulTutorialSubsystem.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
@@ -22,6 +23,9 @@ class AZULPROJECT_API UAzulTutorialSubsystem : public UGameInstanceSubsystem
     GENERATED_BODY()
 
 public:
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    UAzulWidgetTutorial* WidgetTutorial;
 
     /* Notifica que una acción del tutorial se ha realizado */
     UFUNCTION(BlueprintCallable, Category = "Azul|Tutorial")

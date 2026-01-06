@@ -56,7 +56,7 @@ protected:
     UPROPERTY(meta = (BindWidget))
     UButton* ContinueButton;
 
-    UPROPERTY(meta = (BindWidget))
+    UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
     UTextBlock* TutorialText;
 
     UPROPERTY(meta = (BindWidget))
@@ -77,7 +77,7 @@ protected:
     UFUNCTION()
     void SetCheckBoxsForSecondPart();
 
-    UFUNCTION()
+    UFUNCTION(BlueprintCallable)
     void SetTutorialText(const FString& NewText);
 
     void ApplyTutorialText();
