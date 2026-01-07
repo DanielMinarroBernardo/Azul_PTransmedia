@@ -23,6 +23,8 @@ class AZULPROJECT_API AAzulHiloBase : public AActor
 public:
 	AAzulHiloBase();
 
+	virtual void Tick(float DeltaTime) override;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -57,6 +59,15 @@ public:
 	// Llamado desde BP para aplicar puntos interpolados
 	UFUNCTION(BlueprintCallable, Category = "Azul|Hilo")
 	void ApplyInterpolatedSplinePoints(const TArray<FVector>& Points);
+
+	UFUNCTION(BlueprintCallable)
+	void ShowHilo();
+
+	UFUNCTION(BlueprintCallable)
+	void ForceHideHilo();
+
+	bool IsHiloVisible() const { return bHiloVisible; }
+
 
 private:
 	void SetNiagaraLifeTime(float Value);

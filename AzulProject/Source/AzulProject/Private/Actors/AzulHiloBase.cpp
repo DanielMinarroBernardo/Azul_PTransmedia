@@ -157,7 +157,10 @@ void AAzulHiloBase::RecalculateHiloFromInput()
     FVector SecondPoint = StartPos + ForwardDir * 50.0f;
     SecondPoint.Z = HiloZ;
 
-    FVector EndPos = HijoActor->GetActorLocation();
+    FVector EndPos = HijoActor->HiloEndPoint
+        ? HijoActor->HiloEndPoint->GetComponentLocation()
+        : HijoActor->GetActorLocation();
+
 
     PreviousPoints = TargetPoints;
     TargetPoints.Empty();
@@ -206,4 +209,49 @@ void AAzulHiloBase::HideHilo()
     NiagaraComp->SetVisibility(false, true);
 
     bHiloVisible = false;
+}
+
+void AAzulHiloBase::ShowHilo()
+{
+    if (bHiloVisible)
+        return;
+
+    RecalculateHiloFromInput();
+}
+
+void AAzulHiloBase::ForceHideHilo()
+{
+    if (!bHiloVisible)
+        return;
+
+    GetWorld()->GetTimerManager().ClearTimer(Timer_HideHilo);
+    HideHilo();
+}
+
+
+void AAzulHiloBase::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+
+    if (!bHiloVisible || !CachedPlayer)
+        return;
+
+    FVector NewStart = CachedPlayer->GetActorLocation();
+    NewStart.Z -= 20.f;
+
+    // Interpolación suave (clave)
+    FVector CurrentStart = SplineComp->GetLocationAtSplinePoint(
+        0,
+        ESplineCoordinateSpace::World
+    );
+
+    FVector Smoothed =
+        FMath::VInterpTo(CurrentStart, NewStart, DeltaTime, 8.0f);
+
+    SplineComp->SetLocationAtSplinePoint(
+        0,
+        Smoothed,
+        ESplineCoordinateSpace::World,
+        true
+    );
 }

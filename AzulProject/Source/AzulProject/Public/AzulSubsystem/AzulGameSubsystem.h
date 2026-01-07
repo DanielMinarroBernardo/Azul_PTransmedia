@@ -5,6 +5,7 @@
 #include "LevelSequence.h"
 #include "LevelSequencePlayer.h"
 #include "MediaPlayer.h"
+#include "Widgets/AzulWidgetHUDPlayer.h"
 #include "AzulGameSubsystem.generated.h"
 
 class UAzulDialogue;
@@ -57,6 +58,9 @@ public:
     UFUNCTION()
     bool IsSequenceActive();
 
+	//--------------------------WIDGET HUD PLAYER
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|HUD Player")
+    UAzulWidgetHUDPlayer* WidgetHUDPlayer;
 
 private:
 

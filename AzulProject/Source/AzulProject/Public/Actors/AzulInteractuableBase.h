@@ -34,10 +34,10 @@ public:
 	// Componente de colisión que genera overlaps
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Azul|Interactuable", meta = (AllowPrivateAccess = "true"))
 	USphereComponent* CollisionSphere;
+	//-----------------------------------SOLO PARA EL BEBE O LA MADRE CUANDO LLEGUE SU MOMENTO ----------------------------
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Azul|Hilo")
+	USceneComponent* HiloEndPoint;
 
-	// Widget component para mostrar UI (ej.: prompt de interacción)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Azul|UI", meta = (AllowPrivateAccess = "true"))
-	UWidgetComponent* WidgetComp;
 
 	//
 

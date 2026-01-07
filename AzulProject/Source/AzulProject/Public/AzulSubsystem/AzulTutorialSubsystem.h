@@ -24,8 +24,11 @@ class AZULPROJECT_API UAzulTutorialSubsystem : public UGameInstanceSubsystem
 
 public:
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Tutorial")
     UAzulWidgetTutorial* WidgetTutorial;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Tutorial")
+    bool bCanLookTutorial = false;
 
     /* Notifica que una acción del tutorial se ha realizado */
     UFUNCTION(BlueprintCallable, Category = "Azul|Tutorial")

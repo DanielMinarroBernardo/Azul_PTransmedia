@@ -1,7 +1,7 @@
-#include "Widgets/AzulWidgetMirilla.h"
+#include "Widgets/AzulWidgetHUDPlayer.h"
 
 
-void UAzulWidgetMirilla::SetUIState(EInteractUIState NewState)
+void UAzulWidgetHUDPlayer::SetUIState(EInteractUIState NewState)
 {
     if (!InteractImage) return;
 

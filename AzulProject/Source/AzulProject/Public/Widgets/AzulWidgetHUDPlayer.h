@@ -6,7 +6,9 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/Image.h"
 #include "Engine/Texture2D.h"
-#include "AzulWidgetMirilla.generated.h"
+#include "Components/TextBlock.h"
+#include "Components/Border.h"
+#include "AzulWidgetHUDPlayer.generated.h"
 
 UENUM(BlueprintType)
 enum class EInteractUIState : uint8
@@ -21,7 +23,7 @@ enum class EInteractUIState : uint8
  * 
  */
 UCLASS()
-class AZULPROJECT_API UAzulWidgetMirilla : public UUserWidget
+class AZULPROJECT_API UAzulWidgetHUDPlayer : public UUserWidget
 {
 	GENERATED_BODY()
 	
@@ -29,6 +31,12 @@ public:
     // Imagen del widget (marcada IsVariable en UMG)
     UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
     UImage* InteractImage;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* TextInteractuable;
+
+    UPROPERTY(meta = (BindWidget))
+    UBorder* BorderText;
 
     // Texturas configurables desde Blueprint
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Interact UI")

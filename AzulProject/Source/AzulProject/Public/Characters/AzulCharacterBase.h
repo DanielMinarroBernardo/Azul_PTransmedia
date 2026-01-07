@@ -12,7 +12,7 @@
 #include "Actors/AzulHiloBase.h"
 #include "AzulComponentes/AzulHiloComponent.h"
 #include "InputAction.h"
-#include "Widgets/AzulWidgetMirilla.h"
+#include "Widgets/AzulWidgetHUDPlayer.h"
 #include "AzulCharacterBase.generated.h"
 
 
@@ -120,7 +120,7 @@ public:
 	//-----------------------------MIRILLA--------------------------------------
 	// Instancia real del widget
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Azul|Mirilla")
-	UAzulWidgetMirilla* MirillaWidget;
+	UAzulWidgetHUDPlayer* HUDWidget;
 	
 	UFUNCTION()
 	void OpenMirilla();

@@ -33,15 +33,10 @@ AAzulInteractuableBase::AAzulInteractuableBase()
 	MeshComp->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	MeshComp->SetGenerateOverlapEvents(false);
 
-	// Widget component
-	WidgetComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("Widget"));
-	WidgetComp->SetupAttachment(RootComponent);
-	WidgetComp->SetWidgetSpace(EWidgetSpace::World); // o EWidgetSpace::Screen según prefieras
-	WidgetComp->SetDrawSize(FVector2D(1280.0, 720.0));
-	WidgetComp->SetRelativeLocation(FVector(0.0f, 0.0f, 15.0f));
-	WidgetComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	WidgetComp->SetGenerateOverlapEvents(false);
-	WidgetComp->SetVisibility(false); // oculto por defecto
+	HiloEndPoint = CreateDefaultSubobject<USceneComponent>(TEXT("HiloEndPoint"));
+	HiloEndPoint->SetupAttachment(RootComponent);
+	HiloEndPoint->SetRelativeLocation(FVector(0.f, 0.f, 50.f));
+
 
 }
 
@@ -83,13 +78,6 @@ void AAzulInteractuableBase::OnBeginOverlap(UPrimitiveComponent* OverlappedComp,
 		return; // Si no es un personaje AzulCharacterBase, no hacer nada
 	}
 
-
-	// Mostrar widget si existe
-	if (WidgetComp)
-	{
-		WidgetComp->SetVisibility(true);
-	}
-
 	OverlappingCharacter->AddInteractable(
 		TScriptInterface<IAzulInteractuableInterface>(this)
 	);
@@ -106,11 +94,6 @@ void AAzulInteractuableBase::OnEndOverlap(UPrimitiveComponent* OverlappedComp, A
 	if (!OverlappingCharacter)
 	{
 		return; // Si no es un personaje AzulCharacterBase, no hacer nada
-	}
-	// Ocultar widget si existe
-	if (WidgetComp)
-	{
-		WidgetComp->SetVisibility(false);
 	}
 
 	OverlappingCharacter->RemoveInteractable(

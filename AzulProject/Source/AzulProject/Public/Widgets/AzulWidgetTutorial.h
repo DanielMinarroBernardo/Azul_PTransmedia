@@ -10,6 +10,7 @@
 #include "Components/HorizontalBox.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
+#include "Components/Image.h"
 #include "Components/CheckBox.h"
 
 // Gameplay Tags
@@ -71,6 +72,22 @@ protected:
     UPROPERTY()
     FString MainText;
 
+    UPROPERTY(meta = (BindWidget))
+    UButton* SkipButton;
+
+    UPROPERTY(meta = (BindWidget))
+    UHorizontalBox* InteractHelp_01;
+
+    UPROPERTY(meta = (BindWidget))
+    UHorizontalBox* InteractHelp_02;
+
+    UPROPERTY(meta = (BindWidget))
+    UImage* InteractHelp_00;
+
+    UFUNCTION()
+    void OnSkipTutorialPressed();
+
+
     UFUNCTION()
     void OnContinueButtonPressed();
 
@@ -83,6 +100,8 @@ protected:
     void ApplyTutorialText();
 
     void EnableContinueButton();
+
+    void OpenInteractHelp();
 
     FTimerHandle TextTimer;
     FTimerHandle ButtonTimer;

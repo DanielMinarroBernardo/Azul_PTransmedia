@@ -187,35 +187,22 @@ void AAzulCharacterBase::OnSpacePressed()
         {
             if (!GameSubsystem->IsSequenceActive())
             {
-                //for (TActorIterator<AAzulHiloBase> It(GetWorld()); It; ++It)
-                //{
-                    // Si el timer está activo, NO han pasado 6 segundos
-                    if (GetWorld()->GetTimerManager().IsTimerActive(HiloTimer))
-                    {
-                        // Esconder hilo
-                        NotifyHiloHidden();
+                // --- HILO ---
+                if (!HiloActor)
+                    return;
 
-                        // Cancelar timer
-                        GetWorld()->GetTimerManager().ClearTimer(HiloTimer);
-                    }
-
-                    else
-                    {
-                        // Mostrar hilo
-                        HiloActor->RecalculateHiloFromInput();
-                        NotifyHiloShown();
-
-                        // Arrancar timer de 6 segundos y luego ocultar
-                        GetWorld()->GetTimerManager().SetTimer(
-                            HiloTimer,
-                            this,
-                            &AAzulCharacterBase::NotifyHiloHidden,
-                            6.0f,
-                            false
-                        );
-                    }
-                    
-                //}
+                if (HiloActor->IsHiloVisible())
+                {
+                    // Segundo espacio antes de 6s → ocultar
+                    HiloActor->ForceHideHilo();
+                    NotifyHiloHidden();
+                }
+                else
+                {
+                    // Primer espacio → mostrar
+                    HiloActor->ShowHilo();
+                    NotifyHiloShown();
+                }
             }
         }
     }
@@ -244,19 +231,19 @@ void AAzulCharacterBase::OpenMirilla()
 
 void AAzulCharacterBase::UpdatedMirillaUI(bool bInRange, bool bLooking)
 {
-    if (!MirillaWidget) return;
+    if (!HUDWidget) return;
 
     if (!bInRange)
     {
-        MirillaWidget->SetUIState(EInteractUIState::Default);
+        HUDWidget->SetUIState(EInteractUIState::Default);
     }
     else if (bInRange && !bLooking)
     {
-        MirillaWidget->SetUIState(EInteractUIState::InRange);
+        HUDWidget->SetUIState(EInteractUIState::InRange);
     }
     else
     {
-        MirillaWidget->SetUIState(EInteractUIState::InRangeAndLooking);
+        HUDWidget->SetUIState(EInteractUIState::InRangeAndLooking);
     }
 }
 
@@ -307,7 +294,7 @@ void AAzulCharacterBase::PerformInteractTrace()
     }
 
     // 2️⃣ Mirilla obligatoria
-    if (!MirillaWidget)
+    if (!HUDWidget)
     {
         UE_LOG(LogTemp, Error, TEXT("[INTERACT] MirillaWidget is NULL"));
 
@@ -366,6 +353,23 @@ void AAzulCharacterBase::PerformInteractTrace()
         Params
     );
 
+    //if (bHit && GEngine)
+    //{
+    //    FString Msg = FString::Printf(
+    //        TEXT("HIT → Actor: %s | Comp: %s"),
+    //        Hit.GetActor() ? *Hit.GetActor()->GetName() : TEXT("None"),
+    //        Hit.GetComponent() ? *Hit.GetComponent()->GetName() : TEXT("None")
+    //    );
+
+    //    GEngine->AddOnScreenDebugMessage(
+    //        -1,
+    //        0.1f,
+    //        FColor::Green,
+    //        Msg
+    //    );
+    //}
+
+
     // 6️⃣ Buscar si el hit corresponde a ALGUNO de los interactuables en rango
     AAzulInteractuableBase* HitInteractable = nullptr;
 
@@ -421,6 +425,29 @@ void AAzulCharacterBase::AddInteractable(
     if (!Interactable.GetObject())
         return;
 
+    // --- LOG del nombre del interactuable ---
+    UObject* InteractableObject = Interactable.GetObject();
+    AActor* InteractableActor = Cast<AActor>(InteractableObject);
+
+    if (InteractableActor)
+    {
+        UE_LOG(
+            LogTemp,
+            Log,
+            TEXT("Interactable added: %s"),
+            *InteractableActor->GetName()
+        );
+    }
+    else
+    {
+        UE_LOG(
+            LogTemp,
+            Log,
+            TEXT("Interactable added (non-actor object): %s"),
+            *InteractableObject->GetName()
+        );
+    }
+
     OverlappingInteractables.AddUnique(Interactable);
 
     if (OverlappingInteractables.Num() == 1)
@@ -428,6 +455,7 @@ void AAzulCharacterBase::AddInteractable(
         StartInteractTrace();
     }
 }
+
 
 void AAzulCharacterBase::RemoveInteractable(
     TScriptInterface<IAzulInteractuableInterface> Interactable)

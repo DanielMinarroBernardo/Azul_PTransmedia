@@ -1,6 +1,7 @@
 ﻿#include "Widgets/AzulWidgetTutorial.h"
 #include "GameFramework/PlayerController.h"
 #include "Characters/AzulCharacterBase.h"
+#include "AzulSubsystem/AzulTutorialSubsystem.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 void UAzulWidgetTutorial::NativeConstruct()
@@ -13,14 +14,27 @@ void UAzulWidgetTutorial::NativeConstruct()
             this,
             &UAzulWidgetTutorial::OnContinueButtonPressed
         );
-
-        ContinueButton->SetIsEnabled(false);
-
-        CheckBox_1->SetVisibility(ESlateVisibility::HitTestInvisible);
-        CheckBox_2->SetVisibility(ESlateVisibility::HitTestInvisible);
-        CheckBox_3->SetVisibility(ESlateVisibility::HitTestInvisible);
-
     }
+
+    if (SkipButton)
+    {
+        SkipButton->OnClicked.AddDynamic(
+            this,
+            &UAzulWidgetTutorial::OnSkipTutorialPressed
+        );
+    }
+
+
+    ContinueButton->SetIsEnabled(false);
+
+    CheckBox_1->SetVisibility(ESlateVisibility::HitTestInvisible);
+    CheckBox_2->SetVisibility(ESlateVisibility::HitTestInvisible);
+    CheckBox_3->SetVisibility(ESlateVisibility::HitTestInvisible);
+
+    InteractHelp_00->SetVisibility(ESlateVisibility::Hidden);
+    InteractHelp_01->SetVisibility(ESlateVisibility::Hidden);
+    InteractHelp_02->SetVisibility(ESlateVisibility::Hidden);
+
 }
 
 void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag)
@@ -96,7 +110,7 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag)
             ButtonTimer,
             this,
             &UAzulWidgetTutorial::SetCheckBoxsForSecondPart,
-            1.0f,
+            3.0f,
             false
         );
 
@@ -111,6 +125,38 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag)
         CheckBox_1->SetIsChecked(true);
         
         //MainText = TEXT("Very well,");
+        GetWorld()->GetTimerManager().ClearTimer(ButtonTimer);
+        GetWorld()->GetTimerManager().SetTimer(
+            TextTimer,
+            this,
+            &UAzulWidgetTutorial::ApplyTutorialText,
+            5.0f,
+            false
+        );
+
+        return;
+    }
+
+    if (StepTag == FGameplayTag::RequestGameplayTag("Tutorial.TakeManual")) {
+        CheckBox_2->SetIsChecked(true);
+
+        MainText = TEXT("Now open it.");
+        GetWorld()->GetTimerManager().ClearTimer(ButtonTimer);
+        GetWorld()->GetTimerManager().SetTimer(
+            TextTimer,
+            this,
+            &UAzulWidgetTutorial::ApplyTutorialText,
+            5.0f,
+            false
+        );
+
+        return;
+    }
+
+    if (StepTag == FGameplayTag::RequestGameplayTag("Tutorial.OpenManual")) {
+        CheckBox_3->SetIsChecked(true);
+
+        MainText = TEXT("Yes");
         GetWorld()->GetTimerManager().ClearTimer(ButtonTimer);
         GetWorld()->GetTimerManager().SetTimer(
             TextTimer,
@@ -177,13 +223,64 @@ void UAzulWidgetTutorial::OnContinueButtonPressed()
             }
         }
 
+        if (!GetGameInstance())
+            return;
+
+        UAzulTutorialSubsystem* TutorialSubsystem =
+            GetGameInstance()->GetSubsystem<UAzulTutorialSubsystem>();
+
+        if (!TutorialSubsystem)
+            return;
+
+        TutorialSubsystem->bCanLookTutorial = true;
+
         return;
+    }
+
+    if (CurrentStepTag == FGameplayTag::RequestGameplayTag("Tutorial.First.Look")) {
+        InteractHelp_00->SetVisibility(ESlateVisibility::Hidden);
+        InteractHelp_01->SetVisibility(ESlateVisibility::Hidden);
+        InteractHelp_02->SetVisibility(ESlateVisibility::Hidden);
+
+        if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+        {
+            if (AAzulCharacterBase* Character = Cast<AAzulCharacterBase>(PC->GetPawn()))
+            {
+                // --- Desbloquear el look (cámara) ---
+                PC->SetIgnoreLookInput(false);
+
+                // --- Ocultar cursor ---
+                PC->bShowMouseCursor = false;
+
+                // --- Modo de input: solo juego ---
+                FInputModeGameOnly InputMode;
+                PC->SetInputMode(InputMode);
+
+                Character->UnblockPlayerControl();
+                Character->OpenMirilla();
+                FString SonNameString;
+
+                // Si SonName es FString
+                SonNameString = Character->SonName;
+
+                // Si SonName es FName (usa esta línea en vez de la anterior)
+                // SonNameString = Character->SonName.ToString();
+
+                FString TutorialString = FString::Printf(
+                    TEXT("%s is crying, what could be wrong with him?"),
+                    *SonNameString
+                );
+
+                TutorialText->SetText(FText::FromString(TutorialString));
+
+            }
+        }
     }
 }
 
 void UAzulWidgetTutorial::SetCheckBoxsForSecondPart()
 {
-    ContinueButton->SetIsEnabled(false);
+    GetWorld()->GetTimerManager().ClearTimer(TextTimer);
 
     if (!CheckBox_1 || !CheckBox_2 || !CheckBox_3)
         return;
@@ -193,32 +290,10 @@ void UAzulWidgetTutorial::SetCheckBoxsForSecondPart()
 
     TareaText_1->SetText(FText::FromString(TEXT("Interact with any interactive object")));
     TareaText_2->SetText(FText::FromString(TEXT("Take the manual.")));
-    TareaText_3->SetText(FText::FromString(TEXT("Open the manual")));
+    TareaText_3->SetText(FText::FromString(TEXT("Open the manual with the M key")));
 
-
-    if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
-    {
-        if (AAzulCharacterBase* Character = Cast<AAzulCharacterBase>(PC->GetPawn()))
-        {
-            Character->UnblockPlayerControl();
-            Character->OpenMirilla();
-            FString SonNameString;
-
-            // Si SonName es FString
-            SonNameString = Character->SonName;
-
-            // Si SonName es FName (usa esta línea en vez de la anterior)
-            // SonNameString = Character->SonName.ToString();
-
-            FString TutorialString = FString::Printf(
-                TEXT("%s is crying, what could be wrong with him?"),
-                *SonNameString
-            );
-
-            TutorialText->SetText(FText::FromString(TutorialString));
-
-        }
-    }
+    OpenInteractHelp();
+    
 }
 
 void UAzulWidgetTutorial::SetTutorialText(const FString& NewText)
@@ -237,6 +312,90 @@ void UAzulWidgetTutorial::ApplyTutorialText()
 void UAzulWidgetTutorial::EnableContinueButton()
 {
     ContinueButton->SetIsEnabled(true);
+}
+
+void UAzulWidgetTutorial::OpenInteractHelp()
+{
+    // --- Mostrar ayudas ---
+    if (InteractHelp_00)
+        InteractHelp_00->SetVisibility(ESlateVisibility::Visible);
+
+    if (InteractHelp_01)
+        InteractHelp_01->SetVisibility(ESlateVisibility::Visible);
+
+    if (InteractHelp_02)
+        InteractHelp_02->SetVisibility(ESlateVisibility::Visible);
+
+    // --- Obtener PlayerController ---
+    APlayerController* PC = GetWorld()->GetFirstPlayerController();
+    if (!PC)
+        return;
+
+    // --- Bloquear el look (cámara) ---
+    PC->SetIgnoreLookInput(true);
+
+    // --- Mostrar cursor ---
+    PC->bShowMouseCursor = true;
+
+    // --- Modo de input: solo UI (o UI + Game si prefieres) ---
+    FInputModeUIOnly InputMode;
+    InputMode.SetWidgetToFocus(TakeWidget());
+    InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+    PC->SetInputMode(InputMode);
+
+    // --- Mostrar botón Continue ---
+    if (ContinueButton)
+    {
+        ContinueButton->SetVisibility(ESlateVisibility::Visible);
+        ContinueButton->SetIsEnabled(true);
+    }
+}
+
+
+void UAzulWidgetTutorial::OnSkipTutorialPressed()
+{
+    // 1. Obtener el Subsystem
+    UAzulTutorialSubsystem* TutorialSubsystem =
+        GetGameInstance()->GetSubsystem<UAzulTutorialSubsystem>();
+
+
+    if (!TutorialSubsystem)
+        return;
+
+    // 2. Marcar TODOS los pasos como completados
+    TutorialSubsystem->NotifyActionCompleted(
+        FGameplayTag::RequestGameplayTag("Tutorial.First.Space")
+    );
+
+    TutorialSubsystem->NotifyActionCompleted(
+        FGameplayTag::RequestGameplayTag("Tutorial.First.Move")
+    );
+
+    TutorialSubsystem->NotifyActionCompleted(
+        FGameplayTag::RequestGameplayTag("Tutorial.First.Look")
+    );
+
+    TutorialSubsystem->NotifyActionCompleted(
+        FGameplayTag::RequestGameplayTag("Tutorial.Interact")
+    );
+
+    // 3. Desbloquear jugador y activar mirilla
+    if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+    {
+        if (AAzulCharacterBase* Character = Cast<AAzulCharacterBase>(PC->GetPawn()))
+        {
+            Character->UnblockPlayerControl();
+            Character->OpenMirilla();
+
+            if (Character->GetCharacterMovement())
+            {
+                Character->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+            }
+        }
+    }
+
+    // 4. Ocultar el widget de tutorial
+    RemoveFromParent();
 }
 
 
