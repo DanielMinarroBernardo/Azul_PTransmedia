@@ -274,7 +274,7 @@ void AAzulCharacterBase::StopInteractTrace()
     GetWorld()->GetTimerManager().ClearTimer(InteractTraceTimer);
 
     bCanInteract = false;
-    UpdatedMirillaUI(false, false);
+    //UpdatedMirillaUI(false, false);
 }
 
 
@@ -283,7 +283,9 @@ void AAzulCharacterBase::PerformInteractTrace()
     UE_LOG(LogTemp, Verbose, TEXT("[INTERACT] PerformInteractTrace"));
 
     // 1️⃣ Si no hay interactuables en rango, no tiene sentido trazar
-    if (OverlappingInteractables.Num() == 0)
+    if (OverlappingInteractables.Num() == 0 &&
+        OverlappingExceptionActors.Num() == 0)
+
     {
         UE_LOG(LogTemp, Verbose, TEXT("[INTERACT] No overlapping interactables"));
 
@@ -353,33 +355,32 @@ void AAzulCharacterBase::PerformInteractTrace()
         Params
     );
 
-    //if (bHit && GEngine)
-    //{
-    //    FString Msg = FString::Printf(
-    //        TEXT("HIT → Actor: %s | Comp: %s"),
-    //        Hit.GetActor() ? *Hit.GetActor()->GetName() : TEXT("None"),
-    //        Hit.GetComponent() ? *Hit.GetComponent()->GetName() : TEXT("None")
-    //    );
+    if (bHit && GEngine)
+    {
+        FString Msg = FString::Printf(
+            TEXT("HIT → Actor: %s | Comp: %s"),
+            Hit.GetActor() ? *Hit.GetActor()->GetName() : TEXT("None"),
+            Hit.GetComponent() ? *Hit.GetComponent()->GetName() : TEXT("None")
+        );
 
-    //    GEngine->AddOnScreenDebugMessage(
-    //        -1,
-    //        0.1f,
-    //        FColor::Green,
-    //        Msg
-    //    );
-    //}
+        GEngine->AddOnScreenDebugMessage(
+            -1,
+            0.1f,
+            FColor::Green,
+            Msg
+        );
+    }
 
 
     // 6️⃣ Buscar si el hit corresponde a ALGUNO de los interactuables en rango
     AAzulInteractuableBase* HitInteractable = nullptr;
+    AActor* HitExceptionActor = nullptr;
 
     if (bHit)
     {
+        // --- CASO NORMAL ---
         for (const TScriptInterface<IAzulInteractuableInterface>& Interactable : OverlappingInteractables)
         {
-            if (!Interactable.GetObject())
-                continue;
-
             AAzulInteractuableBase* Candidate =
                 Cast<AAzulInteractuableBase>(Interactable.GetObject());
 
@@ -392,13 +393,40 @@ void AAzulCharacterBase::PerformInteractTrace()
                 break;
             }
         }
+
+        // --- CASO EXCEPCIÓN ---
+        if (!HitInteractable)
+        {
+            for (AActor* Actor : OverlappingExceptionActors)
+            {
+                if (!Actor)
+                    continue;
+
+                if (!IsExceptionInteractable(Actor))
+                    continue;
+
+                UStaticMeshComponent* ExceptionMesh =
+                    Actor->FindComponentByClass<UStaticMeshComponent>();
+
+                if (ExceptionMesh && Hit.GetComponent() == ExceptionMesh)
+                {
+                    HitExceptionActor = Actor;
+                    break;
+                }
+            }
+        }
     }
+
+
 
     // 7️⃣ Resultado final del sistema
     if (HitInteractable)
     {
+        // --- CASO NORMAL ---
         CurrentInteractable =
             TScriptInterface<IAzulInteractuableInterface>(HitInteractable);
+
+        CurrentExceptionActor = nullptr;
 
         bCanInteract = true;
         UpdatedMirillaUI(true, true);
@@ -410,12 +438,32 @@ void AAzulCharacterBase::PerformInteractTrace()
             *HitInteractable->GetName()
         );
     }
+    else if (HitExceptionActor)
+    {
+        // --- CASO EXCEPCIÓN ---
+        CurrentInteractable = nullptr;
+        CurrentExceptionActor = HitExceptionActor;
+
+        bCanInteract = true;
+        UpdatedMirillaUI(true, true);
+
+        UE_LOG(
+            LogTemp,
+            Verbose,
+            TEXT("[INTERACT] Looking at exception actor: %s"),
+            *HitExceptionActor->GetName()
+        );
+    }
     else
     {
         CurrentInteractable = nullptr;
+        CurrentExceptionActor = nullptr;
+
         bCanInteract = false;
         UpdatedMirillaUI(true, false);
     }
+
+
 }
 
 
@@ -425,31 +473,12 @@ void AAzulCharacterBase::AddInteractable(
     if (!Interactable.GetObject())
         return;
 
-    // --- LOG del nombre del interactuable ---
-    UObject* InteractableObject = Interactable.GetObject();
-    AActor* InteractableActor = Cast<AActor>(InteractableObject);
-
-    if (InteractableActor)
-    {
-        UE_LOG(
-            LogTemp,
-            Log,
-            TEXT("Interactable added: %s"),
-            *InteractableActor->GetName()
-        );
-    }
-    else
-    {
-        UE_LOG(
-            LogTemp,
-            Log,
-            TEXT("Interactable added (non-actor object): %s"),
-            *InteractableObject->GetName()
-        );
-    }
-
     OverlappingInteractables.AddUnique(Interactable);
 
+    // EN RANGO SIEMPRE
+    UpdatedMirillaUI(true, false);
+
+    // Arrancar trace si es el primero
     if (OverlappingInteractables.Num() == 1)
     {
         StartInteractTrace();
@@ -465,12 +494,60 @@ void AAzulCharacterBase::RemoveInteractable(
 
     OverlappingInteractables.Remove(Interactable);
 
-    if (OverlappingInteractables.Num() == 0)
+    if (OverlappingInteractables.Num() == 0 &&
+        OverlappingExceptionActors.Num() == 0)
     {
         CurrentInteractable = nullptr;
         StopInteractTrace();
     }
 }
+
+
+bool AAzulCharacterBase::IsExceptionInteractable(AActor* Actor) const
+{
+    if (!Actor)
+        return false;
+
+    const FName ActorName = Actor->GetFName();
+
+    return InteractableNameExceptions.Contains(ActorName);
+}
+
+void AAzulCharacterBase::AddInteractableException(AActor* Actor)
+{
+    if (!Actor)
+        return;
+
+    if (!IsExceptionInteractable(Actor))
+        return;
+
+    OverlappingExceptionActors.AddUnique(Actor);
+
+    // InRange
+    UpdatedMirillaUI(true, false);
+
+    // Asegurar que el trace está activo
+    if (!GetWorld()->GetTimerManager().IsTimerActive(InteractTraceTimer))
+    {
+        StartInteractTrace();
+    }
+}
+
+
+void AAzulCharacterBase::RemoveInteractableException(AActor* Actor)
+{
+    OverlappingExceptionActors.Remove(Actor);
+
+    if (OverlappingInteractables.Num() == 0 &&
+        OverlappingExceptionActors.Num() == 0)
+    {
+        CurrentExceptionActor = nullptr;
+        StopInteractTrace();
+    }
+}
+
+
+
 
 
 

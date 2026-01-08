@@ -51,6 +51,25 @@ public:
 	void AddInteractable(TScriptInterface<IAzulInteractuableInterface> Interactable);
 	void RemoveInteractable(TScriptInterface<IAzulInteractuableInterface> Interactable);
 
+	// --- EXCEPCIONES DE MIRILLA ---
+	UPROPERTY()
+	TArray<AActor*> OverlappingExceptionActors;
+
+	UPROPERTY()
+	AActor* CurrentExceptionActor = nullptr;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Azul|InteractionExceptions")
+	TArray<FName> InteractableNameExceptions;
+
+	bool IsExceptionInteractable(AActor* Actor) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Azul|InteractionExceptions")
+	void AddInteractableException(AActor* Actor);
+	
+	UFUNCTION(BlueprintCallable, Category = "Azul|InteractionExceptions")
+	void RemoveInteractableException(AActor* Actor);
+
 
 	UFUNCTION()
 	void StartInteractTrace();
