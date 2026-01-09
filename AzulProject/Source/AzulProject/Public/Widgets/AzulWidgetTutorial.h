@@ -19,6 +19,15 @@
 
 #include "AzulWidgetTutorial.generated.h"
 
+UENUM()
+enum class EInteractHelpState : uint8
+{
+    None,
+    FirstSet,
+    SecondSet
+};
+
+
 UCLASS()
 class AZULPROJECT_API UAzulWidgetTutorial : public UUserWidget
 {
@@ -98,8 +107,16 @@ protected:
 
     bool bSecondPartActivated = false;
 
+    EInteractHelpState InteractHelpState = EInteractHelpState::None;
+
     UFUNCTION()
     void ClearTutorialText();
+
+    UFUNCTION()
+    void ShowSecondInteractHelpSet();
+
+    UFUNCTION()
+    void CloseAllInteractHelp();
 
     UFUNCTION()
     void OnSkipTutorialPressed();

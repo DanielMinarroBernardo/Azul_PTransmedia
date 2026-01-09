@@ -277,7 +277,7 @@ void AAzulCharacterBase::StopInteractTrace()
     GetWorld()->GetTimerManager().ClearTimer(InteractTraceTimer);
 
     bCanInteract = false;
-    //UpdatedMirillaUI(false, false);
+    UpdatedMirillaUI(false, false);
 }
 
 

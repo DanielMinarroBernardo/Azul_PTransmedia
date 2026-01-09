@@ -179,6 +179,19 @@ void UAzulWidgetTutorial::OnContinueButtonPressed()
     if (!TutorialText || !ContinueButton)
         return;
 
+    // FLUJO DE INTERACT HELP
+    if (InteractHelpState == EInteractHelpState::FirstSet)
+    {
+        ShowSecondInteractHelpSet();
+        return;
+    }
+
+    if (InteractHelpState == EInteractHelpState::SecondSet)
+    {
+        CloseAllInteractHelp();
+        return;
+    }
+
     ContinueButton->SetIsEnabled(false);
 
     // --- FLUJO DE TEXTO ---
@@ -240,6 +253,7 @@ void UAzulWidgetTutorial::OnContinueButtonPressed()
     }
 
     if (CurrentStepTag == FGameplayTag::RequestGameplayTag("Tutorial.First.Look")) {
+
         InteractHelp_00->SetVisibility(ESlateVisibility::Hidden);
         InteractHelp_01->SetVisibility(ESlateVisibility::Hidden);
         InteractHelp_02->SetVisibility(ESlateVisibility::Hidden);
@@ -287,11 +301,9 @@ void UAzulWidgetTutorial::SetCheckBoxsForSecondPart()
         return;
 
     bSecondPartActivated = true;
+    InteractHelpState = EInteractHelpState::FirstSet;
 
     ClearTutorialText();
-
-    if (!CheckBox_1 || !CheckBox_2 || !CheckBox_3)
-        return;
 
     CheckBox_1->SetIsChecked(false);
     CheckBox_2->SetIsChecked(false);
@@ -301,8 +313,69 @@ void UAzulWidgetTutorial::SetCheckBoxsForSecondPart()
     TareaText_2->SetText(FText::FromString(TEXT("Take the manual.")));
     TareaText_3->SetText(FText::FromString(TEXT("Open the manual with the M key")));
 
+    // Mostrar 00–02
+    InteractHelp_00->SetVisibility(ESlateVisibility::Visible);
+    InteractHelp_01->SetVisibility(ESlateVisibility::Visible);
+    InteractHelp_02->SetVisibility(ESlateVisibility::Visible);
+
+    // Ocultar 03–05
+    InteractHelp_03->SetVisibility(ESlateVisibility::Hidden);
+    InteractHelp_04->SetVisibility(ESlateVisibility::Hidden);
+    InteractHelp_05->SetVisibility(ESlateVisibility::Hidden);
+
     OpenInteractHelp();
 }
+
+void UAzulWidgetTutorial::ShowSecondInteractHelpSet()
+{
+    InteractHelpState = EInteractHelpState::SecondSet;
+
+    // Ocultar primera tanda
+    InteractHelp_00->SetVisibility(ESlateVisibility::Hidden);
+    InteractHelp_01->SetVisibility(ESlateVisibility::Hidden);
+    InteractHelp_02->SetVisibility(ESlateVisibility::Hidden);
+
+    // Mostrar segunda tanda
+    InteractHelp_03->SetVisibility(ESlateVisibility::Visible);
+    InteractHelp_04->SetVisibility(ESlateVisibility::Visible);
+    InteractHelp_05->SetVisibility(ESlateVisibility::Visible);
+}
+
+void UAzulWidgetTutorial::CloseAllInteractHelp()
+{
+    InteractHelpState = EInteractHelpState::None;
+
+    // Ocultar todas las ayudas
+    InteractHelp_00->SetVisibility(ESlateVisibility::Hidden);
+    InteractHelp_01->SetVisibility(ESlateVisibility::Hidden);
+    InteractHelp_02->SetVisibility(ESlateVisibility::Hidden);
+    InteractHelp_03->SetVisibility(ESlateVisibility::Hidden);
+    InteractHelp_04->SetVisibility(ESlateVisibility::Hidden);
+    InteractHelp_05->SetVisibility(ESlateVisibility::Hidden);
+
+    // Restaurar input
+    if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+    {
+        PC->SetIgnoreLookInput(false);
+        PC->bShowMouseCursor = false;
+
+        FInputModeGameOnly InputMode;
+        PC->SetInputMode(InputMode);
+
+        if (AAzulCharacterBase* Character = Cast<AAzulCharacterBase>(PC->GetPawn()))
+        {
+            Character->OpenMirilla();
+            Character->UpdatedMirillaUI(false, false);
+        }
+    }
+
+    if (ContinueButton)
+    {
+        ContinueButton->SetVisibility(ESlateVisibility::Hidden);
+        ContinueButton->SetIsEnabled(false);
+    }
+}
+
 
 
 void UAzulWidgetTutorial::SetTutorialText(const FString& NewText)
