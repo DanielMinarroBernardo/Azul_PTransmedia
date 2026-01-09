@@ -35,6 +35,10 @@ void UAzulWidgetTutorial::NativeConstruct()
     InteractHelp_01->SetVisibility(ESlateVisibility::Hidden);
     InteractHelp_02->SetVisibility(ESlateVisibility::Hidden);
 
+    InteractHelp_03->SetVisibility(ESlateVisibility::Hidden);
+    InteractHelp_04->SetVisibility(ESlateVisibility::Hidden);
+    InteractHelp_05->SetVisibility(ESlateVisibility::Hidden);
+
 }
 
 void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag)

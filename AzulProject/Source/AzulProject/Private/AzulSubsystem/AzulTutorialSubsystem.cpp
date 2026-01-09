@@ -92,6 +92,16 @@ void UAzulTutorialSubsystem::StartTutorial()
     UE_LOG(LogTemp, Warning, TEXT("Tutorial STARTED"));
 }
 
+void UAzulTutorialSubsystem::ResetTutorial()
+{
+    CompletedActions.Reset();
+    bTutorialCompleted = false;
+    bTutorialActive = false;
+    bCanLookTutorial = false;
+
+    UE_LOG(LogTemp, Warning, TEXT("Tutorial RESET"));
+}
+
 bool UAzulTutorialSubsystem::IsTutorialActive() const
 {
     return bTutorialActive;

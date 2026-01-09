@@ -54,6 +54,9 @@ public:
     void StartTutorial();
 
     UFUNCTION(BlueprintCallable, Category = "Azul|Tutorial")
+    void ResetTutorial();
+
+    UFUNCTION(BlueprintCallable, Category = "Azul|Tutorial")
     bool IsTutorialActive() const;
 
 protected:

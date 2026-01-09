@@ -360,18 +360,18 @@ void AAzulCharacterBase::PerformInteractTrace()
 
     if (bHit && GEngine)
     {
-        FString Msg = FString::Printf(
-            TEXT("HIT → Actor: %s | Comp: %s"),
-            Hit.GetActor() ? *Hit.GetActor()->GetName() : TEXT("None"),
-            Hit.GetComponent() ? *Hit.GetComponent()->GetName() : TEXT("None")
-        );
+        //FString Msg = FString::Printf(
+        //    TEXT("HIT → Actor: %s | Comp: %s"),
+        //    Hit.GetActor() ? *Hit.GetActor()->GetName() : TEXT("None"),
+        //    Hit.GetComponent() ? *Hit.GetComponent()->GetName() : TEXT("None")
+        //);
 
-        GEngine->AddOnScreenDebugMessage(
-            -1,
-            0.1f,
-            FColor::Green,
-            Msg
-        );
+        //GEngine->AddOnScreenDebugMessage(
+        //    -1,
+        //    0.1f,
+        //    FColor::Green,
+        //    Msg
+        //);
     }
 
 
