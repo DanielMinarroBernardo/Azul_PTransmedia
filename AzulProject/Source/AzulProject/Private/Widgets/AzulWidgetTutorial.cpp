@@ -94,8 +94,10 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag)
         CheckBox_3->SetIsChecked(true);
         ContinueButton->SetVisibility(ESlateVisibility::Hidden);
 
+        ClearTutorialText();
+
         MainText = TEXT("Great, now you can see everything you want by turning your character's head.");
-        GetWorld()->GetTimerManager().ClearTimer(TextTimer);
+
         GetWorld()->GetTimerManager().SetTimer(
             TextTimer,
             this,
@@ -104,8 +106,7 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag)
             false
         );
 
-        GetWorld()->GetTimerManager().ClearTimer(ButtonTimer);
-        //Cambiar los checkbox después de delay
+        // Timer solo informativo, no decisivo
         GetWorld()->GetTimerManager().SetTimer(
             ButtonTimer,
             this,
@@ -114,10 +115,9 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag)
             false
         );
 
-
-
         return;
     }
+
 
     // ---------- INTERACTUAR ----------
     if (StepTag == FGameplayTag::RequestGameplayTag("Tutorial.Interact"))
@@ -180,12 +180,9 @@ void UAzulWidgetTutorial::OnContinueButtonPressed()
     // --- FLUJO DE TEXTO ---
     if (CurrentStepTag == FGameplayTag::RequestGameplayTag("Tutorial.First.Space"))
     {
-        TutorialText->SetText(
-            FText::FromString(
-                TEXT("Press W to move forward\nPress A and D to move sideways\nPress S to move backward")
-            )
+        SetTutorialText(
+            TEXT("Press W to move forward\nPress A and D to move sideways\nPress S to move backward")
         );
-
 
         CurrentStepTag = FGameplayTag::RequestGameplayTag("Tutorial.First.Move");
 
@@ -205,9 +202,10 @@ void UAzulWidgetTutorial::OnContinueButtonPressed()
 
     if (CurrentStepTag == FGameplayTag::RequestGameplayTag("Tutorial.First.Move"))
     {
-        TutorialText->SetText(
-            FText::FromString(TEXT("Move your mouse to look around"))
+        SetTutorialText(
+            TEXT("Move your mouse to look around")
         );
+
 
         CurrentStepTag =
             FGameplayTag::RequestGameplayTag("Tutorial.First.Look");
@@ -271,7 +269,8 @@ void UAzulWidgetTutorial::OnContinueButtonPressed()
                     *SonNameString
                 );
 
-                TutorialText->SetText(FText::FromString(TutorialString));
+                SetTutorialText(TutorialString);
+
 
             }
         }
@@ -280,29 +279,46 @@ void UAzulWidgetTutorial::OnContinueButtonPressed()
 
 void UAzulWidgetTutorial::SetCheckBoxsForSecondPart()
 {
-    GetWorld()->GetTimerManager().ClearTimer(TextTimer);
+    if (bSecondPartActivated)
+        return;
+
+    bSecondPartActivated = true;
+
+    ClearTutorialText();
 
     if (!CheckBox_1 || !CheckBox_2 || !CheckBox_3)
         return;
+
     CheckBox_1->SetIsChecked(false);
     CheckBox_2->SetIsChecked(false);
-	CheckBox_3->SetIsChecked(false);
+    CheckBox_3->SetIsChecked(false);
 
     TareaText_1->SetText(FText::FromString(TEXT("Interact with any interactive object")));
     TareaText_2->SetText(FText::FromString(TEXT("Take the manual.")));
     TareaText_3->SetText(FText::FromString(TEXT("Open the manual with the M key")));
 
     OpenInteractHelp();
-    
 }
+
 
 void UAzulWidgetTutorial::SetTutorialText(const FString& NewText)
 {
-    if (TutorialText)
+    GetWorld()->GetTimerManager().ClearTimer(TextTimer);
+
+    MainText = NewText;
+
+    if (NewText.IsEmpty())
     {
-        TutorialText->SetText(FText::FromString(NewText));
+        TutorialText->SetText(FText::GetEmpty());
+        TextBorder->SetVisibility(ESlateVisibility::Hidden);
+        return;
     }
+
+    TutorialText->SetText(FText::FromString(NewText));
+    TextBorder->SetVisibility(ESlateVisibility::Visible);
 }
+
+
 
 void UAzulWidgetTutorial::ApplyTutorialText()
 {
@@ -397,5 +413,26 @@ void UAzulWidgetTutorial::OnSkipTutorialPressed()
     // 4. Ocultar el widget de tutorial
     RemoveFromParent();
 }
+
+void UAzulWidgetTutorial::ClearTutorialText()
+{
+    if (GetWorld())
+    {
+        GetWorld()->GetTimerManager().ClearTimer(TextTimer);
+    }
+
+    MainText = TEXT("");
+
+    if (TutorialText)
+    {
+        TutorialText->SetText(FText::GetEmpty());
+    }
+
+    if (TextBorder)
+    {
+        TextBorder->SetVisibility(ESlateVisibility::Hidden);
+    }
+}
+
 
 

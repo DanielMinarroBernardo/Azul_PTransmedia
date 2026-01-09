@@ -129,7 +129,10 @@ public:
 
 	// Llamadas desde componentes
 	void NotifyHiloShown();
+
+	UFUNCTION()
 	void NotifyHiloHidden();
+
 
 	FTimerHandle HiloTimer;
 

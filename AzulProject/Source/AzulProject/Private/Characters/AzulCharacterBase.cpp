@@ -38,6 +38,14 @@ void AAzulCharacterBase::BeginPlay()
     {
         BolsoComponent->InitializeBolso(this);
     }
+
+    if (HiloActor)
+    {
+        HiloActor->OnHiloHidden.AddDynamic(
+            this,
+            &AAzulCharacterBase::NotifyHiloHidden
+        );
+    }
 }
 
 // Called every frame
@@ -188,18 +196,12 @@ void AAzulCharacterBase::OnSpacePressed()
             if (!GameSubsystem->IsSequenceActive())
             {
                 // --- HILO ---
-                if (!HiloActor)
-                    return;
-
                 if (HiloActor->IsHiloVisible())
                 {
-                    // Segundo espacio antes de 6s → ocultar
                     HiloActor->ForceHideHilo();
-                    NotifyHiloHidden();
                 }
                 else
                 {
-                    // Primer espacio → mostrar
                     HiloActor->ShowHilo();
                     NotifyHiloShown();
                 }
@@ -217,6 +219,7 @@ void AAzulCharacterBase::NotifyHiloShown()
 
 void AAzulCharacterBase::NotifyHiloHidden()
 {
+    UE_LOG(LogTemp, Warning, TEXT("NotifyHiloHidden CALLED"));
     BP_OnHiloHidden();
 }
 
@@ -545,9 +548,3 @@ void AAzulCharacterBase::RemoveInteractableException(AActor* Actor)
         StopInteractTrace();
     }
 }
-
-
-
-
-
-
