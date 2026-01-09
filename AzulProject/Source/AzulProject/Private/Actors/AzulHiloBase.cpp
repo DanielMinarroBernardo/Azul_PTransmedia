@@ -28,6 +28,8 @@ void AAzulHiloBase::BeginPlay()
     {
         NiagaraComp->SetAsset(NiagaraTemplate);
     }
+
+
 }
 
 
@@ -200,16 +202,24 @@ void AAzulHiloBase::RecalculateHiloFromInput()
 
 void AAzulHiloBase::HideHilo()
 {
+    if (!bHiloVisible)
+        return;
+
     GetWorld()->GetTimerManager().ClearTimer(Timer_HideHilo);
 
-    // ❗ NO borrar spline
+    // Ocultar spline y VFX
     SplineComp->SetVisibility(false, true);
 
     NiagaraComp->Deactivate();
     NiagaraComp->SetVisibility(false, true);
 
     bHiloVisible = false;
+
+    //NOTIFICAR SIEMPRE (timer, input, lo que sea)
+    OnHiloHidden.Broadcast();
 }
+
+
 
 void AAzulHiloBase::ShowHilo()
 {

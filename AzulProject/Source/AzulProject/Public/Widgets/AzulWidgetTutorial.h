@@ -40,6 +40,9 @@ protected:
     UBorder* TutorialBorder;
 
     UPROPERTY(meta = (BindWidget))
+    UBorder* TextBorder;
+
+    UPROPERTY(meta = (BindWidget))
     UVerticalBox* TutorialVerticalBox;
 
     UPROPERTY(meta = (BindWidget))
@@ -84,9 +87,13 @@ protected:
     UPROPERTY(meta = (BindWidget))
     UImage* InteractHelp_00;
 
+    bool bSecondPartActivated = false;
+
+    UFUNCTION()
+    void ClearTutorialText();
+
     UFUNCTION()
     void OnSkipTutorialPressed();
-
 
     UFUNCTION()
     void OnContinueButtonPressed();

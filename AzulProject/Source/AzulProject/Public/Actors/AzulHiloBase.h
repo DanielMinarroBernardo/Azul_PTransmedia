@@ -15,6 +15,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSplineRouteChanged,
 	const TArray<FVector>&, Previous,
 	const TArray<FVector>&, Target);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHiloHidden);
+
 UCLASS()
 class AZULPROJECT_API AAzulHiloBase : public AActor
 {
@@ -45,6 +47,9 @@ public:
 	// Evento para BP (Timeline)
 	UPROPERTY(BlueprintAssignable, Category = "Azul|Hilo")
 	FOnSplineRouteChanged OnSplineRouteChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "Azul|Hilo")
+	FOnHiloHidden OnHiloHidden;
 
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Azul|Hilo")
