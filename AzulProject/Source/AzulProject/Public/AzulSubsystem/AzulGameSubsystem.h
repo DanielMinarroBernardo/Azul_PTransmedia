@@ -62,6 +62,11 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|HUD Player")
     UAzulWidgetHUDPlayer* WidgetHUDPlayer;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|HUD Player|Mirilla")
+    bool bIsLookingItem = false;
+
+
+
 private:
 
     UPROPERTY()

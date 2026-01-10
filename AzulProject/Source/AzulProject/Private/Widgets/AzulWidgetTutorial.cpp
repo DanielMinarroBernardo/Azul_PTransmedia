@@ -8,23 +8,6 @@ void UAzulWidgetTutorial::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    if (ContinueButton)
-    {
-        ContinueButton->OnClicked.AddDynamic(
-            this,
-            &UAzulWidgetTutorial::OnContinueButtonPressed
-        );
-    }
-
-    if (SkipButton)
-    {
-        SkipButton->OnClicked.AddDynamic(
-            this,
-            &UAzulWidgetTutorial::OnSkipTutorialPressed
-        );
-    }
-
-
     ContinueButton->SetIsEnabled(false);
 
     CheckBox_1->SetVisibility(ESlateVisibility::HitTestInvisible);
@@ -39,11 +22,53 @@ void UAzulWidgetTutorial::NativeConstruct()
     InteractHelp_04->SetVisibility(ESlateVisibility::Hidden);
     InteractHelp_05->SetVisibility(ESlateVisibility::Hidden);
 
+    if (GetGameInstance())
+    {
+        if (UAzulTutorialSubsystem* TutorialSubsystem =
+            GetGameInstance()->GetSubsystem<UAzulTutorialSubsystem>())
+        {
+            TutorialSubsystem->OnTutorialStepUpdated.RemoveDynamic(
+                this,
+                &UAzulWidgetTutorial::FirstPartTutorial
+            );
+
+            TutorialSubsystem->OnTutorialStepUpdated.AddDynamic(
+                this,
+                &UAzulWidgetTutorial::FirstPartTutorial
+            );
+        }
+    }
+
 }
 
-void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag)
+void UAzulWidgetTutorial::NativeOnInitialized()
+{
+    Super::NativeOnInitialized();
+
+    if (ContinueButton)
+    {
+        ContinueButton->OnClicked.AddUniqueDynamic(
+            this,
+            &UAzulWidgetTutorial::OnContinueButtonPressed
+        );
+    }
+
+    if (SkipButton)
+    {
+        SkipButton->OnClicked.AddUniqueDynamic(
+            this,
+            &UAzulWidgetTutorial::OnSkipTutorialPressed
+        );
+    }
+}
+
+
+void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag, bool bCompleted)
 {
     if (!TutorialVerticalBox || !ContinueButton)
+        return;
+
+    if (!bCompleted)
         return;
 
     CurrentStepTag = StepTag;
@@ -101,6 +126,22 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag)
         ClearTutorialText();
 
         MainText = TEXT("Great, now you can see everything you want by turning your character's head.");
+
+        if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+        {
+            if (AAzulCharacterBase* Character = Cast<AAzulCharacterBase>(PC->GetPawn()))
+            {
+                // Bloquear movimiento WASD
+                if (Character->GetCharacterMovement())
+                {
+                    Character->GetCharacterMovement()->DisableMovement();
+                }
+
+                // Permitir LOOK
+                PC->SetIgnoreLookInput(false);
+            }
+        }
+
 
         GetWorld()->GetTimerManager().SetTimer(
             TextTimer,
@@ -366,6 +407,11 @@ void UAzulWidgetTutorial::CloseAllInteractHelp()
         {
             Character->OpenMirilla();
             Character->UpdatedMirillaUI(false, false);
+
+            if (Character->GetCharacterMovement())
+            {
+                Character->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+            }
         }
     }
 
@@ -451,7 +497,6 @@ void UAzulWidgetTutorial::OnSkipTutorialPressed()
     UAzulTutorialSubsystem* TutorialSubsystem =
         GetGameInstance()->GetSubsystem<UAzulTutorialSubsystem>();
 
-
     if (!TutorialSubsystem)
         return;
 
@@ -472,9 +517,19 @@ void UAzulWidgetTutorial::OnSkipTutorialPressed()
         FGameplayTag::RequestGameplayTag("Tutorial.Interact")
     );
 
-    // 3. Desbloquear jugador y activar mirilla
+    // 3. Restaurar INPUT COMPLETAMENTE
     if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
     {
+        // Desbloquear cámara
+        PC->SetIgnoreLookInput(false);
+
+        // Ocultar cursor
+        PC->bShowMouseCursor = false;
+
+        // Modo de input: SOLO JUEGO
+        FInputModeGameOnly InputMode;
+        PC->SetInputMode(InputMode);
+
         if (AAzulCharacterBase* Character = Cast<AAzulCharacterBase>(PC->GetPawn()))
         {
             Character->UnblockPlayerControl();
@@ -487,9 +542,10 @@ void UAzulWidgetTutorial::OnSkipTutorialPressed()
         }
     }
 
-    // 4. Ocultar el widget de tutorial
+    // 4. Ocultar el widget
     RemoveFromParent();
 }
+
 
 void UAzulWidgetTutorial::ClearTutorialText()
 {
@@ -510,6 +566,3 @@ void UAzulWidgetTutorial::ClearTutorialText()
         TextBorder->SetVisibility(ESlateVisibility::Hidden);
     }
 }
-
-
-

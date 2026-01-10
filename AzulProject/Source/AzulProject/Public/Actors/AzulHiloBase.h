@@ -85,7 +85,7 @@ private:
 
 	// Tiempo visible
 	UPROPERTY(EditAnywhere, Category = "Azul|Hilo")
-	float HiloVisibleTime = 6.0f;
+	float HiloVisibleTime = 4.0f;
 
 	// Función interna de apagado
 	void HideHilo();

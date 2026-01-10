@@ -59,6 +59,10 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Azul|Tutorial")
     bool IsTutorialActive() const;
 
+    UFUNCTION(BlueprintCallable, Category = "Azul|TutorialInput")
+    void ApplyPauseMenuInputMode();
+
+
 protected:
 
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
@@ -81,4 +85,7 @@ private:
     bool bTutorialCompleted = false;
 
     void CheckTutorialCompletion();
+
+    bool bUseUIAndGameInput = false;
+
 };

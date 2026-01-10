@@ -37,11 +37,12 @@ public:
 
     /* Llamada desde el Event Dispatcher del Subsystem */
     UFUNCTION(BlueprintCallable, Category = "Azul|Tutorial")
-    void FirstPartTutorial(FGameplayTag StepTag);
+    void FirstPartTutorial(FGameplayTag StepTag, bool bCompleted);
 
 protected:
 
     virtual void NativeConstruct() override;
+    virtual void NativeOnInitialized() override;
 
     /* -------- WIDGETS -------- */
 

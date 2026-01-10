@@ -1,10 +1,16 @@
 ﻿#include "Actors/AzulHiloBase.h"
 #include "Actors/AzulInteractuableBase.h"
 #include "Characters/AzulCharacterBase.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/CharacterMovementComponent.h"
+
 
 AAzulHiloBase::AAzulHiloBase()
 {
+    PrimaryActorTick.bCanEverTick = true;
+
     bHiloVisible = false;
 
     SplineComp = CreateDefaultSubobject<USplineComponent>(TEXT("SplineComp"));
@@ -28,8 +34,6 @@ void AAzulHiloBase::BeginPlay()
     {
         NiagaraComp->SetAsset(NiagaraTemplate);
     }
-
-
 }
 
 
@@ -37,8 +41,6 @@ void AAzulHiloBase::SetNiagaraLifeTime(float Value)
 {
     static const FName LifeTimeName(TEXT("LifeTime"));
     NiagaraComp->SetVariableFloat(LifeTimeName, Value);
-
-    //UKismetSystemLibrary::PrintString(this, TEXT("CAMBIADO EL LIFE TIME"), true);
 }
 
 
@@ -122,34 +124,25 @@ void AAzulHiloBase::ApplyInterpolatedSplinePoints(const TArray<FVector>& Points)
 
 void AAzulHiloBase::RecalculateHiloFromInput()
 {
-    //UKismetSystemLibrary::PrintString(
-    //    this,
-    //    TEXT(">>> RecalculateHiloFromInput CALLED <<<"),
-    //    true
-    //);
-
     if (!CachedPlayer || !HijoActor)
     {
-        //UKismetSystemLibrary::PrintString(
-        //    this,
-        //    TEXT("EARLY RETURN: CachedPlayer or HijoActor NULL"),
-        //    true
-        //);
-        //return;
+        return;
+    }
+
+    if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+    {
+        if (AAzulCharacterBase* Character = Cast<AAzulCharacterBase>(PC->GetPawn()))
+        {
+            if (Character->GetCharacterMovement())
+            {
+                Character->GetCharacterMovement()->DisableMovement();
+            }
+        }
     }
 
     SplineComp->SetVisibility(true, true);
 
-    //UKismetSystemLibrary::PrintString(
-    //    this,
-    //    FString::Printf(
-    //        TEXT("bHiloVisible cambiado: %s"),
-    //        bHiloVisible ? TEXT("true") : TEXT("false")
-    //    ),
-    //    true
-    //);
-
-    const float HiloZ = CachedPlayer->GetActorLocation().Z - 20.0f;
+    const float HiloZ = CachedPlayer->GetActorLocation().Z + 5.0f;
 
     FVector StartPos = CachedPlayer->GetActorLocation();
     StartPos.Z = HiloZ;
@@ -197,11 +190,19 @@ void AAzulHiloBase::RecalculateHiloFromInput()
 }
 
 
-
-
-
 void AAzulHiloBase::HideHilo()
 {
+    if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+    {
+        if (AAzulCharacterBase* Character = Cast<AAzulCharacterBase>(PC->GetPawn()))
+        {
+            if (Character->GetCharacterMovement())
+            {
+                Character->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+            }
+        }
+    }
+
     if (!bHiloVisible)
         return;
 

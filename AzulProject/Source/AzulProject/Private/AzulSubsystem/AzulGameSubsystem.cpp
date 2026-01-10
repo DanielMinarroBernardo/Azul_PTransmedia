@@ -42,10 +42,10 @@ void UAzulGameSubsystem::PlayLevelSequence(
             return;
         }
 
-        // 🔒 Bloqueamos control
+        // Bloqueamos control
         Character->BlockPlayerControl();
 
-        // 👻 Ocultamos mesh si procede
+        // Ocultamos mesh si procede
         if (bHideCharacterMeshDuringSequence)
         {
             if (USkeletalMeshComponent* Mesh = Character->GetMesh())

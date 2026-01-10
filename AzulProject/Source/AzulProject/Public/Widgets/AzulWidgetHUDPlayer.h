@@ -32,11 +32,11 @@ public:
     UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
     UImage* InteractImage;
 
-    UPROPERTY(meta = (BindWidget))
+    /*UPROPERTY(meta = (BindWidget))
     UTextBlock* TextInteractuable;
 
     UPROPERTY(meta = (BindWidget))
-    UBorder* BorderText;
+    UBorder* BorderText;*/
 
     // Texturas configurables desde Blueprint
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Interact UI")

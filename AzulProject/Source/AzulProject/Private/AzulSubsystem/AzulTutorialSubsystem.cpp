@@ -106,3 +106,39 @@ bool UAzulTutorialSubsystem::IsTutorialActive() const
 {
     return bTutorialActive;
 }
+
+void UAzulTutorialSubsystem::ApplyPauseMenuInputMode()
+{
+    // Determinar si estamos antes del LOOK
+    const FGameplayTag LookTag =
+        FGameplayTag::RequestGameplayTag("Tutorial.First.Look");
+
+    const bool bBeforeLook = !CompletedActions.HasTag(LookTag);
+
+    if (UWorld* World = GetWorld())
+    {
+        if (APlayerController* PC = World->GetFirstPlayerController())
+        {
+            if (bBeforeLook)
+            {
+                // 🔹 Tutorial temprano → Juego + UI
+                FInputModeGameAndUI InputMode;
+                InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+                InputMode.SetHideCursorDuringCapture(false);
+
+                PC->SetInputMode(InputMode);
+                PC->bShowMouseCursor = true;
+            }
+            else
+            {
+                // 🔹 Tutorial avanzado → Solo juego
+                FInputModeGameOnly InputMode;
+                PC->SetInputMode(InputMode);
+
+                PC->bShowMouseCursor = false;
+            }
+        }
+    }
+}
+
+
