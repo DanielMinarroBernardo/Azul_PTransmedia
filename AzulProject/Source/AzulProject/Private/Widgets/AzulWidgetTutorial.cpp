@@ -36,6 +36,16 @@ void UAzulWidgetTutorial::NativeConstruct()
                 this,
                 &UAzulWidgetTutorial::FirstPartTutorial
             );
+
+            TutorialSubsystem->OnTutorialCompleted.RemoveDynamic(
+                this,
+                &UAzulWidgetTutorial::HandleTutorialCompleted
+            );
+
+            TutorialSubsystem->OnTutorialCompleted.AddDynamic(
+                this,
+                &UAzulWidgetTutorial::HandleTutorialCompleted
+            );
         }
     }
 
@@ -61,6 +71,24 @@ void UAzulWidgetTutorial::NativeOnInitialized()
         );
     }
 }
+
+void UAzulWidgetTutorial::NativeDestruct()
+{
+    Super::NativeDestruct();
+
+    if (GetGameInstance())
+    {
+        if (UAzulTutorialSubsystem* TutorialSubsystem =
+            GetGameInstance()->GetSubsystem<UAzulTutorialSubsystem>())
+        {
+            TutorialSubsystem->OnTutorialCompleted.RemoveDynamic(
+                this,
+                &UAzulWidgetTutorial::HandleTutorialCompleted
+            );
+        }
+    }
+}
+
 
 
 void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag, bool bCompleted)
@@ -100,7 +128,15 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag, bool bComplete
         StepTag.MatchesTag(FGameplayTag::RequestGameplayTag("Tutorial.First.Move"))
         )
     {
-        CheckBox_2->SetIsChecked(true);
+        if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+        {
+            if (AAzulCharacterBase* Character = Cast<AAzulCharacterBase>(PC->GetPawn()))
+            {
+                if (Character->bIsReadyToMoveTutorial) {
+                    CheckBox_2->SetIsChecked(true);
+                }
+            }
+        }
 
         MainText = TEXT("There you are, now you can move in all directions and explore every location.");
         GetWorld()->GetTimerManager().ClearTimer(TextTimer);
@@ -185,7 +221,7 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag, bool bComplete
     if (StepTag == FGameplayTag::RequestGameplayTag("Tutorial.TakeManual")) {
         CheckBox_2->SetIsChecked(true);
 
-        MainText = TEXT("Now open it.");
+        MainText = TEXT("You just picked up the manual, try opening it.");
         GetWorld()->GetTimerManager().ClearTimer(ButtonTimer);
         GetWorld()->GetTimerManager().SetTimer(
             TextTimer,
@@ -201,7 +237,7 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag, bool bComplete
     if (StepTag == FGameplayTag::RequestGameplayTag("Tutorial.OpenManual")) {
         CheckBox_3->SetIsChecked(true);
 
-        MainText = TEXT("Yes");
+        MainText = TEXT("Yes, you've just completed the tutorial.");
         GetWorld()->GetTimerManager().ClearTimer(ButtonTimer);
         GetWorld()->GetTimerManager().SetTimer(
             TextTimer,
@@ -246,11 +282,15 @@ void UAzulWidgetTutorial::OnContinueButtonPressed()
 
         if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
         {
+            PC->FlushPressedKeys();
+
             if (AAzulCharacterBase* Character = Cast<AAzulCharacterBase>(PC->GetPawn()))
             {
                 if (Character->GetCharacterMovement())
                 {
                     Character->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+                    Character->bIsReadyToMoveTutorial = true;
+                    Character->bTutorialAllowMovement = true;
                 }
             }
         }
@@ -264,7 +304,7 @@ void UAzulWidgetTutorial::OnContinueButtonPressed()
             TEXT("Move your mouse to look around")
         );
 
-
+        
         CurrentStepTag =
             FGameplayTag::RequestGameplayTag("Tutorial.First.Look");
 
@@ -487,6 +527,26 @@ void UAzulWidgetTutorial::OpenInteractHelp()
     {
         ContinueButton->SetVisibility(ESlateVisibility::Visible);
         ContinueButton->SetIsEnabled(true);
+    }
+}
+
+void UAzulWidgetTutorial::CompleteTutorial(const FGameplayTag& Tag)
+{
+    UAzulTutorialSubsystem* TutorialSubsystem =
+        GetGameInstance()->GetSubsystem<UAzulTutorialSubsystem>();
+
+    TutorialSubsystem->OnTutorialCompleted.Broadcast(Tag);
+}
+
+void UAzulWidgetTutorial::HandleTutorialCompleted(FGameplayTag CompletedTag)
+{
+    // Si quieres filtrar:
+    if (CompletedTag != FGameplayTag::RequestGameplayTag("Tutorial.Completed"))
+        return;
+
+    if (TutorialBorder)
+    {
+        TutorialBorder->SetVisibility(ESlateVisibility::Hidden);
     }
 }
 

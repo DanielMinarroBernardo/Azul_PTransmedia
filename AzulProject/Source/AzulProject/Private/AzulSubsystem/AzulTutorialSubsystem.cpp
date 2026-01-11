@@ -23,6 +23,14 @@ void UAzulTutorialSubsystem::Initialize(FSubsystemCollectionBase& Collection)
         FGameplayTag::RequestGameplayTag("Tutorial.Interact")
     );
 
+    TutorialCompletionRequirements.AddTag(
+        FGameplayTag::RequestGameplayTag("Tutorial.TakeManual")
+    );
+
+    TutorialCompletionRequirements.AddTag(
+        FGameplayTag::RequestGameplayTag("Tutorial.OpenManual")
+    );
+
     UE_LOG(LogTemp, Warning, TEXT("Tutorial Subsystem initialized with %d completion requirements"),
         TutorialCompletionRequirements.Num());
 }

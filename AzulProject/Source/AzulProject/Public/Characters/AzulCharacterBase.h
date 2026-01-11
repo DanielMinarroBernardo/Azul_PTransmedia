@@ -161,6 +161,13 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Azul|Mirilla")
 	float InteractTraceDistance = 1000.0f;
 
+	//----------------------------TUTORIAL----------------------------------
+	bool bIsReadyToMoveTutorial = false;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Azul|Tutorial")
+	bool bTutorialAllowMovement = false;
+
+
 	//----------------------------INPUT-------------------------------------------
 
 	// Input

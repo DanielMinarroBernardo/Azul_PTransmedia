@@ -43,6 +43,7 @@ protected:
 
     virtual void NativeConstruct() override;
     virtual void NativeOnInitialized() override;
+    virtual void NativeDestruct() override;
 
     /* -------- WIDGETS -------- */
 
@@ -136,6 +137,11 @@ protected:
     void EnableContinueButton();
 
     void OpenInteractHelp();
+
+    void CompleteTutorial(const FGameplayTag& Tag);
+
+    UFUNCTION()
+    void HandleTutorialCompleted(FGameplayTag CompletedTag);
 
     FTimerHandle TextTimer;
     FTimerHandle ButtonTimer;
