@@ -51,6 +51,7 @@ void AAzulInteractuableBase::BeginPlay()
 		CollisionSphere->OnComponentEndOverlap.AddDynamic(this, &AAzulInteractuableBase::OnEndOverlap);
 	}
 
+	
 }
 
 void AAzulInteractuableBase::Interactua_Implementation()

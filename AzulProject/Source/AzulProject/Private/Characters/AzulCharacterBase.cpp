@@ -46,6 +46,35 @@ void AAzulCharacterBase::BeginPlay()
             &AAzulCharacterBase::NotifyHiloHidden
         );
     }
+
+    // --- AÑADIDO MANUAL DE INTERACTUABLES INICIALES ---
+    TArray<AActor*> FoundActors;
+
+    UGameplayStatics::GetAllActorsOfClass(
+        GetWorld(),
+        AAzulInteractuableBase::StaticClass(),
+        FoundActors
+    );
+
+    for (AActor* Actor : FoundActors)
+    {
+        AAzulInteractuableBase* Interactable =
+            Cast<AAzulInteractuableBase>(Actor);
+
+        if (!Interactable)
+            continue;
+
+        // AQUÍ decides cuáles sí y cuáles no
+        const FString Name = Interactable->GetName();
+
+        if (Name == TEXT("BP_InteractuableTexto_C_2") ||
+            Name == TEXT("BP_InteractuableTexto_C_1"))
+        {
+            AddInteractable(
+                TScriptInterface<IAzulInteractuableInterface>(Interactable)
+            );
+        }
+    }
 }
 
 // Called every frame
@@ -358,21 +387,21 @@ void AAzulCharacterBase::PerformInteractTrace()
         Params
     );
 
-    if (bHit && GEngine)
+    /*if (bHit && GEngine)
     {
-        //FString Msg = FString::Printf(
-        //    TEXT("HIT → Actor: %s | Comp: %s"),
-        //    Hit.GetActor() ? *Hit.GetActor()->GetName() : TEXT("None"),
-        //    Hit.GetComponent() ? *Hit.GetComponent()->GetName() : TEXT("None")
-        //);
+        FString Msg = FString::Printf(
+            TEXT("HIT → Actor: %s | Comp: %s"),
+            Hit.GetActor() ? *Hit.GetActor()->GetName() : TEXT("None"),
+            Hit.GetComponent() ? *Hit.GetComponent()->GetName() : TEXT("None")
+        );
 
-        //GEngine->AddOnScreenDebugMessage(
-        //    -1,
-        //    0.1f,
-        //    FColor::Green,
-        //    Msg
-        //);
-    }
+        GEngine->AddOnScreenDebugMessage(
+            -1,
+            0.1f,
+            FColor::Green,
+            Msg
+        );
+    }*/
 
 
     // 6️⃣ Buscar si el hit corresponde a ALGUNO de los interactuables en rango
@@ -394,6 +423,47 @@ void AAzulCharacterBase::PerformInteractTrace()
             {
                 HitInteractable = Candidate;
                 break;
+            }
+
+            // --- EXCEPCIÓN ARMARIOS ---
+            if (!HitInteractable && Hit.GetActor() && Hit.GetComponent())
+            {
+                const FString ActorName = Hit.GetActor()->GetName();
+                const FString CompName = Hit.GetComponent()->GetName();
+
+                const bool bIsArmario =
+                    ActorName == TEXT("BP_Armarios_C_1") ||
+                    ActorName == TEXT("BP_Armarios_C_3") ||
+                    ActorName == TEXT("BP_Armarios_C_5");
+
+                const bool bIsPomo =
+                    CompName == TEXT("Pomo") ||
+                    CompName == TEXT("Pomo1");
+
+                if (bIsArmario && bIsPomo)
+                {
+                    HitInteractable = Candidate;
+                    break;
+                }
+            }
+
+            // --- EXCEPCIÓN BAÚL ---
+            if (!HitInteractable && Hit.GetActor() && Hit.GetComponent())
+            {
+                const FString ActorName = Hit.GetActor()->GetName();
+                const FString CompName = Hit.GetComponent()->GetName();
+
+                const bool bIsBaul =
+                    ActorName == TEXT("BP_Baulongo_C_1");
+
+                const bool bIsParaAbrir =
+                    CompName == TEXT("ParaAbrir");
+
+                if (bIsBaul && bIsParaAbrir)
+                {
+                    HitInteractable = Candidate;
+                    break;
+                }
             }
         }
 
