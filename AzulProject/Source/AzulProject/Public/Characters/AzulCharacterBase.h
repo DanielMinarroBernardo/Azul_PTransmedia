@@ -121,6 +121,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Azul|Input")
 	UInputAction* IA_MostrarHilo;
 
+	UPROPERTY(BlueprintReadOnly)
+	bool bMovementLockedByHilo = false;
+
 	UFUNCTION(BlueprintImplementableEvent, Category = "Azul|Hilo")
 	void BP_OnHiloShown();
 
@@ -164,8 +167,14 @@ public:
 	//----------------------------TUTORIAL----------------------------------
 	bool bIsReadyToMoveTutorial = false;
 
+	UPROPERTY(BlueprintReadOnly)
+	bool bTutorialForbidMovementWhileHilo = false;
+
 	UPROPERTY(BlueprintReadWrite, Category = "Azul|Tutorial")
 	bool bTutorialAllowMovement = false;
+
+	UFUNCTION(BlueprintCallable)
+	bool CanMoveAccordingToTutorial() const;
 
 
 	//----------------------------INPUT-------------------------------------------

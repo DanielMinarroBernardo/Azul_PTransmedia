@@ -140,6 +140,8 @@ protected:
 
     void CompleteTutorial(const FGameplayTag& Tag);
 
+    void ApplyMoveCompletedText();
+
     UFUNCTION()
     void HandleTutorialCompleted(FGameplayTag CompletedTag);
 

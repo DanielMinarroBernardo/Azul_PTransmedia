@@ -243,14 +243,47 @@ void AAzulCharacterBase::OnSpacePressed()
 
 void AAzulCharacterBase::NotifyHiloShown()
 {
+    bMovementLockedByHilo = true;
+    GetCharacterMovement()->DisableMovement();
     BP_OnHiloShown();
 }
 
 void AAzulCharacterBase::NotifyHiloHidden()
 {
-    UE_LOG(LogTemp, Warning, TEXT("NotifyHiloHidden CALLED"));
+    bMovementLockedByHilo = false;
+
+    if (CanMoveAccordingToTutorial())
+    {
+        GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+    }
+
     BP_OnHiloHidden();
 }
+
+//------------------------------------TUTORIAL
+bool AAzulCharacterBase::CanMoveAccordingToTutorial() const
+{
+    // Si el tutorial no está activo → movimiento normal
+    if (!GetGameInstance())
+        return true;
+
+    const UAzulTutorialSubsystem* TutorialSubsystem =
+        GetGameInstance()->GetSubsystem<UAzulTutorialSubsystem>();
+
+    if (!TutorialSubsystem || !TutorialSubsystem->IsTutorialActive())
+        return true;
+
+    // No se permite movimiento todavía
+    if (!bTutorialAllowMovement)
+        return false;
+
+    // Caso especial: hilo activo bloquea movimiento
+    if (bTutorialForbidMovementWhileHilo && bMovementLockedByHilo)
+        return false;
+
+    return true;
+}
+
 
 //------------------------------------MIRILLA
 

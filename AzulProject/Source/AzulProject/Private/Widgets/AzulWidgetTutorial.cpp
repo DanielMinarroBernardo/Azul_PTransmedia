@@ -106,7 +106,7 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag, bool bComplete
     {
         CheckBox_1->SetIsChecked(true);
 
-        MainText = TEXT("This is the thread that will always take you to your child whenever you need it. It lasts 6 seconds, but you can remove it before that time by pressing the space bar again.");
+        MainText = TEXT("This is the thread that will always take you to your child whenever you need it. It lasts 4 seconds, but you can remove it before that time by pressing the space bar again. You cannot move while you are watching the thread.");
         GetWorld()->GetTimerManager().ClearTimer(TextTimer);
         
         //Pasa 2 segundos y cambiamos texto
@@ -124,9 +124,7 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag, bool bComplete
     }
 
     // ---------- MOVE (WASD) ----------
-    if (
-        StepTag.MatchesTag(FGameplayTag::RequestGameplayTag("Tutorial.First.Move"))
-        )
+    if (StepTag.MatchesTag(FGameplayTag::RequestGameplayTag("Tutorial.First.Move")))
     {
         if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
         {
@@ -138,20 +136,20 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag, bool bComplete
             }
         }
 
-        MainText = TEXT("There you are, now you can move in all directions and explore every location.");
+        // ⏱ Esperar 3 segundos antes de mostrar el texto
         GetWorld()->GetTimerManager().ClearTimer(TextTimer);
         GetWorld()->GetTimerManager().SetTimer(
             TextTimer,
             this,
-            &UAzulWidgetTutorial::ApplyTutorialText,
-            1.0f,
+            &UAzulWidgetTutorial::ApplyMoveCompletedText,
+            3.0f,
             false
         );
 
         EnableContinueButton();
-
         return;
     }
+
 
     // ---------- LOOK ----------
     if (StepTag == FGameplayTag::RequestGameplayTag("Tutorial.First.Look"))
@@ -238,17 +236,28 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag, bool bComplete
         CheckBox_3->SetIsChecked(true);
 
         MainText = TEXT("Yes, you've just completed the tutorial.");
-        GetWorld()->GetTimerManager().ClearTimer(ButtonTimer);
+
+        GetWorld()->GetTimerManager().ClearTimer(TextTimer);
         GetWorld()->GetTimerManager().SetTimer(
             TextTimer,
             this,
             &UAzulWidgetTutorial::ApplyTutorialText,
-            5.0f,
+            0.1f,
+            false
+        );
+
+        // ⏱ Limpiar texto tras 4 segundos
+        GetWorld()->GetTimerManager().SetTimer(
+            ButtonTimer,
+            this,
+            &UAzulWidgetTutorial::ClearTutorialText,
+            4.0f,
             false
         );
 
         return;
     }
+
 }
 
 void UAzulWidgetTutorial::OnContinueButtonPressed()
@@ -274,29 +283,42 @@ void UAzulWidgetTutorial::OnContinueButtonPressed()
     // --- FLUJO DE TEXTO ---
     if (CurrentStepTag == FGameplayTag::RequestGameplayTag("Tutorial.First.Space"))
     {
+        //RESTAURAR INPUT A JUEGO
+        if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+        {
+            //PC->bShowMouseCursor = true;
+
+            //FInputModeGameOnly InputMode;
+            //PC->SetInputMode(InputMode);
+
+            FInputModeGameOnly InputMode;
+            PC->SetInputMode(InputMode);
+            PC->bShowMouseCursor = true;
+
+        }
+
         SetTutorialText(
             TEXT("Press W to move forward\nPress A and D to move sideways\nPress S to move backward")
         );
 
         CurrentStepTag = FGameplayTag::RequestGameplayTag("Tutorial.First.Move");
 
-        if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+        if (AAzulCharacterBase* Character = Cast<AAzulCharacterBase>(
+            GetWorld()->GetFirstPlayerController()->GetPawn()))
         {
-            PC->FlushPressedKeys();
+            Character->bIsReadyToMoveTutorial = true;
+            Character->bTutorialAllowMovement = true;
+            Character->bTutorialForbidMovementWhileHilo = true;
 
-            if (AAzulCharacterBase* Character = Cast<AAzulCharacterBase>(PC->GetPawn()))
+            if (!Character->bMovementLockedByHilo)
             {
-                if (Character->GetCharacterMovement())
-                {
-                    Character->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-                    Character->bIsReadyToMoveTutorial = true;
-                    Character->bTutorialAllowMovement = true;
-                }
+                Character->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
             }
         }
 
         return;
     }
+
 
     if (CurrentStepTag == FGameplayTag::RequestGameplayTag("Tutorial.First.Move"))
     {
@@ -312,10 +334,13 @@ void UAzulWidgetTutorial::OnContinueButtonPressed()
         {
             if (AAzulCharacterBase* Character = Cast<AAzulCharacterBase>(PC->GetPawn()))
             {
-                if (Character->GetCharacterMovement())
-                {
-                    Character->UnblockPlayerControl();
-                }
+                PC->SetIgnoreLookInput(false);
+                PC->bShowMouseCursor = false;
+
+                FInputModeGameOnly InputMode;
+                PC->SetInputMode(InputMode);
+
+                Character->bTutorialForbidMovementWhileHilo = false;
             }
         }
 
@@ -454,6 +479,20 @@ void UAzulWidgetTutorial::CloseAllInteractHelp()
             }
         }
     }
+
+    //SetTutorialText(
+    //    TEXT("Walk around the room and explore the pictures, cupboards, trunks...")
+    //);
+
+    //// Limpiar texto tras 10 segundos
+    //GetWorld()->GetTimerManager().ClearTimer(TextTimer);
+    //GetWorld()->GetTimerManager().SetTimer(
+    //    TextTimer,
+    //    this,
+    //    &UAzulWidgetTutorial::ClearTutorialText,
+    //    10.0f,
+    //    false
+    //);
 
     if (ContinueButton)
     {
@@ -626,3 +665,11 @@ void UAzulWidgetTutorial::ClearTutorialText()
         TextBorder->SetVisibility(ESlateVisibility::Hidden);
     }
 }
+
+void UAzulWidgetTutorial::ApplyMoveCompletedText()
+{
+    SetTutorialText(
+        TEXT("There you are, now you can move in all directions and explore every location.")
+    );
+}
+

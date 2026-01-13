@@ -136,6 +136,7 @@ void AAzulHiloBase::RecalculateHiloFromInput()
             if (Character->GetCharacterMovement())
             {
                 Character->GetCharacterMovement()->DisableMovement();
+                Character->bMovementLockedByHilo = true;
             }
         }
     }
@@ -198,7 +199,14 @@ void AAzulHiloBase::HideHilo()
         {
             if (Character->GetCharacterMovement())
             {
-                Character->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+                Character->bMovementLockedByHilo = false;
+
+                // Solo permitir mover si el tutorial no lo prohíbe
+                if (!Character->bTutorialForbidMovementWhileHilo)
+                {
+                    Character->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+                }
+
             }
         }
     }
