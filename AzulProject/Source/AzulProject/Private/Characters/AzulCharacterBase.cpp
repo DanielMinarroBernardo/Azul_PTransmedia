@@ -387,7 +387,7 @@ void AAzulCharacterBase::PerformInteractTrace()
         Params
     );
 
-    /*if (bHit && GEngine)
+    if (bHit && GEngine)
     {
         FString Msg = FString::Printf(
             TEXT("HIT → Actor: %s | Comp: %s"),
@@ -401,7 +401,7 @@ void AAzulCharacterBase::PerformInteractTrace()
             FColor::Green,
             Msg
         );
-    }*/
+    }
 
 
     // 6️⃣ Buscar si el hit corresponde a ALGUNO de los interactuables en rango
@@ -465,6 +465,28 @@ void AAzulCharacterBase::PerformInteractTrace()
                     break;
                 }
             }
+
+            // --- EXCEPCIÓN BEBÉ ---
+            if (!HitInteractable && Hit.GetActor() && Hit.GetComponent())
+            {
+                const FString ActorName = Hit.GetActor()->GetName();
+                const FString CompName = Hit.GetComponent()->GetName();
+
+                const bool bIsBebe =
+                    ActorName == TEXT("BP_Bebe_C_1");
+
+                const bool bIsParaInteractuar =
+                    CompName == TEXT("ParaInteractuarCabeza") ||
+                    CompName == TEXT("ParaInteractuarCuerpo");
+
+                if (bIsBebe && bIsParaInteractuar)
+                {
+                    HitInteractable = Candidate;
+                    break;
+                }
+            }
+
+
         }
 
         // --- CASO EXCEPCIÓN ---
