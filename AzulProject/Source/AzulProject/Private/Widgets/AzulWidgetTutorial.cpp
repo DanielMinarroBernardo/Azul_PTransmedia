@@ -353,7 +353,7 @@ void UAzulWidgetTutorial::OnContinueButtonPressed()
                 FInputModeGameOnly InputMode;
                 PC->SetInputMode(InputMode);
 
-                Character->UnblockPlayerControl();
+                //Character->UnblockPlayerControl();
                 Character->OpenMirilla();
                 FString SonNameString;
 
