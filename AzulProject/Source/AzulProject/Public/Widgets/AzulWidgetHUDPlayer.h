@@ -13,40 +13,29 @@
 UENUM(BlueprintType)
 enum class EInteractUIState : uint8
 {
-    Default             UMETA(DisplayName = "Default"),
-    InRange             UMETA(DisplayName = "In Range"),
-    InRangeAndLooking   UMETA(DisplayName = "In Range And Looking")
+    Default,
+    Active
 };
 
-
-/**
- * 
- */
 UCLASS()
 class AZULPROJECT_API UAzulWidgetHUDPlayer : public UUserWidget
 {
-	GENERATED_BODY()
-	
+    GENERATED_BODY()
+
 public:
-    // Imagen del widget (marcada IsVariable en UMG)
     UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
     UImage* InteractImage;
 
-    /*UPROPERTY(meta = (BindWidget))
-    UTextBlock* TextInteractuable;
-
-    UPROPERTY(meta = (BindWidget))
-    UBorder* BorderText;*/
-
-    // Texturas configurables desde Blueprint
+    // UNA sola textura
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Interact UI")
-    UTexture2D* DefaultTexture;
+    UTexture2D* CrosshairTexture;
+
+    // Colores
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Interact UI")
+    FLinearColor DefaultColor = FLinearColor(0.1333f, 0.3176f, 1.0f, 0.0f);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Interact UI")
-    UTexture2D* InRangeTexture;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Interact UI")
-    UTexture2D* LookingTexture;
+    FLinearColor ActiveColor = FLinearColor(0.7765f, 1.0f, 1.0f, 0.5451f);
 
     UFUNCTION(BlueprintCallable)
     void SetUIState(EInteractUIState NewState);

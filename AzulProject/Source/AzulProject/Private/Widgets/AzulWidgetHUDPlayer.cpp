@@ -1,31 +1,20 @@
 #include "Widgets/AzulWidgetHUDPlayer.h"
 
-
 void UAzulWidgetHUDPlayer::SetUIState(EInteractUIState NewState)
 {
-    if (!InteractImage) return;
+    if (!InteractImage || !CrosshairTexture)
+        return;
 
-    UTexture2D* TextureToApply = nullptr;
+    InteractImage->SetBrushFromTexture(CrosshairTexture, true);
 
     switch (NewState)
     {
     case EInteractUIState::Default:
-        TextureToApply = DefaultTexture;
+        InteractImage->SetColorAndOpacity(DefaultColor);
         break;
 
-    case EInteractUIState::InRange:
-        TextureToApply = InRangeTexture;
-        break;
-
-    case EInteractUIState::InRangeAndLooking:
-        TextureToApply = LookingTexture;
+    case EInteractUIState::Active:
+        InteractImage->SetColorAndOpacity(ActiveColor);
         break;
     }
-
-
-    if (TextureToApply)
-    {
-        InteractImage->SetBrushFromTexture(TextureToApply, true);
-    }
-
 }

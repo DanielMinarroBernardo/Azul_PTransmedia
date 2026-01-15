@@ -41,6 +41,15 @@ public:
 
 	//
 
+	UFUNCTION(BlueprintCallable, Category = "Azul|Interactuable")
+	bool IsValidInteractionComponent(const UPrimitiveComponent* Component) const;
+
+	// Componentes válidos para interacción por mirilla
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Azul|Interactuable")
+	TArray<UPrimitiveComponent*> InteractionComponents;
+
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Character")
 	AAzulCharacterBase* OverlappingCharacter;
 

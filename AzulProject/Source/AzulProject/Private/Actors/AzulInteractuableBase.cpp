@@ -68,6 +68,21 @@ void AAzulInteractuableBase::Tick(float DeltaTime)
 
 
 
+bool AAzulInteractuableBase::IsValidInteractionComponent(
+	const UPrimitiveComponent* Component) const
+{
+	if (!Component)
+		return false;
+
+	if (InteractionComponents.Num() == 0)
+	{
+		return Component == MeshComp;
+	}
+
+	return InteractionComponents.Contains(Component);
+}
+
+
 void AAzulInteractuableBase::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {

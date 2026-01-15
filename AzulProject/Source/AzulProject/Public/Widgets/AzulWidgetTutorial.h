@@ -90,22 +90,11 @@ protected:
     UButton* SkipButton;
 
     UPROPERTY(meta = (BindWidget))
-    UHorizontalBox* InteractHelp_01;
+    UBorder* InteractHelp_FirstSet;
 
     UPROPERTY(meta = (BindWidget))
-    UHorizontalBox* InteractHelp_02;
+    UBorder* InteractHelp_SecondSet;
 
-    UPROPERTY(meta = (BindWidget))
-    UImage* InteractHelp_00;
-
-    UPROPERTY(meta = (BindWidget))
-    UHorizontalBox* InteractHelp_04;
-
-    UPROPERTY(meta = (BindWidget))
-    UHorizontalBox* InteractHelp_05;
-
-    UPROPERTY(meta = (BindWidget))
-    UImage* InteractHelp_03;
 
     bool bSecondPartActivated = false;
 

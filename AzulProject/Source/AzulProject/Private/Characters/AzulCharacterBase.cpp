@@ -81,6 +81,7 @@ void AAzulCharacterBase::BeginPlay()
 void AAzulCharacterBase::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
+    CheckCrosshairTrace();
 }
 
 void AAzulCharacterBase::AddStoryTag(const FGameplayTag& NewTag)
@@ -294,93 +295,16 @@ void AAzulCharacterBase::OpenMirilla()
 
 
 
-void AAzulCharacterBase::UpdatedMirillaUI(bool bInRange, bool bLooking)
+
+void AAzulCharacterBase::CheckCrosshairTrace()
 {
-    if (!HUDWidget) return;
-
-    if (!bInRange)
-    {
-        HUDWidget->SetUIState(EInteractUIState::Default);
-    }
-    else if (bInRange && !bLooking)
-    {
-        HUDWidget->SetUIState(EInteractUIState::InRange);
-    }
-    else
-    {
-        HUDWidget->SetUIState(EInteractUIState::InRangeAndLooking);
-    }
-}
-
-void AAzulCharacterBase::StartInteractTrace()
-{
-    UE_LOG(LogTemp, Warning, TEXT("[INTERACT] StartInteractTrace"));
-
-    if (GetWorld()->GetTimerManager().IsTimerActive(InteractTraceTimer))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("[INTERACT] Trace already active"));
-        return;
-    }
-
-    GetWorld()->GetTimerManager().SetTimer(
-        InteractTraceTimer,
-        this,
-        &AAzulCharacterBase::PerformInteractTrace,
-        InteractTraceInterval,
-        true
-    );
-}
-
-
-void AAzulCharacterBase::StopInteractTrace()
-{
-    UE_LOG(LogTemp, Warning, TEXT("[INTERACT] StopInteractTrace"));
-
-    GetWorld()->GetTimerManager().ClearTimer(InteractTraceTimer);
-
-    bCanInteract = false;
-    UpdatedMirillaUI(false, false);
-}
-
-
-void AAzulCharacterBase::PerformInteractTrace()
-{
-    UE_LOG(LogTemp, Verbose, TEXT("[INTERACT] PerformInteractTrace"));
-
-    // 1️⃣ Si no hay interactuables en rango, no tiene sentido trazar
-    if (OverlappingInteractables.Num() == 0 &&
-        OverlappingExceptionActors.Num() == 0)
-
-    {
-        UE_LOG(LogTemp, Verbose, TEXT("[INTERACT] No overlapping interactables"));
-
-        CurrentInteractable = nullptr;
-        bCanInteract = false;
-        UpdatedMirillaUI(false, false);
-        return;
-    }
-
-    // 2️⃣ Mirilla obligatoria
     if (!HUDWidget)
-    {
-        UE_LOG(LogTemp, Error, TEXT("[INTERACT] MirillaWidget is NULL"));
-
-        CurrentInteractable = nullptr;
-        bCanInteract = false;
         return;
-    }
 
-    // 3️⃣ PlayerController necesario para el deproject
     APlayerController* PC = Cast<APlayerController>(GetController());
     if (!PC)
-    {
-        CurrentInteractable = nullptr;
-        bCanInteract = false;
-        UpdatedMirillaUI(true, false);
         return;
-    }
 
-    // 4️⃣ Obtener rayo desde el centro de la pantalla
     FVector WorldLocation;
     FVector WorldDirection;
 
@@ -398,16 +322,16 @@ void AAzulCharacterBase::PerformInteractTrace()
         WorldLocation,
         WorldDirection))
     {
-        CurrentInteractable = nullptr;
         bCanInteract = false;
-        UpdatedMirillaUI(true, false);
+        HUDWidget->SetUIState(EInteractUIState::Default);
         return;
     }
 
-    FVector Start = WorldLocation;
-    FVector End = Start + WorldDirection * InteractTraceDistance;
+    const float TraceDistance = 350.f;
 
-    // 5️⃣ LineTrace
+    FVector Start = WorldLocation;
+    FVector End = Start + WorldDirection * TraceDistance;
+
     FHitResult Hit;
     FCollisionQueryParams Params;
     Params.AddIgnoredActor(this);
@@ -420,179 +344,101 @@ void AAzulCharacterBase::PerformInteractTrace()
         Params
     );
 
-    if (bHit && GEngine)
+    bool bValidHit = false;
+
+    CurrentInteractable = nullptr;
+    CurrentExceptionActor = nullptr;
+
+    if (bHit && Hit.GetActor() && Hit.GetComponent())
     {
-        FString Msg = FString::Printf(
-            TEXT("HIT → Actor: %s | Comp: %s"),
-            Hit.GetActor() ? *Hit.GetActor()->GetName() : TEXT("None"),
-            Hit.GetComponent() ? *Hit.GetComponent()->GetName() : TEXT("None")
-        );
-
-        GEngine->AddOnScreenDebugMessage(
-            -1,
-            0.1f,
-            FColor::Green,
-            Msg
-        );
-    }
-
-
-    // 6️⃣ Buscar si el hit corresponde a ALGUNO de los interactuables en rango
-    AAzulInteractuableBase* HitInteractable = nullptr;
-    AActor* HitExceptionActor = nullptr;
-
-    if (bHit)
-    {
-        // --- CASO NORMAL ---
+        // ---- INTERACTUABLES NORMALES ----
         for (const TScriptInterface<IAzulInteractuableInterface>& Interactable : OverlappingInteractables)
         {
-            AAzulInteractuableBase* Candidate =
+            AAzulInteractuableBase* InteractableActor =
                 Cast<AAzulInteractuableBase>(Interactable.GetObject());
 
-            if (!Candidate || !Candidate->MeshComp)
+            if (!InteractableActor)
                 continue;
 
-            if (Hit.GetComponent() == Candidate->MeshComp)
+            if (Hit.GetActor() != InteractableActor)
+                continue;
+
+            if (InteractableActor->IsValidInteractionComponent(
+                Cast<UPrimitiveComponent>(Hit.GetComponent())))
             {
-                HitInteractable = Candidate;
+                bValidHit = true;
+                CurrentInteractable = Interactable;
                 break;
             }
-
-            // --- EXCEPCIÓN ARMARIOS ---
-            if (!HitInteractable && Hit.GetActor() && Hit.GetComponent())
-            {
-                const FString ActorName = Hit.GetActor()->GetName();
-                const FString CompName = Hit.GetComponent()->GetName();
-
-                const bool bIsArmario =
-                    ActorName == TEXT("BP_Armarios_C_1") ||
-                    ActorName == TEXT("BP_Armarios_C_3") ||
-                    ActorName == TEXT("BP_Armarios_C_5");
-
-                const bool bIsPomo =
-                    CompName == TEXT("Pomo") ||
-                    CompName == TEXT("Pomo1");
-
-                if (bIsArmario && bIsPomo)
-                {
-                    HitInteractable = Candidate;
-                    break;
-                }
-            }
-
-            // --- EXCEPCIÓN BAÚL ---
-            if (!HitInteractable && Hit.GetActor() && Hit.GetComponent())
-            {
-                const FString ActorName = Hit.GetActor()->GetName();
-                const FString CompName = Hit.GetComponent()->GetName();
-
-                const bool bIsBaul =
-                    ActorName == TEXT("BP_Baulongo_C_1");
-
-                const bool bIsParaAbrir =
-                    CompName == TEXT("ParaAbrir");
-
-                if (bIsBaul && bIsParaAbrir)
-                {
-                    HitInteractable = Candidate;
-                    break;
-                }
-            }
-
-            // --- EXCEPCIÓN BEBÉ ---
-            if (!HitInteractable && Hit.GetActor() && Hit.GetComponent())
-            {
-                const FString ActorName = Hit.GetActor()->GetName();
-                const FString CompName = Hit.GetComponent()->GetName();
-
-                const bool bIsBebe =
-                    ActorName == TEXT("BP_Bebe_C_1");
-
-                const bool bIsParaInteractuar =
-                    CompName == TEXT("ParaInteractuarCabeza") ||
-                    CompName == TEXT("ParaInteractuarCuerpo");
-
-                if (bIsBebe && bIsParaInteractuar)
-                {
-                    HitInteractable = Candidate;
-                    break;
-                }
-            }
-
-
         }
 
-        // --- CASO EXCEPCIÓN ---
-        if (!HitInteractable)
+        // ---- EXCEPCIONES ----
+        if (!bValidHit && IsExceptionInteractable(Hit.GetActor()))
         {
-            for (AActor* Actor : OverlappingExceptionActors)
+            bool bCanSetInteractable = true;
+
+            const FString ActorName = Hit.GetActor()->GetName();
+
+            // 🔒 ARMARIOS → solo Pomo / Pomo1
+            if (ActorName.Contains(TEXT("BP_Armarios")))
             {
-                if (!Actor)
-                    continue;
+                bCanSetInteractable = false;
 
-                if (!IsExceptionInteractable(Actor))
-                    continue;
-
-                UStaticMeshComponent* ExceptionMesh =
-                    Actor->FindComponentByClass<UStaticMeshComponent>();
-
-                if (ExceptionMesh && Hit.GetComponent() == ExceptionMesh)
+                if (UStaticMeshComponent* HitMesh =
+                    Cast<UStaticMeshComponent>(Hit.GetComponent()))
                 {
-                    HitExceptionActor = Actor;
-                    break;
+                    const FName MeshName = HitMesh->GetFName();
+
+                    if (MeshName == TEXT("Pomo") || MeshName == TEXT("Pomo1"))
+                    {
+                        bCanSetInteractable = true;
+                    }
                 }
             }
+
+            // 🔒 BAULONGO → solo ParaAbrir
+            else if (ActorName.Contains(TEXT("BP_Baulongo")))
+            {
+                bCanSetInteractable = false;
+
+                if (UStaticMeshComponent* HitMesh =
+                    Cast<UStaticMeshComponent>(Hit.GetComponent()))
+                {
+                    const FName MeshName = HitMesh->GetFName();
+
+                    if (MeshName == TEXT("ParaAbrir"))
+                    {
+                        bCanSetInteractable = true;
+                    }
+                }
+            }
+
+            // ✅ Solo si se puede interactuar
+            if (bCanSetInteractable &&
+                Hit.GetActor()->GetClass()->ImplementsInterface(
+                    UAzulInteractuableInterface::StaticClass()))
+            {
+                CurrentInteractable =
+                    TScriptInterface<IAzulInteractuableInterface>(Hit.GetActor());
+            }
+
+            // 🔑 AQUÍ ESTÁ LA CLAVE
+            bValidHit = bCanSetInteractable;
+            CurrentExceptionActor = bCanSetInteractable ? Hit.GetActor() : nullptr;
         }
+
+
     }
 
+    bCanInteract = bValidHit;
 
-
-    // 7️⃣ Resultado final del sistema
-    if (HitInteractable)
-    {
-        // --- CASO NORMAL ---
-        CurrentInteractable =
-            TScriptInterface<IAzulInteractuableInterface>(HitInteractable);
-
-        CurrentExceptionActor = nullptr;
-
-        bCanInteract = true;
-        UpdatedMirillaUI(true, true);
-
-        UE_LOG(
-            LogTemp,
-            Verbose,
-            TEXT("[INTERACT] Looking at interactable: %s"),
-            *HitInteractable->GetName()
-        );
-    }
-    else if (HitExceptionActor)
-    {
-        // --- CASO EXCEPCIÓN ---
-        CurrentInteractable = nullptr;
-        CurrentExceptionActor = HitExceptionActor;
-
-        bCanInteract = true;
-        UpdatedMirillaUI(true, true);
-
-        UE_LOG(
-            LogTemp,
-            Verbose,
-            TEXT("[INTERACT] Looking at exception actor: %s"),
-            *HitExceptionActor->GetName()
-        );
-    }
-    else
-    {
-        CurrentInteractable = nullptr;
-        CurrentExceptionActor = nullptr;
-
-        bCanInteract = false;
-        UpdatedMirillaUI(true, false);
-    }
-
-
+    HUDWidget->SetUIState(
+        bCanInteract
+        ? EInteractUIState::Active
+        : EInteractUIState::Default
+    );
 }
+
 
 
 void AAzulCharacterBase::AddInteractable(
@@ -602,15 +448,6 @@ void AAzulCharacterBase::AddInteractable(
         return;
 
     OverlappingInteractables.AddUnique(Interactable);
-
-    // EN RANGO SIEMPRE
-    UpdatedMirillaUI(true, false);
-
-    // Arrancar trace si es el primero
-    if (OverlappingInteractables.Num() == 1)
-    {
-        StartInteractTrace();
-    }
 }
 
 
@@ -626,7 +463,6 @@ void AAzulCharacterBase::RemoveInteractable(
         OverlappingExceptionActors.Num() == 0)
     {
         CurrentInteractable = nullptr;
-        StopInteractTrace();
     }
 }
 
@@ -636,10 +472,20 @@ bool AAzulCharacterBase::IsExceptionInteractable(AActor* Actor) const
     if (!Actor)
         return false;
 
-    const FName ActorName = Actor->GetFName();
+    for (const TSubclassOf<AActor>& ExceptionClass : InteractableClassExceptions)
+    {
+        if (!ExceptionClass)
+            continue;
 
-    return InteractableNameExceptions.Contains(ActorName);
+        if (Actor->IsA(ExceptionClass))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
+
 
 void AAzulCharacterBase::AddInteractableException(AActor* Actor)
 {
@@ -650,15 +496,6 @@ void AAzulCharacterBase::AddInteractableException(AActor* Actor)
         return;
 
     OverlappingExceptionActors.AddUnique(Actor);
-
-    // InRange
-    UpdatedMirillaUI(true, false);
-
-    // Asegurar que el trace está activo
-    if (!GetWorld()->GetTimerManager().IsTimerActive(InteractTraceTimer))
-    {
-        StartInteractTrace();
-    }
 }
 
 
@@ -670,6 +507,5 @@ void AAzulCharacterBase::RemoveInteractableException(AActor* Actor)
         OverlappingExceptionActors.Num() == 0)
     {
         CurrentExceptionActor = nullptr;
-        StopInteractTrace();
     }
 }

@@ -60,7 +60,8 @@ public:
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Azul|InteractionExceptions")
-	TArray<FName> InteractableNameExceptions;
+	TArray<TSubclassOf<AActor>> InteractableClassExceptions;
+
 
 	bool IsExceptionInteractable(AActor* Actor) const;
 
@@ -69,16 +70,6 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Azul|InteractionExceptions")
 	void RemoveInteractableException(AActor* Actor);
-
-
-	UFUNCTION()
-	void StartInteractTrace();
-
-	UFUNCTION()
-	void StopInteractTrace();
-
-	UFUNCTION()
-	void PerformInteractTrace();
 
 	UPROPERTY(BlueprintReadOnly, Category = "Azul|Interactuable")
 	bool bCanInteract = false;
@@ -154,15 +145,8 @@ public:
 	void BP_OpenMirilla();
 
 	UFUNCTION()
-	void UpdatedMirillaUI(bool bInRange, bool bLooking);
+	void CheckCrosshairTrace();
 
-	FTimerHandle InteractTraceTimer;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Azul|Mirilla")
-	float InteractTraceInterval = 0.05f; // 20 veces por segundo
-
-	UPROPERTY(EditDefaultsOnly, Category = "Azul|Mirilla")
-	float InteractTraceDistance = 1000.0f;
 
 	//----------------------------TUTORIAL----------------------------------
 	bool bIsReadyToMoveTutorial = false;

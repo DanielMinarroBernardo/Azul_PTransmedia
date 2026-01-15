@@ -14,13 +14,12 @@ void UAzulWidgetTutorial::NativeConstruct()
     CheckBox_2->SetVisibility(ESlateVisibility::HitTestInvisible);
     CheckBox_3->SetVisibility(ESlateVisibility::HitTestInvisible);
 
-    InteractHelp_00->SetVisibility(ESlateVisibility::Hidden);
-    InteractHelp_01->SetVisibility(ESlateVisibility::Hidden);
-    InteractHelp_02->SetVisibility(ESlateVisibility::Hidden);
+    if (InteractHelp_FirstSet)
+        InteractHelp_FirstSet->SetVisibility(ESlateVisibility::Hidden);
 
-    InteractHelp_03->SetVisibility(ESlateVisibility::Hidden);
-    InteractHelp_04->SetVisibility(ESlateVisibility::Hidden);
-    InteractHelp_05->SetVisibility(ESlateVisibility::Hidden);
+    if (InteractHelp_SecondSet)
+        InteractHelp_SecondSet->SetVisibility(ESlateVisibility::Hidden);
+
 
     if (GetGameInstance())
     {
@@ -106,7 +105,7 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag, bool bComplete
     {
         CheckBox_1->SetIsChecked(true);
 
-        MainText = TEXT("This is the thread that will always take you to your child whenever you need it. It lasts 4 seconds, but you can remove it before that time by pressing the space bar again. You cannot move while you are watching the thread.");
+        MainText = TEXT("This is the thread that will always take you to your son whenever you want it. It lasts 4 seconds, but you can remove it before that time by pressing the spacebar again. You cannot move while you are watching the thread.");
         GetWorld()->GetTimerManager().ClearTimer(TextTimer);
         
         //Pasa 2 segundos y cambiamos texto
@@ -360,9 +359,8 @@ void UAzulWidgetTutorial::OnContinueButtonPressed()
 
     if (CurrentStepTag == FGameplayTag::RequestGameplayTag("Tutorial.First.Look")) {
 
-        InteractHelp_00->SetVisibility(ESlateVisibility::Hidden);
-        InteractHelp_01->SetVisibility(ESlateVisibility::Hidden);
-        InteractHelp_02->SetVisibility(ESlateVisibility::Hidden);
+        if (InteractHelp_FirstSet)
+            InteractHelp_FirstSet->SetVisibility(ESlateVisibility::Hidden);
 
         if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
         {
@@ -419,15 +417,11 @@ void UAzulWidgetTutorial::SetCheckBoxsForSecondPart()
     TareaText_2->SetText(FText::FromString(TEXT("Take the manual.")));
     TareaText_3->SetText(FText::FromString(TEXT("Open the manual with the M key")));
 
-    // Mostrar 00–02
-    InteractHelp_00->SetVisibility(ESlateVisibility::Visible);
-    InteractHelp_01->SetVisibility(ESlateVisibility::Visible);
-    InteractHelp_02->SetVisibility(ESlateVisibility::Visible);
+    if (InteractHelp_FirstSet)
+        InteractHelp_FirstSet->SetVisibility(ESlateVisibility::Visible);
 
-    // Ocultar 03–05
-    InteractHelp_03->SetVisibility(ESlateVisibility::Hidden);
-    InteractHelp_04->SetVisibility(ESlateVisibility::Hidden);
-    InteractHelp_05->SetVisibility(ESlateVisibility::Hidden);
+    if (InteractHelp_SecondSet)
+        InteractHelp_SecondSet->SetVisibility(ESlateVisibility::Hidden);
 
     OpenInteractHelp();
 }
@@ -436,28 +430,22 @@ void UAzulWidgetTutorial::ShowSecondInteractHelpSet()
 {
     InteractHelpState = EInteractHelpState::SecondSet;
 
-    // Ocultar primera tanda
-    InteractHelp_00->SetVisibility(ESlateVisibility::Hidden);
-    InteractHelp_01->SetVisibility(ESlateVisibility::Hidden);
-    InteractHelp_02->SetVisibility(ESlateVisibility::Hidden);
+    if (InteractHelp_FirstSet)
+        InteractHelp_FirstSet->SetVisibility(ESlateVisibility::Hidden);
 
-    // Mostrar segunda tanda
-    InteractHelp_03->SetVisibility(ESlateVisibility::Visible);
-    InteractHelp_04->SetVisibility(ESlateVisibility::Visible);
-    InteractHelp_05->SetVisibility(ESlateVisibility::Visible);
+    if (InteractHelp_SecondSet)
+        InteractHelp_SecondSet->SetVisibility(ESlateVisibility::Visible);
 }
 
 void UAzulWidgetTutorial::CloseAllInteractHelp()
 {
     InteractHelpState = EInteractHelpState::None;
 
-    // Ocultar todas las ayudas
-    InteractHelp_00->SetVisibility(ESlateVisibility::Hidden);
-    InteractHelp_01->SetVisibility(ESlateVisibility::Hidden);
-    InteractHelp_02->SetVisibility(ESlateVisibility::Hidden);
-    InteractHelp_03->SetVisibility(ESlateVisibility::Hidden);
-    InteractHelp_04->SetVisibility(ESlateVisibility::Hidden);
-    InteractHelp_05->SetVisibility(ESlateVisibility::Hidden);
+    if (InteractHelp_FirstSet)
+        InteractHelp_FirstSet->SetVisibility(ESlateVisibility::Hidden);
+
+    if (InteractHelp_SecondSet)
+        InteractHelp_SecondSet->SetVisibility(ESlateVisibility::Hidden);
 
     // Restaurar input
     if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
@@ -471,8 +459,6 @@ void UAzulWidgetTutorial::CloseAllInteractHelp()
         if (AAzulCharacterBase* Character = Cast<AAzulCharacterBase>(PC->GetPawn()))
         {
             Character->OpenMirilla();
-            Character->UpdatedMirillaUI(false, false);
-
             if (Character->GetCharacterMovement())
             {
                 Character->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
@@ -480,25 +466,34 @@ void UAzulWidgetTutorial::CloseAllInteractHelp()
         }
     }
 
-    //SetTutorialText(
-    //    TEXT("Walk around the room and explore the pictures, cupboards, trunks...")
-    //);
+    // --- VOLVER A MOSTRAR TUTORIAL BORDER ---
+    if (TutorialBorder)
+    {
+        TutorialBorder->SetVisibility(ESlateVisibility::Visible);
+    }
 
-    //// Limpiar texto tras 10 segundos
-    //GetWorld()->GetTimerManager().ClearTimer(TextTimer);
-    //GetWorld()->GetTimerManager().SetTimer(
-    //    TextTimer,
-    //    this,
-    //    &UAzulWidgetTutorial::ClearTutorialText,
-    //    10.0f,
-    //    false
-    //);
 
     if (ContinueButton)
     {
         ContinueButton->SetVisibility(ESlateVisibility::Hidden);
         ContinueButton->SetIsEnabled(false);
     }
+
+    if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+    {
+        if (AAzulCharacterBase* Character = Cast<AAzulCharacterBase>(PC->GetPawn()))
+        {
+            FString SonNameString = Character->SonName;
+
+            FString TutorialString = FString::Printf(
+                TEXT("%s is crying, what could be wrong with him?"),
+                *SonNameString
+            );
+
+            SetTutorialText(TutorialString);
+        }
+    }
+
 }
 
 
@@ -534,15 +529,15 @@ void UAzulWidgetTutorial::EnableContinueButton()
 
 void UAzulWidgetTutorial::OpenInteractHelp()
 {
-    // --- Mostrar ayudas ---
-    if (InteractHelp_00)
-        InteractHelp_00->SetVisibility(ESlateVisibility::Visible);
 
-    if (InteractHelp_01)
-        InteractHelp_01->SetVisibility(ESlateVisibility::Visible);
+    // --- OCULTAR TUTORIAL BORDER ---
+    if (TutorialBorder)
+    {
+        TutorialBorder->SetVisibility(ESlateVisibility::Hidden);
+    }
 
-    if (InteractHelp_02)
-        InteractHelp_02->SetVisibility(ESlateVisibility::Visible);
+    if (InteractHelp_FirstSet)
+        InteractHelp_FirstSet->SetVisibility(ESlateVisibility::Visible);
 
     // --- Obtener PlayerController ---
     APlayerController* PC = GetWorld()->GetFirstPlayerController();

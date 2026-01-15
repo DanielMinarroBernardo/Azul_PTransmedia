@@ -143,6 +143,7 @@ void AAzulHiloBase::RecalculateHiloFromInput()
 
     SplineComp->SetVisibility(true, true);
 
+    // ------------------ START POINT ------------------
     const float HiloZ = CachedPlayer->GetActorLocation().Z + 5.0f;
 
     FVector StartPos = CachedPlayer->GetActorLocation();
@@ -150,29 +151,52 @@ void AAzulHiloBase::RecalculateHiloFromInput()
 
     const FVector ForwardDir = CachedPlayer->GetActorForwardVector();
 
+    // Tramo recto inicial
     FVector SecondPoint = StartPos + ForwardDir * 50.0f;
     SecondPoint.Z = HiloZ;
 
+    // ------------------ END POINT ------------------
     FVector EndPos = HijoActor->HiloEndPoint
         ? HijoActor->HiloEndPoint->GetComponentLocation()
         : HijoActor->GetActorLocation();
 
+    // Forward del endpoint
+    FVector EndForward = FVector::ForwardVector;
 
+    if (HijoActor->HiloEndPoint)
+    {
+        EndForward = HijoActor->HiloEndPoint->GetForwardVector();
+    }
+    else
+    {
+        EndForward = HijoActor->GetActorForwardVector();
+    }
+
+    // Punto previo para forzar tramo recto final
+    const float EndStraightDistance = 20.0f;
+    FVector PreEndPoint = EndPos - EndForward * EndStraightDistance;
+
+    // ------------------ SPLINE POINTS ------------------
     PreviousPoints = TargetPoints;
     TargetPoints.Empty();
 
     TargetPoints.Add(StartPos);
     TargetPoints.Add(SecondPoint);
 
+    // Curva SOLO hasta el punto previo
     const TArray<FVector> CurvedPoints =
-        GenerateCurvedRoute(SecondPoint, ForwardDir, EndPos);
+        GenerateCurvedRoute(SecondPoint, ForwardDir, PreEndPoint);
 
     TargetPoints.Append(CurvedPoints);
+
+    // Tramo recto final (alineado con forward del endpoint)
+    TargetPoints.Add(EndPos);
 
     OnSplineRouteChanged.Broadcast(PreviousPoints, TargetPoints);
 
     ApplyInterpolatedSplinePoints(TargetPoints);
 
+    // ------------------ STATE ------------------
     bHiloVisible = true;
 
     SetNiagaraLifeTime(100.0f);
@@ -189,6 +213,7 @@ void AAzulHiloBase::RecalculateHiloFromInput()
         );
     }
 }
+
 
 
 void AAzulHiloBase::HideHilo()
