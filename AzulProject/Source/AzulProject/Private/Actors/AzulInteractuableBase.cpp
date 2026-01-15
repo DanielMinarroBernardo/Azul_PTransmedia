@@ -33,10 +33,15 @@ AAzulInteractuableBase::AAzulInteractuableBase()
 	MeshComp->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	MeshComp->SetGenerateOverlapEvents(false);
 
-	HiloEndPoint = CreateDefaultSubobject<USceneComponent>(TEXT("HiloEndPoint"));
+	HiloEndPoint = CreateDefaultSubobject<UArrowComponent>(TEXT("HiloEndPoint"));
 	HiloEndPoint->SetupAttachment(RootComponent);
 	HiloEndPoint->SetRelativeLocation(FVector(0.f, 0.f, 50.f));
+	//HiloEndPoint->SetRelativeRotation(FRotator::ZeroRotator);
 
+	// Opcional pero MUY recomendable
+	HiloEndPoint->ArrowSize = 1.5f;
+	HiloEndPoint->bHiddenInGame = true;
+	HiloEndPoint->SetVisibility(false);
 
 }
 

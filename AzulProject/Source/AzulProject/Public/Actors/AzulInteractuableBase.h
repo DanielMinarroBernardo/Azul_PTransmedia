@@ -8,6 +8,7 @@
 #include "Interfaces/AzulInteractuableInterface.h"
 #include "Components/WidgetComponent.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/ArrowComponent.h"
 #include "AzulInteractuableBase.generated.h"
 
 class AAzulCharacterBase;
@@ -35,8 +36,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Azul|Interactuable", meta = (AllowPrivateAccess = "true"))
 	USphereComponent* CollisionSphere;
 	//-----------------------------------SOLO PARA EL BEBE O LA MADRE CUANDO LLEGUE SU MOMENTO ----------------------------
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Azul|Hilo")
-	USceneComponent* HiloEndPoint;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Azul|Hilo")
+	UArrowComponent* HiloEndPoint;
+
 
 
 	//
