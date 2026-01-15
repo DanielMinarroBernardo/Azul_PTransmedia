@@ -267,28 +267,27 @@ FReply UAzulWidgetTutorial::NativeOnKeyDown(
     const FKeyEvent& InKeyEvent
 )
 {
-    // Solo si el botón existe y está habilitado
     if (ContinueButton && ContinueButton->GetIsEnabled())
     {
         const FKey PressedKey = InKeyEvent.GetKey();
 
-        // ✅ SOLO ENTER / RETURN
-        if (PressedKey == EKeys::Enter ||
-            PressedKey == EKeys::NumPadEnter)
+        // ✅ SOLO ENTER
+        if (PressedKey == EKeys::Enter)
         {
             OnContinueButtonPressed();
             return FReply::Handled();
         }
 
-        // ❌ Space se ignora explícitamente
+        // ❌ Space se consume explícitamente
         if (PressedKey == EKeys::SpaceBar)
         {
-            return FReply::Handled(); // lo consumes para que no haga nada
+            return FReply::Handled();
         }
     }
 
     return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
 }
+
 
 
 void UAzulWidgetTutorial::OnContinueButtonPressed()
