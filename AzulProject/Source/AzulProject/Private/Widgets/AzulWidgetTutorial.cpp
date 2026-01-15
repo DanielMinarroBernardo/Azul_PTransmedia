@@ -515,6 +515,16 @@ void UAzulWidgetTutorial::SetTutorialText(const FString& NewText)
     TextBorder->SetVisibility(ESlateVisibility::Visible);
 }
 
+void UAzulWidgetTutorial::SetVisibilityTutorialBorder(bool bVisibility)
+{
+    if (!TutorialBorder)
+        return;
+
+    TutorialBorder->SetVisibility(
+        bVisibility ? ESlateVisibility::Visible : ESlateVisibility::Hidden
+    );
+}
+
 
 
 void UAzulWidgetTutorial::ApplyTutorialText()

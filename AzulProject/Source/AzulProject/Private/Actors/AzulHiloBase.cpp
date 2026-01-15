@@ -124,11 +124,14 @@ void AAzulHiloBase::ApplyInterpolatedSplinePoints(const TArray<FVector>& Points)
 
 void AAzulHiloBase::RecalculateHiloFromInput()
 {
-    if (!CachedPlayer || !HijoActor)
+    if (!CachedPlayer || !HijoActor || !SplineComp)
     {
         return;
     }
 
+    // -------------------------------------------------
+    // BLOQUEAR MOVIMIENTO DEL JUGADOR
+    // -------------------------------------------------
     if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
     {
         if (AAzulCharacterBase* Character = Cast<AAzulCharacterBase>(PC->GetPawn()))
@@ -143,60 +146,73 @@ void AAzulHiloBase::RecalculateHiloFromInput()
 
     SplineComp->SetVisibility(true, true);
 
-    // ------------------ START POINT ------------------
-    const float HiloZ = CachedPlayer->GetActorLocation().Z + 5.0f;
+    // -------------------------------------------------
+    // START POINT (jugador)
+    // -------------------------------------------------
+    const float StartStraightDistance = 50.0f;
+    const float StartZOffset = 5.0f;
 
     FVector StartPos = CachedPlayer->GetActorLocation();
-    StartPos.Z = HiloZ;
+    StartPos.Z += StartZOffset;
 
-    const FVector ForwardDir = CachedPlayer->GetActorForwardVector();
+    const FVector StartForward = CachedPlayer->GetActorForwardVector();
 
-    // Tramo recto inicial
-    FVector SecondPoint = StartPos + ForwardDir * 50.0f;
-    SecondPoint.Z = HiloZ;
+    FVector SecondPoint = StartPos + StartForward * StartStraightDistance;
+    SecondPoint.Z = StartPos.Z;
 
-    // ------------------ END POINT ------------------
-    FVector EndPos = HijoActor->HiloEndPoint
-        ? HijoActor->HiloEndPoint->GetComponentLocation()
-        : HijoActor->GetActorLocation();
-
-    // Forward del endpoint
-    FVector EndForward = FVector::ForwardVector;
+    // -------------------------------------------------
+    // END POINT (USANDO ARROW)
+    // -------------------------------------------------
+    FVector EndPos;
+    FVector EndForward;
 
     if (HijoActor->HiloEndPoint)
     {
-        EndForward = HijoActor->HiloEndPoint->GetForwardVector();
+        EndPos = HijoActor->HiloEndPoint->GetComponentLocation();
+        EndForward = HijoActor->HiloEndPoint->GetForwardVector(); // 🔥 CLAVE
     }
     else
     {
+        EndPos = HijoActor->GetActorLocation();
         EndForward = HijoActor->GetActorForwardVector();
     }
 
-    // Punto previo para forzar tramo recto final
-    const float EndStraightDistance = 20.0f;
-    FVector PreEndPoint = EndPos - EndForward * EndStraightDistance;
+    // Tramo recto final definido por el ARROW
+    const float EndStraightDistance = 5.0f;
+    const FVector PreEndPoint = EndPos - EndForward * EndStraightDistance;
 
-    // ------------------ SPLINE POINTS ------------------
+    // -------------------------------------------------
+    // SPLINE POINTS
+    // -------------------------------------------------
     PreviousPoints = TargetPoints;
     TargetPoints.Empty();
 
-    TargetPoints.Add(StartPos);
-    TargetPoints.Add(SecondPoint);
+    TargetPoints.Add(StartPos);        // Start
+    TargetPoints.Add(SecondPoint);     // Recto inicial
 
-    // Curva SOLO hasta el punto previo
+    // Curva hasta el inicio del tramo final
     const TArray<FVector> CurvedPoints =
-        GenerateCurvedRoute(SecondPoint, ForwardDir, PreEndPoint);
+        GenerateCurvedRoute(
+            SecondPoint,
+            StartForward,
+            PreEndPoint
+        );
 
     TargetPoints.Append(CurvedPoints);
 
-    // Tramo recto final (alineado con forward del endpoint)
+    // Recto final (controlado por Arrow)
+    TargetPoints.Add(PreEndPoint);
     TargetPoints.Add(EndPos);
 
+    // -------------------------------------------------
+    // APLICAR SPLINE
+    // -------------------------------------------------
     OnSplineRouteChanged.Broadcast(PreviousPoints, TargetPoints);
-
     ApplyInterpolatedSplinePoints(TargetPoints);
 
-    // ------------------ STATE ------------------
+    // -------------------------------------------------
+    // ESTADO / VISIBILIDAD
+    // -------------------------------------------------
     bHiloVisible = true;
 
     SetNiagaraLifeTime(100.0f);
@@ -213,6 +229,9 @@ void AAzulHiloBase::RecalculateHiloFromInput()
         );
     }
 }
+
+
+
 
 
 

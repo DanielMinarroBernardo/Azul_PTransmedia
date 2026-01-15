@@ -121,6 +121,9 @@ protected:
     UFUNCTION(BlueprintCallable)
     void SetTutorialText(const FString& NewText);
 
+    UFUNCTION(BlueprintCallable)
+    void SetVisibilityTutorialBorder(bool bVisibility);
+
     void ApplyTutorialText();
 
     void EnableContinueButton();
