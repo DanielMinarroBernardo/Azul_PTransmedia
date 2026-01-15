@@ -321,7 +321,7 @@ void UAzulWidgetTutorial::OnContinueButtonPressed()
             //FInputModeGameOnly InputMode;
             //PC->SetInputMode(InputMode);
 
-            FInputModeGameOnly InputMode;
+            FInputModeGameAndUI InputMode;
             PC->SetInputMode(InputMode);
             PC->bShowMouseCursor = true;
 
