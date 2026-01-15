@@ -103,7 +103,8 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag, bool bComplete
     // ---------- SPACE ----------
     if (StepTag == FGameplayTag::RequestGameplayTag("Tutorial.First.Space"))
     {
-        CheckBox_1->SetIsChecked(true);
+        SetTaskCompleted(CheckBox_1, TareaText_1);
+
 
         MainText = TEXT("This is the thread that will always take you to your son whenever you want it. It lasts 4 seconds, but you can remove it before that time by pressing the spacebar again. You cannot move while you are watching the thread.");
         GetWorld()->GetTimerManager().ClearTimer(TextTimer);
@@ -130,7 +131,8 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag, bool bComplete
             if (AAzulCharacterBase* Character = Cast<AAzulCharacterBase>(PC->GetPawn()))
             {
                 if (Character->bIsReadyToMoveTutorial) {
-                    CheckBox_2->SetIsChecked(true);
+                    SetTaskCompleted(CheckBox_2, TareaText_2);
+
                 }
             }
         }
@@ -153,7 +155,8 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag, bool bComplete
     // ---------- LOOK ----------
     if (StepTag == FGameplayTag::RequestGameplayTag("Tutorial.First.Look"))
     {
-        CheckBox_3->SetIsChecked(true);
+        SetTaskCompleted(CheckBox_3, TareaText_3);
+
         ContinueButton->SetVisibility(ESlateVisibility::Hidden);
 
         ClearTutorialText();
@@ -200,7 +203,7 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag, bool bComplete
     // ---------- INTERACTUAR ----------
     if (StepTag == FGameplayTag::RequestGameplayTag("Tutorial.Interact"))
     {
-        CheckBox_1->SetIsChecked(true);
+        SetTaskCompleted(CheckBox_1, TareaText_1);
         
         //MainText = TEXT("Very well,");
         GetWorld()->GetTimerManager().ClearTimer(ButtonTimer);
@@ -216,7 +219,7 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag, bool bComplete
     }
 
     if (StepTag == FGameplayTag::RequestGameplayTag("Tutorial.TakeManual")) {
-        CheckBox_2->SetIsChecked(true);
+        SetTaskCompleted(CheckBox_2, TareaText_2);
 
         MainText = TEXT("You just picked up the manual, try opening it.");
         GetWorld()->GetTimerManager().ClearTimer(ButtonTimer);
@@ -232,7 +235,7 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag, bool bComplete
     }
 
     if (StepTag == FGameplayTag::RequestGameplayTag("Tutorial.OpenManual")) {
-        CheckBox_3->SetIsChecked(true);
+        SetTaskCompleted(CheckBox_3, TareaText_3);
 
         MainText = TEXT("Yes, you've just completed the tutorial.");
 
@@ -258,6 +261,35 @@ void UAzulWidgetTutorial::FirstPartTutorial(FGameplayTag StepTag, bool bComplete
     }
 
 }
+
+FReply UAzulWidgetTutorial::NativeOnKeyDown(
+    const FGeometry& InGeometry,
+    const FKeyEvent& InKeyEvent
+)
+{
+    // Solo si el botón existe y está habilitado
+    if (ContinueButton && ContinueButton->GetIsEnabled())
+    {
+        const FKey PressedKey = InKeyEvent.GetKey();
+
+        // ✅ SOLO ENTER / RETURN
+        if (PressedKey == EKeys::Enter ||
+            PressedKey == EKeys::NumPadEnter)
+        {
+            OnContinueButtonPressed();
+            return FReply::Handled();
+        }
+
+        // ❌ Space se ignora explícitamente
+        if (PressedKey == EKeys::SpaceBar)
+        {
+            return FReply::Handled(); // lo consumes para que no haga nada
+        }
+    }
+
+    return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+}
+
 
 void UAzulWidgetTutorial::OnContinueButtonPressed()
 {
@@ -416,6 +448,10 @@ void UAzulWidgetTutorial::SetCheckBoxsForSecondPart()
     TareaText_1->SetText(FText::FromString(TEXT("Interact with any interactive object")));
     TareaText_2->SetText(FText::FromString(TEXT("Take the manual.")));
     TareaText_3->SetText(FText::FromString(TEXT("Open the manual with the M key")));
+
+    TareaText_1->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+    TareaText_2->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+    TareaText_3->SetColorAndOpacity(FSlateColor(FLinearColor::White));
 
     if (InteractHelp_FirstSet)
         InteractHelp_FirstSet->SetVisibility(ESlateVisibility::Visible);
@@ -649,6 +685,22 @@ void UAzulWidgetTutorial::OnSkipTutorialPressed()
     // 4. Ocultar el widget
     RemoveFromParent();
 }
+
+void UAzulWidgetTutorial::SetTaskCompleted(UCheckBox* CheckBox, UTextBlock* TaskText)
+{
+    if (CheckBox)
+    {
+        CheckBox->SetIsChecked(true);
+    }
+
+    if (TaskText)
+    {
+        TaskText->SetColorAndOpacity(
+            FSlateColor(FLinearColor(0.443f, 0.443f, 0.443f, 1.0f))
+        );
+    }
+}
+
 
 
 void UAzulWidgetTutorial::ClearTutorialText()

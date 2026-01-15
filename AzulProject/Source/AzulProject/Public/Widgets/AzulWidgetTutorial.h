@@ -39,6 +39,12 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Azul|Tutorial")
     void FirstPartTutorial(FGameplayTag StepTag, bool bCompleted);
 
+    virtual FReply NativeOnKeyDown(
+        const FGeometry& InGeometry,
+        const FKeyEvent& InKeyEvent
+    ) override;
+
+
 protected:
 
     virtual void NativeConstruct() override;
@@ -99,6 +105,9 @@ protected:
     bool bSecondPartActivated = false;
 
     EInteractHelpState InteractHelpState = EInteractHelpState::None;
+
+    void SetTaskCompleted(UCheckBox* CheckBox, UTextBlock* TaskText);
+
 
     UFUNCTION()
     void ClearTutorialText();

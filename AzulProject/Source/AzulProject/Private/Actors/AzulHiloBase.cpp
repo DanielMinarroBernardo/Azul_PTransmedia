@@ -191,12 +191,21 @@ void AAzulHiloBase::RecalculateHiloFromInput()
     TargetPoints.Add(SecondPoint);     // Recto inicial
 
     // Curva hasta el inicio del tramo final
+    //const TArray<FVector> CurvedPoints =
+    //    GenerateCurvedRoute(
+    //        SecondPoint,
+    //        StartForward,
+    //        PreEndPoint
+    //    );
+
     const TArray<FVector> CurvedPoints =
-        GenerateCurvedRoute(
+        GenerateSmoothCurvedRoute(
             SecondPoint,
             StartForward,
-            PreEndPoint
+            PreEndPoint,
+            EndForward
         );
+
 
     TargetPoints.Append(CurvedPoints);
 
@@ -230,6 +239,41 @@ void AAzulHiloBase::RecalculateHiloFromInput()
     }
 }
 
+TArray<FVector> AAzulHiloBase::GenerateSmoothCurvedRoute(
+    const FVector& StartPos,
+    const FVector& StartForward,
+    const FVector& EndPos,
+    const FVector& EndForward
+)
+{
+    TArray<FVector> Result;
+
+    const int32 NumPoints = 50;
+
+    const float StartTangentLength = 80.0f;
+    const float EndTangentLength = 20.0f;
+
+    const FVector ControlPointA =
+        StartPos + StartForward * StartTangentLength;
+
+    const FVector ControlPointB =
+        EndPos - EndForward * EndTangentLength;
+
+    for (int32 i = 1; i <= NumPoints; ++i)
+    {
+        const float T = static_cast<float>(i) / NumPoints;
+
+        const FVector Point =
+            FMath::Pow(1 - T, 3) * StartPos +
+            3 * FMath::Pow(1 - T, 2) * T * ControlPointA +
+            3 * (1 - T) * FMath::Pow(T, 2) * ControlPointB +
+            FMath::Pow(T, 3) * EndPos;
+
+        Result.Add(Point);
+    }
+
+    return Result;
+}
 
 
 

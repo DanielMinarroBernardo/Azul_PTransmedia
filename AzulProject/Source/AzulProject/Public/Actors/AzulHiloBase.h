@@ -73,6 +73,13 @@ public:
 
 	bool IsHiloVisible() const { return bHiloVisible; }
 
+	TArray<FVector> GenerateSmoothCurvedRoute(
+		const FVector& StartPos,
+		const FVector& StartForward,
+		const FVector& EndPos,
+		const FVector& EndForward
+	);
+
 
 private:
 	void SetNiagaraLifeTime(float Value);
