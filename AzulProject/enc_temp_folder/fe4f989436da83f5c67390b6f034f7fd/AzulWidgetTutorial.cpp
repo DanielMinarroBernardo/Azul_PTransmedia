@@ -444,7 +444,6 @@ void UAzulWidgetTutorial::SetCheckBoxsForSecondPart()
     CheckBox_2->SetIsChecked(false);
     CheckBox_3->SetIsChecked(false);
 
-    TutorialPageText->SetText(FText::FromString(TEXT("Tutorial 2/2")));
     TareaText_1->SetText(FText::FromString(TEXT("Interact with any interactive object")));
     TareaText_2->SetText(FText::FromString(TEXT("Take the manual.")));
     TareaText_3->SetText(FText::FromString(TEXT("Open the manual with the M key")));

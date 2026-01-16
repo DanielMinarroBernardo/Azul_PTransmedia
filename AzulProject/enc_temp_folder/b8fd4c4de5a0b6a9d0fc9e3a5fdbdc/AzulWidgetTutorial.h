@@ -79,9 +79,6 @@ protected:
 
     UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
     UTextBlock* TutorialText;
-    
-    UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
-    UTextBlock* TutorialPageText;
 
     UPROPERTY(meta = (BindWidget))
     UTextBlock* TareaText_1;
