@@ -19,6 +19,8 @@ void UAzulWidgetTutorial::NativeConstruct()
 
     if (InteractHelp_SecondSet)
         InteractHelp_SecondSet->SetVisibility(ESlateVisibility::Hidden);
+    if (InteractHelp_ThirdSet)
+        InteractHelp_ThirdSet->SetVisibility(ESlateVisibility::Hidden);
 
 
     if (GetGameInstance())
@@ -301,8 +303,13 @@ void UAzulWidgetTutorial::OnContinueButtonPressed()
         ShowSecondInteractHelpSet();
         return;
     }
-
     if (InteractHelpState == EInteractHelpState::SecondSet)
+    {
+        ShowThirdInteractHelpSet();
+        return;
+    }
+
+    if (InteractHelpState == EInteractHelpState::ThirdSet)
     {
         CloseAllInteractHelp();
         return;
@@ -472,6 +479,16 @@ void UAzulWidgetTutorial::ShowSecondInteractHelpSet()
     if (InteractHelp_SecondSet)
         InteractHelp_SecondSet->SetVisibility(ESlateVisibility::Visible);
 }
+void UAzulWidgetTutorial::ShowThirdInteractHelpSet()
+{
+    InteractHelpState = EInteractHelpState::ThirdSet;
+
+    if (InteractHelp_ThirdSet)
+        InteractHelp_ThirdSet->SetVisibility(ESlateVisibility::Visible);
+
+    if (InteractHelp_SecondSet)
+        InteractHelp_SecondSet->SetVisibility(ESlateVisibility::Hidden);
+}
 
 void UAzulWidgetTutorial::CloseAllInteractHelp()
 {
@@ -482,6 +499,9 @@ void UAzulWidgetTutorial::CloseAllInteractHelp()
 
     if (InteractHelp_SecondSet)
         InteractHelp_SecondSet->SetVisibility(ESlateVisibility::Hidden);
+
+    if (InteractHelp_ThirdSet)
+        InteractHelp_ThirdSet->SetVisibility(ESlateVisibility::Hidden);
 
     // Restaurar input
     if (APlayerController* PC = GetWorld()->GetFirstPlayerController())

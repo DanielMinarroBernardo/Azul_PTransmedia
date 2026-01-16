@@ -24,7 +24,8 @@ enum class EInteractHelpState : uint8
 {
     None,
     FirstSet,
-    SecondSet
+    SecondSet,
+    ThirdSet
 };
 
 
@@ -104,6 +105,9 @@ protected:
     UPROPERTY(meta = (BindWidget))
     UBorder* InteractHelp_SecondSet;
 
+    UPROPERTY(meta = (BindWidget))
+    UBorder* InteractHelp_ThirdSet;
+
 
     bool bSecondPartActivated = false;
 
@@ -117,6 +121,9 @@ protected:
 
     UFUNCTION()
     void ShowSecondInteractHelpSet();
+    
+    UFUNCTION()
+    void ShowThirdInteractHelpSet();
 
     UFUNCTION()
     void CloseAllInteractHelp();
