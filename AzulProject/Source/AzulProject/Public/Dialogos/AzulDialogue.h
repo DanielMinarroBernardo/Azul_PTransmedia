@@ -109,6 +109,19 @@ public:
     UPROPERTY(BlueprintAssignable)
     FOnDialogueUpdated OnDialogueUpdated;
 
+protected:
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
+    FText DialogueText;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
+    float DialogueDuration;
+
+public:
+    FText GetDialogueText() const;
+    float GetDialogueDuration() const;
+
+    void SetDialogueDuration(float NewDuration);
+
 private:
 
     UFUNCTION()
