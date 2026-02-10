@@ -254,4 +254,17 @@ void UAzulDialogue::SetDialogueText(UTextBlock* Text)
 
 }
 
+FText UAzulDialogue::GetDialogueText() const
+{
+    return DialogueText;
+}
 
+float UAzulDialogue::GetDialogueDuration() const
+{
+    return DialogueDuration;
+}
+
+void UAzulDialogue::SetDialogueDuration(float NewDuration)
+{
+    DialogueDuration = NewDuration;
+}

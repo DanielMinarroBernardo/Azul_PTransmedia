@@ -1,4 +1,4 @@
-﻿#include "AzulStoryManagerSubsystem.h"
+﻿#include "AzulSubsystem/AzulStoryManagerSubsystem.h"
 #include "Engine/Engine.h"
 
 UDataTable* UAzulStoryManagerSubsystem::GetDialogueForNPC(FName NPC_ID)

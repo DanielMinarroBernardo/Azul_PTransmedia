@@ -7,11 +7,19 @@
 #include "GameplayTagContainer.h"
 #include "Interfaces/AzulInteractuableInterface.h"
 #include "Components/WidgetComponent.h"
+#include "AzulComponentes/AzulStoryTextComponent.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/ArrowComponent.h"
 #include "AzulInteractuableBase.generated.h"
 
 class AAzulCharacterBase;
+
+UENUM(BlueprintType)
+enum class EInteractionNarrativeMode : uint8
+{
+	SimpleText UMETA(DisplayName = "Simple Text"),
+	DialogueWithDecisions UMETA(DisplayName = "Dialogue With Decisions")
+};
 
 UCLASS()
 class AZULPROJECT_API AAzulInteractuableBase : public AActor, public IAzulInteractuableInterface
@@ -39,6 +47,32 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Azul|Hilo")
 	UArrowComponent* HiloEndPoint;
 
+	//--------------------------TEXTO NARRATIVO -------------------------------------------------------
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Azul|Narrative")
+	EInteractionNarrativeMode NarrativeMode;
+
+	// Para texto simple
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Azul|Narrative")
+	FGameplayTag StoryContextTag;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UAzulStoryTextComponent* StoryTextComponent;
+
+	// Para diálogos con decisiones
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Azul|Narrative")
+	FName DialogueID;
+
+	void ExecuteSimpleStoryText();
+	void ExecuteDialogueWithDecisions();
+
+	// Widget para texto simple (NO decisiones)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Azul|Narrative|UI")
+	TSubclassOf<UUserWidget> SimpleTextWidgetClass;
+
+
+public:
 
 
 	//
