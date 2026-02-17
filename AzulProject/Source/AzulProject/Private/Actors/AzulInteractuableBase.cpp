@@ -9,8 +9,6 @@
 #include "Kismet/GameplayStatics.h"
 
 
-
-
 // Sets default values
 AAzulInteractuableBase::AAzulInteractuableBase()
 {
@@ -66,23 +64,21 @@ void AAzulInteractuableBase::BeginPlay()
 		CollisionSphere->OnComponentBeginOverlap.AddDynamic(this, &AAzulInteractuableBase::OnBeginOverlap);
 		CollisionSphere->OnComponentEndOverlap.AddDynamic(this, &AAzulInteractuableBase::OnEndOverlap);
 	}
-
-	
 }
 
 void AAzulInteractuableBase::Interactua_Implementation()
 {
 	OnExtraInteractBP();
-	switch (NarrativeMode)
-	{
-	case EInteractionNarrativeMode::SimpleText:
-		ExecuteSimpleStoryText();
-		break;
+	//switch (NarrativeMode)
+	//{
+	//case EInteractionNarrativeMode::SimpleText:
+	//	ExecuteSimpleStoryText();
+	//	break;
 
-	case EInteractionNarrativeMode::DialogueWithDecisions:
-		ExecuteDialogueWithDecisions();
-		break;
-	}
+	//case EInteractionNarrativeMode::DialogueWithDecisions:
+	//	ExecuteDialogueWithDecisions();
+	//	break;
+	//}
 }
 
 // Called every frame
@@ -91,7 +87,6 @@ void AAzulInteractuableBase::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 }
-
 
 
 bool AAzulInteractuableBase::IsValidInteractionComponent(
@@ -144,28 +139,28 @@ void AAzulInteractuableBase::OnEndOverlap(UPrimitiveComponent* OverlappedComp, A
 
 }
 
-void AAzulInteractuableBase::ExecuteSimpleStoryText()
-{
-	if (!StoryTextComponent)
-		return;
-
-	const FText StoryText =
-		StoryTextComponent->GetStoryTextForContext(StoryContextTag);
-
-	if (StoryText.IsEmpty())
-		return;
-
-	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
-	if (!PC)
-		return;
-
-	UUserWidget* Widget = CreateWidget<UUserWidget>(PC, SimpleTextWidgetClass);
-	if (!Widget)
-		return;
-
-	Widget->AddToViewport();
-
-}
+//void AAzulInteractuableBase::ExecuteSimpleStoryText()
+//{
+//	if (!StoryTextComponent)
+//		return;
+//
+//	const FText StoryText =
+//		StoryTextComponent->GetStoryTextForContext(StoryContextTag);
+//
+//	if (StoryText.IsEmpty())
+//		return;
+//
+//	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+//	if (!PC)
+//		return;
+//
+//	UUserWidget* Widget = CreateWidget<UUserWidget>(PC, SimpleTextWidgetClass);
+//	if (!Widget)
+//		return;
+//
+//	Widget->AddToViewport();
+//
+//}
 
 
 void AAzulInteractuableBase::ExecuteDialogueWithDecisions()
