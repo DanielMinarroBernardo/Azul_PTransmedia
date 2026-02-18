@@ -97,6 +97,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Azul|Story")
 	FString SonName;
 
+	UFUNCTION(BlueprintCallable, Category = "Azul|Story")
+	void SetCurrentGameplayTag();
+
 	//---------------------------BOLSO---------------------------------------------
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Azul|Bolso")
 	UAzulBolsoComponent* BolsoComponent;

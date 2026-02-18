@@ -65,6 +65,11 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|HUD Player|Mirilla")
     bool bIsLookingItem = false;
 
+    //-----------------------------STORY TEXTS PROPS
+    UFUNCTION(BlueprintCallable, Category = "Azul|StoryProps")
+    FName GetCurrentGameplayName();
+
+
 
 
 private:

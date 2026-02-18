@@ -75,6 +75,8 @@ void AAzulCharacterBase::BeginPlay()
             );
         }
     }
+
+    SetCurrentGameplayTag();
 }
 
 // Called every frame
@@ -87,6 +89,54 @@ void AAzulCharacterBase::Tick(float DeltaTime)
 void AAzulCharacterBase::AddStoryTag(const FGameplayTag& NewTag)
 {
     ActiveStoryTags.AddTag(NewTag);
+}
+
+void AAzulCharacterBase::SetCurrentGameplayTag()
+{
+    UWorld* World = GetWorld();
+    if (!World)
+        return;
+
+    FString LevelName = UGameplayStatics::GetCurrentLevelName(World, true);
+
+    const FString Prefix = TEXT("LV_Gameplay_");
+    if (!LevelName.StartsWith(Prefix))
+        return;
+
+    FString LevelNumber = LevelName.RightChop(Prefix.Len());
+    FString TagString = FString::Printf(TEXT("Gameplay.%s"), *LevelNumber);
+
+    FGameplayTag LevelTag = FGameplayTag::RequestGameplayTag(FName(*TagString), false);
+    if (!LevelTag.IsValid())
+        return;
+
+    FGameplayTagContainer& ActiveTags = ActiveStoryTags;
+
+    // Obtener el tag padre
+    FGameplayTag GameplayParentTag =
+        FGameplayTag::RequestGameplayTag(FName("Gameplay"));
+
+    // 1️ Crear lista temporal
+    TArray<FGameplayTag> TagsToRemove;
+
+    for (const FGameplayTag& Tag : ActiveTags)
+    {
+        if (Tag.MatchesTag(GameplayParentTag))
+        {
+            TagsToRemove.Add(Tag);
+        }
+    }
+
+    // 2️ Eliminar los encontrados
+    for (const FGameplayTag& Tag : TagsToRemove)
+    {
+        ActiveTags.RemoveTag(Tag);
+    }
+
+    // 3️ Añadir el nuevo
+    ActiveTags.AddTag(LevelTag);
+
+
 }
 
 

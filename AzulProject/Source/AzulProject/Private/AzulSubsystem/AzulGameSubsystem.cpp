@@ -5,6 +5,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Characters/AzulCharacterBase.h"
+#include "GameplayTagContainer.h"
 #include "Dialogos/AzulDialogue.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogAzulCinematics, Log, All);
@@ -117,6 +118,42 @@ bool UAzulGameSubsystem::IsSequenceActive()
 {
     return SequencePlayer != nullptr;
 }
+
+FName UAzulGameSubsystem::GetCurrentGameplayName()
+{
+    UWorld* World = GetWorld();
+    if (!World)
+        return NAME_None;
+
+    FString LevelName = UGameplayStatics::GetCurrentLevelName(World, true);
+
+    const FString Prefix = TEXT("LV_Gameplay_");
+    if (!LevelName.StartsWith(Prefix))
+        return NAME_None;
+
+    FString LevelNumber = LevelName.RightChop(Prefix.Len());
+    FString TagString = FString::Printf(TEXT("Gameplay.%s"), *LevelNumber);
+
+    FGameplayTag LevelTag = FGameplayTag::RequestGameplayTag(FName(*TagString), false);
+    if (!LevelTag.IsValid())
+        return NAME_None;
+
+    AAzulCharacterBase* MomCharacter = Cast<AAzulCharacterBase>(
+        UGameplayStatics::GetPlayerCharacter(World, 0)
+    );
+
+    if (!MomCharacter)
+        return NAME_None;
+
+    if (MomCharacter->ActiveStoryTags.HasTag(LevelTag))
+    {
+        return LevelTag.GetTagName();
+    }
+
+    return NAME_None;
+}
+
+
 
 void UAzulGameSubsystem::OnSequenceFinished()
 {
