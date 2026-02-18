@@ -50,5 +50,5 @@ public:
     FText CurrentStoryText;
 
     UFUNCTION(BlueprintCallable, Category = "Azul|StoryText")
-    void SetTextStoryFromGameplay(FGameplayTag Gameplay);
+    void SetTextStoryFromGameplay(const FGameplayTag& Gameplay);
 };

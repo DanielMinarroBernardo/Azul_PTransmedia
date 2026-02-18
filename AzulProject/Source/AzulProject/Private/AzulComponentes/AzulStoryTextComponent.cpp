@@ -2,7 +2,7 @@
 #include "Actors/AzulInteractuableBase.h"
 #include "Characters/AzulCharacterBase.h"
 #include "Engine/DataTable.h"
-#include "AzulSubsystem/AzulTutorialSubsystem.h"
+#include "Widgets/AzulWidgetTutorial.h"
 #include "AzulSubsystem/AzulGameSubsystem.h"
 
 UAzulStoryTextComponent::UAzulStoryTextComponent()
@@ -12,11 +12,12 @@ UAzulStoryTextComponent::UAzulStoryTextComponent()
     //DefaultStoryText = FText::FromString(TEXT("..."));
 }
 
-//void UAzulStoryTextComponent::BeginPlay()
-//{
-//    Super::BeginPlay();
-//}
-//
+void UAzulStoryTextComponent::BeginPlay()
+{
+    Super::BeginPlay();
+}
+
+
 //FText UAzulStoryTextComponent::GetStoryTextForContext(FGameplayTag ContextTag) const
 //{
 //    if (StoryTextByContext.Contains(ContextTag))
@@ -32,19 +33,18 @@ UAzulStoryTextComponent::UAzulStoryTextComponent()
 //    return StoryTextByContext.Contains(ContextTag);
 //}
 
-//CONTINUAR HACIENDO!
 
-//void UAzulStoryTextComponent::SetTextStoryFromGameplay(const FGameplayTag& Gameplay)
-//{
-//    // Obtener el owner y castear a InteractuableBase
+void UAzulStoryTextComponent::SetTextStoryFromGameplay(const FGameplayTag& Gameplay)
+{
+//    // 1️⃣ Obtener Owner
 //    AAzulInteractuableBase* OwnerInteractuable = Cast<AAzulInteractuableBase>(GetOwner());
 //    if (!OwnerInteractuable)
 //    {
-//        UE_LOG(LogTemp, Warning, TEXT("Owner no es InteractuableBase"));
+//        UE_LOG(LogTemp, Warning, TEXT("Owner no es AAzulInteractuableBase"));
 //        return;
 //    }
 //
-//    // Obtener el Character
+//    // 2️⃣ Obtener Character
 //    AAzulCharacterBase* Character = nullptr;
 //    if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
 //    {
@@ -53,80 +53,61 @@ UAzulStoryTextComponent::UAzulStoryTextComponent()
 //
 //    if (!Character)
 //    {
-//        UE_LOG(LogTemp, Warning, TEXT("No hay CharacterBase asociado"));
+//        UE_LOG(LogTemp, Warning, TEXT("No hay AAzulCharacterBase asociado"));
 //        return;
 //    }
 //
-//    // Convertir tag a string
-//    FString TagStr = Gameplay.GetTagName().ToString();
-//
-//    // Validar tabla
+//    // 3️⃣ Validar DataTable
 //    if (!StoryDataTable)
 //    {
 //        UE_LOG(LogTemp, Warning, TEXT("StoryDataTable no asignada"));
 //        return;
 //    }
 //
-//    // Obtener todas las filas de la DataTable
-//    TArray<FStoryRow*> Rows;
-//    StoryDataTable->GetAllRows<FStoryRow>(TEXT("SetTextStoryFromGameplay"), Rows);
-//    if (Rows.Num() == 0)
+//    // 4️⃣ Obtener nombre de fila directamente desde el tag
+//    FName RowName = Gameplay.GetTagName();
+//
+//    // 5️⃣ Buscar fila directamente
+//    static const FString ContextString(TEXT("SetTextStoryFromGameplay"));
+//
+//    FStoryRow* FoundRow = StoryDataTable->FindRow<FStoryRow>(RowName, ContextString);
+//
+//    if (!FoundRow)
 //    {
-//        UE_LOG(LogTemp, Warning, TEXT("No hay filas en StoryDataTable"));
+//        UE_LOG(LogTemp, Warning, TEXT("No se encontró fila %s en StoryDataTable"), *RowName.ToString());
 //        return;
 //    }
 //
-//    // Determinar índice según el tag
-//    int32 Index = 0; // Default: Gameplay.01 → primer elemento
-//    bool bIsGameplay1 = (TagStr == TEXT("Gameplay.01"));
+//    FText StoryText = FoundRow->StoryText;
 //
-//    if (!bIsGameplay1)
+//    // 6️⃣ Caso especial Gameplay.01
+//    if (RowName == FName("Gameplay.01"))
 //    {
-//        if (!TagStr.StartsWith(TEXT("Gameplay.")))
+//        UAzulWidgetTutorial* TutorialWidget = Character->GetTutorialWidget();
+//        if (TutorialWidget)
 //        {
-//            UE_LOG(LogTemp, Warning, TEXT("Tag %s no es Gameplay.xx"), *TagStr);
-//            return;
+//            TutorialWidget->SetTutorialText(StoryText);
+//            UE_LOG(LogTemp, Log, TEXT("Texto seteado en TutorialWidget: %s"), *StoryText.ToString());
 //        }
-//
-//        FString NumberStr = TagStr.RightChop(FString(TEXT("Gameplay.")).Len());
-//        Index = FCString::Atoi(*NumberStr) - 1;
-//
-//        if (Index < 0 || Index >= Rows.Num())
+//        else
 //        {
-//            UE_LOG(LogTemp, Warning, TEXT("Índice %d fuera de rango en StoryDataTable"), Index);
-//            return;
-//        }
-//    }
-//
-//    // Obtener texto correspondiente
-//    FText StoryText = Rows[Index]->StoryText;
-//
-//    if (bIsGameplay1)
-//    {
-//        // 🔹 Setear tutorial text usando AzulTutorialSubsystem
-//        if (UWorld* World = GetWorld())
-//        {
-//            if (UAzulTutorialSubsystem* TutorialSubsystem = World->GetSubsystem<UAzulTutorialSubsystem>())
-//            {
-//                TutorialSubsystem->SetTutorialText(StoryText);
-//                UE_LOG(LogTemp, Log, TEXT("TutorialText seteado: %s"), *StoryText.ToString());
-//            }
+//            UE_LOG(LogTemp, Warning, TEXT("TutorialWidget no encontrado en Character"));
 //        }
 //    }
 //    else
 //    {
-//        // 🔹 Setear texto en el HUD del player usando AzulGameSubsystem
+//        // 🔹 Setear texto en el HUD usando el Subsystem
 //        if (UWorld* World = GetWorld())
 //        {
 //            if (UAzulGameSubsystem* GameSubsystem = World->GetSubsystem<UAzulGameSubsystem>())
 //            {
-//                // Por ahora guardamos en CurrentStoryText, luego se implementa función en el subsystem
 //                CurrentStoryText = StoryText;
-//                UE_LOG(LogTemp, Log, TEXT("GameStoryText seteado en subsystem: %s"), *StoryText.ToString());
+//                UE_LOG(LogTemp, Log, TEXT("Texto seteado en Subsystem: %s"), *StoryText.ToString());
 //            }
 //        }
 //    }
-//}
+}
+
 
 
 
