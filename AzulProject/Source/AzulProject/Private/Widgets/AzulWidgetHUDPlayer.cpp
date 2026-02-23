@@ -18,3 +18,16 @@ void UAzulWidgetHUDPlayer::SetUIState(EInteractUIState NewState)
         break;
     }
 }
+
+void UAzulWidgetHUDPlayer::SetStoryText(const FString& NewText)
+{
+    if (NewText.IsEmpty())
+    {
+        StoryText->SetText(FText::GetEmpty());
+        TextBorder->SetVisibility(ESlateVisibility::Hidden);
+        return;
+    }
+
+    StoryText->SetText(FText::FromString(NewText));
+    TextBorder->SetVisibility(ESlateVisibility::Visible);
+}

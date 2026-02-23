@@ -7,6 +7,7 @@
 #include "Characters/AzulCharacterBase.h"
 #include "GameplayTagContainer.h"
 #include "Dialogos/AzulDialogue.h"
+#include "Widgets/AzulWidgetHUDPlayer.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogAzulCinematics, Log, All);
 
@@ -151,6 +152,35 @@ FName UAzulGameSubsystem::GetCurrentGameplayName()
     }
 
     return NAME_None;
+}
+
+bool UAzulGameSubsystem::IsGameGameplay()
+{
+    UWorld* World = GetWorld();
+    if (!World)
+        return false;
+
+    FString LevelName = UGameplayStatics::GetCurrentLevelName(World, true);
+
+    const FString Prefix = TEXT("LV_Gameplay_");
+    if (!LevelName.StartsWith(Prefix))
+        return false;
+
+    // Extraemos el número del nivel
+    FString LevelNumberString = LevelName.RightChop(Prefix.Len());
+
+    // Convertimos el string a número entero
+    int32 LevelNumber = FCString::Atoi(*LevelNumberString);
+
+    // Si el número es 1 → false
+    if (LevelNumber == 1)
+        return false;
+
+    // Si está entre 2 y 13 → true
+    if (LevelNumber >= 2 && LevelNumber <= 13)
+        return true;
+
+    return false;
 }
 
 

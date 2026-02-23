@@ -69,8 +69,8 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Azul|StoryProps")
     FName GetCurrentGameplayName();
 
-
-
+    UFUNCTION(BlueprintCallable, Category = "Azul|StoryProps")
+    bool IsGameGameplay();
 
 private:
 

@@ -37,6 +37,16 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Interact UI")
     FLinearColor ActiveColor = FLinearColor(0.7765f, 1.0f, 1.0f, 0.5451f);
 
+    UPROPERTY(meta = (BindWidget))
+    UBorder* TextBorder;
+
+    UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
+    UTextBlock* StoryText;
+
+
     UFUNCTION(BlueprintCallable)
     void SetUIState(EInteractUIState NewState);
+
+    UFUNCTION(BlueprintCallable, Category = "Azul|StoryText")
+    void SetStoryText(const FString& NewText);
 };
