@@ -183,6 +183,85 @@ bool UAzulGameSubsystem::IsGameGameplay()
     return false;
 }
 
+AAzulInteractuableBase* UAzulGameSubsystem::GetCurrentHijoActor()
+{
+    UWorld* World = GetWorld();
+    if (!World)
+        return nullptr;
+
+    AAzulCharacterBase* Character = Cast<AAzulCharacterBase>(
+        UGameplayStatics::GetPlayerCharacter(World, 0)
+    );
+
+    if (!Character)
+        return nullptr;
+
+    for (const FGameplayTag& Tag : Character->ActiveStoryTags)
+    {
+        FString TagString = Tag.GetTagName().ToString();
+
+        if (!TagString.StartsWith(TEXT("Gameplay.")))
+            continue;
+
+        FString NumberString = TagString.RightChop(9); // Quita "Gameplay."
+        int32 LevelNumber = FCString::Atoi(*NumberString);
+
+        // Gameplay.01
+        if (LevelNumber == 1)
+        {
+            UClass* Clase = LoadClass<AAzulInteractuableBase>(
+                nullptr,
+                TEXT("/All/Game/Code/BP_Bebe.BP_Bebe_C")
+            );
+
+            return Cast<AAzulInteractuableBase>(
+                UGameplayStatics::GetActorOfClass(World, Clase)
+            );
+        }
+
+        // Gameplay.02 - 04
+        if (LevelNumber >= 2 && LevelNumber <= 4)
+        {
+            UClass* Clase = LoadClass<AAzulInteractuableBase>(
+                nullptr,
+                TEXT("/All/Game/Code/BP_Niño.BP_Niño_C")
+            );
+
+            return Cast<AAzulInteractuableBase>(
+                UGameplayStatics::GetActorOfClass(World, Clase)
+            );
+        }
+
+        // Gameplay.05 - 09
+        if (LevelNumber >= 5 && LevelNumber <= 9)
+        {
+            UClass* Clase = LoadClass<AAzulInteractuableBase>(
+                nullptr,
+                TEXT("/All/Game/Code/BP_Adolescente.BP_Adolescente_C")
+            );
+
+            return Cast<AAzulInteractuableBase>(
+                UGameplayStatics::GetActorOfClass(World, Clase)
+            );
+        }
+
+        // Gameplay.10 - 12
+        if (LevelNumber >= 10 && LevelNumber <= 12)
+        {
+            UClass* Clase = LoadClass<AAzulInteractuableBase>(
+                nullptr,
+                TEXT("/All/Game/Code/BP_HijoAdulto.BP_HijoAdulto_C")
+            );
+
+            return Cast<AAzulInteractuableBase>(
+                UGameplayStatics::GetActorOfClass(World, Clase)
+            );
+        }
+    }
+
+    return nullptr;
+}
+
 
 
 void UAzulGameSubsystem::OnSequenceFinished()

@@ -72,6 +72,10 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Azul|StoryProps")
     bool IsGameGameplay();
 
+    //---------------------------------HILO
+    UFUNCTION(BlueprintCallable, Category = "Azul|Hilo")
+    AAzulInteractuableBase* GetCurrentHijoActor();
+
 private:
 
     UPROPERTY()
