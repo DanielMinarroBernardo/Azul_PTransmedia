@@ -106,9 +106,6 @@ public:
 
 	//---------------------------HILO--------------------------------------------
 
-	/*UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Azul|Hilo")
-	UAzulHiloComponent* HiloComponent;*/
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Hilo")
 	AAzulHiloBase* HiloActor = nullptr;
 
@@ -130,7 +127,6 @@ public:
 	UFUNCTION()
 	void NotifyHiloHidden();
 
-
 	FTimerHandle HiloTimer;
 
 	UFUNCTION()
@@ -149,7 +145,6 @@ public:
 
 	UFUNCTION()
 	void CheckCrosshairTrace();
-
 
 	//----------------------------TUTORIAL----------------------------------
 	bool bIsReadyToMoveTutorial = false;
@@ -183,7 +178,6 @@ public:
 	//CONTROLES PARA CINEMÁTICAS
 	void BlockPlayerControl();
 	void UnblockPlayerControl();
-
 
 private:
 	bool bIsBlocked = false;
