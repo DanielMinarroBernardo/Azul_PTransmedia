@@ -77,6 +77,7 @@ void AAzulCharacterBase::BeginPlay()
     }
 
     SetCurrentGameplayTag();
+
 }
 
 // Called every frame
@@ -374,7 +375,7 @@ void AAzulCharacterBase::CheckCrosshairTrace()
         return;
     }
 
-    const float TraceDistance = 200.f;
+    const float TraceDistance = 350.f;
 
     FVector Start = WorldLocation;
     FVector End = Start + WorldDirection * TraceDistance;
@@ -398,21 +399,21 @@ void AAzulCharacterBase::CheckCrosshairTrace()
 
     if (bHit && Hit.GetActor() && Hit.GetComponent())
     {
-        if (GEngine)
-        {
-            FString DebugMessage = FString::Printf(
-                TEXT("Actor: %s | Comp: %s"),
-                *Hit.GetActor()->GetName(),
-                *Hit.GetComponent()->GetName()
-            );
+        //if (GEngine)
+        //{
+        //    FString DebugMessage = FString::Printf(
+        //        TEXT("Actor: %s | Comp: %s"),
+        //        *Hit.GetActor()->GetName(),
+        //        *Hit.GetComponent()->GetName()
+        //    );
 
-            GEngine->AddOnScreenDebugMessage(
-                -1,             // Key (-1 = nuevo mensaje cada vez)
-                2.0f,           // Duración en segundos
-                FColor::Yellow, // Color
-                DebugMessage
-            );
-        }
+        //    GEngine->AddOnScreenDebugMessage(
+        //        -1,             // Key (-1 = nuevo mensaje cada vez)
+        //        2.0f,           // Duración en segundos
+        //        FColor::Yellow, // Color
+        //        DebugMessage
+        //    );
+        //}
 
         // ---- INTERACTUABLES NORMALES ----
         for (const TScriptInterface<IAzulInteractuableInterface>& Interactable : OverlappingInteractables)
