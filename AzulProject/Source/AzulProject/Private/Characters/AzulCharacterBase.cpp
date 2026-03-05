@@ -22,7 +22,7 @@ AAzulCharacterBase::AAzulCharacterBase()
 {
     PrimaryActorTick.bCanEverTick = true;
 
-    BolsoComponent = CreateDefaultSubobject<UAzulBolsoComponent>(TEXT("BolsoComponent"));
+    //BolsoComponent = CreateDefaultSubobject<UAzulBolsoComponent>(TEXT("BolsoComponent"));
 
     //HiloComponent = CreateDefaultSubobject<UAzulHiloComponent>(TEXT("HiloComponent"));
 
