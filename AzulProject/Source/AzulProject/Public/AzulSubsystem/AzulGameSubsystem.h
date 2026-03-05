@@ -22,6 +22,9 @@ class AZULPROJECT_API UAzulGameSubsystem : public UGameInstanceSubsystem
 
 public:
 
+    // Se llama cuando el subsystem se inicializa
+    virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+
     //---------------------------------------------------DIALOGOS
 
     /* Diálogo actualmente activo (si lo hay) */
@@ -59,11 +62,16 @@ public:
     bool IsSequenceActive();
 
 	//--------------------------WIDGET HUD PLAYER
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Azul|HUD Player")
+    TSubclassOf<UAzulWidgetHUDPlayer> WidgetHUDPlayerClass;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|HUD Player")
     UAzulWidgetHUDPlayer* WidgetHUDPlayer;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|HUD Player|Mirilla")
     bool bIsLookingItem = false;
+
+    void OnLevelLoaded(UWorld* LoadedWorld);
 
     //-----------------------------STORY TEXTS PROPS
     UFUNCTION(BlueprintCallable, Category = "Azul|StoryProps")

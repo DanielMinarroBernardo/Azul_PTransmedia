@@ -8,8 +8,34 @@
 #include "GameplayTagContainer.h"
 #include "Dialogos/AzulDialogue.h"
 #include "Widgets/AzulWidgetHUDPlayer.h"
+#include "Blueprint/UserWidget.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogAzulCinematics, Log, All);
+
+void UAzulGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+    Super::Initialize(Collection);
+
+    if (IsGameGameplay() && WidgetHUDPlayerClass)
+    {
+        UWorld* World = GetWorld();
+        if (!World) return;
+
+        APlayerController* PC = World->GetFirstPlayerController();
+        if (!PC) return;
+
+        WidgetHUDPlayer = CreateWidget<UAzulWidgetHUDPlayer>(
+            PC,
+            WidgetHUDPlayerClass
+        );
+
+        if (WidgetHUDPlayer)
+        {
+            WidgetHUDPlayer->AddToViewport();
+            WidgetHUDPlayer->SetVisibility(ESlateVisibility::Visible);
+        }
+    }
+}
 
 void UAzulGameSubsystem::PlayLevelSequence(
     ULevelSequence* Sequence,
