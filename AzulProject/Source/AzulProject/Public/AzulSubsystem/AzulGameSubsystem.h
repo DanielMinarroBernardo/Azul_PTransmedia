@@ -84,6 +84,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Azul|Hilo")
     AAzulInteractuableBase* GetCurrentHijoActor();
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul")
+    bool bBlendFinishedCR= true;
+
 private:
 
     UPROPERTY()
