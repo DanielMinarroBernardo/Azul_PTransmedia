@@ -45,13 +45,6 @@ AAzulInteractuableBase::AAzulInteractuableBase()
 	HiloEndPoint->ArrowSize = 1.5f;
 	HiloEndPoint->bHiddenInGame = true;
 	HiloEndPoint->SetVisibility(false);
-
-	StoryTextComponent = CreateDefaultSubobject<UAzulStoryTextComponent>(
-		TEXT("StoryTextComponent")
-	);
-
-	NarrativeMode = EInteractionNarrativeMode::SimpleText;
-
 }
 
 // Called when the game starts or when spawned

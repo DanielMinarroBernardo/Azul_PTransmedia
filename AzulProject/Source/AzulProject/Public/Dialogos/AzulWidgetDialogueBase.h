@@ -4,8 +4,8 @@
 #include "Blueprint/UserWidget.h"
 #include "AzulWidgetDialogueBase.generated.h"
 
-class AAzulNPCBase;
 class UAzulDialogue;
+class UTextBlock;
 
 UCLASS()
 class AZULPROJECT_API UAzulWidgetDialogueBase : public UUserWidget
@@ -14,13 +14,12 @@ class AZULPROJECT_API UAzulWidgetDialogueBase : public UUserWidget
 
 public:
 
-    /* Referencia al NPC que controla el diálogo */
-    UPROPERTY(BlueprintReadWrite, Category = "Azul|Dialogue")
-    AAzulNPCBase* NPC;
-
     /* Referencia al objeto diálogo activo */
     UPROPERTY(BlueprintReadWrite, Category = "Azul|Dialogue")
     UAzulDialogue* Dialogue;
+
+    UPROPERTY(BlueprintReadWrite, meta = (BindWidget), Category = "Azul|Dialogue")
+    UTextBlock* DialogueTextBlock = nullptr;
 
     /* Llamado desde el botón continuar */
     UFUNCTION(BlueprintCallable, Category = "Azul|Dialogue")
@@ -28,6 +27,14 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Azul|Dialogue")
     void PressChoice(int32 ChoiceIndex);
+
+    /* Pinta el texto en el widget de diálogo */
+    UFUNCTION(BlueprintCallable, Category = "Azul|Dialogue")
+    void SetDialogueText(const FString& NewText);
+
+    /* Devuelve el texto actualmente visible en el widget */
+    UFUNCTION(BlueprintCallable, Category = "Azul|Dialogue")
+    FString GetDialogueTextString() const;
 
 protected:
 

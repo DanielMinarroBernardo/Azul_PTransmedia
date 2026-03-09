@@ -13,7 +13,6 @@ void UAzulDialogue::StartDialogue(UDataTable* OverrideTable, bool bRestart)
     {
         DialogueTable = OverrideTable;
         CurrentTable = OverrideTable;
-        CurrentTableIndex = DialogueSequence.Find(OverrideTable);
     }
     else
     {
@@ -160,7 +159,7 @@ void UAzulDialogue::HandleContinueClicked()
     OnDialogueUpdated.Broadcast();
 }
 
-FString UAzulDialogue::ProcessSonName(const FString& InText)
+FString UAzulDialogue::ProcessSonName(const FString& InText) const
 {
     FString Out = InText;
 
@@ -252,6 +251,16 @@ void UAzulDialogue::SetDialogueText(UTextBlock* Text)
 
     UE_LOG(LogTemp, Warning, TEXT("SETDIALOGUETEXT ejecutado: %s"), *CurrentText);
 
+}
+
+FString UAzulDialogue::GetProcessedCurrentText() const
+{
+    if (!CurrentRow)
+    {
+        return FString();
+    }
+
+    return ProcessSonName(CurrentRow->Text);
 }
 
 FText UAzulDialogue::GetDialogueText() const

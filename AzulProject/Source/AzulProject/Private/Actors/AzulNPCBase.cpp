@@ -75,7 +75,7 @@ void AAzulNPCBase::Interactua_Implementation()
     if (!DialogueWidgetInstance)
     {
         UAzulWidgetDialogueBase* W = CreateWidget<UAzulWidgetDialogueBase>(GetWorld(), DialogueWidgetClass);
-        W->NPC = this;
+        //W->NPC = this;
         DialogueWidgetInstance = W;
     }
 

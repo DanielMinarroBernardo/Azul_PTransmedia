@@ -1,22 +1,49 @@
 ﻿#include "Dialogos/AzulWidgetDialogueBase.h"
-#include "Actors/AzulNPCBase.h"
 #include "Dialogos/AzulDialogue.h"
+#include "Components/TextBlock.h"
+#include "AzulSubsystem/AzulGameSubsystem.h"
+#include "Engine/GameInstance.h"
+#include "Kismet/GameplayStatics.h"
 
 void UAzulWidgetDialogueBase::PressContinue()
 {
-    if (NPC)
+    if (UGameInstance* GI = GetGameInstance())
     {
-        NPC->OnContinueRequested();
+        if (UAzulGameSubsystem* GameSubsystem = GI->GetSubsystem<UAzulGameSubsystem>())
+        {
+            GameSubsystem->RequestAdvanceDialogue();
+        }
     }
 }
 
 void UAzulWidgetDialogueBase::PressChoice(int32 ChoiceIndex)
 {
-    if (NPC)
+    if (Dialogue)
     {
-        NPC->OnChoiceSelected(ChoiceIndex);
+        Dialogue->OnChoiceClicked(ChoiceIndex);
     }
 }
+
+void UAzulWidgetDialogueBase::SetDialogueText(const FString& NewText)
+{
+    if (!DialogueTextBlock)
+    {
+        return;
+    }
+
+    DialogueTextBlock->SetText(FText::FromString(NewText));
+}
+
+FString UAzulWidgetDialogueBase::GetDialogueTextString() const
+{
+    if (!DialogueTextBlock)
+    {
+        return FString();
+    }
+
+    return DialogueTextBlock->GetText().ToString();
+}
+
 
 FReply UAzulWidgetDialogueBase::NativeOnMouseButtonDown(
     const FGeometry& InGeometry,

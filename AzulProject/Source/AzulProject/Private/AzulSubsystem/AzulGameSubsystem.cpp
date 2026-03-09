@@ -9,6 +9,7 @@
 #include "Dialogos/AzulDialogue.h"
 #include "Widgets/AzulWidgetHUDPlayer.h"
 #include "Blueprint/UserWidget.h"
+#include "Actors/AzulInteractuableBase.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogAzulCinematics, Log, All);
 
@@ -16,25 +17,98 @@ void UAzulGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
 
-    if (IsGameGameplay() && WidgetHUDPlayerClass)
+    UWorld* World = GetWorld();
+    if (!World) return;
+
+    APlayerController* PC = World->GetFirstPlayerController();
+    if (!PC) return;
+
+    if (IsGameGameplay())
     {
-        UWorld* World = GetWorld();
-        if (!World) return;
+        if (WidgetHUDPlayerClass) {
+            WidgetHUDPlayer = CreateWidget<UAzulWidgetHUDPlayer>(
+                PC,
+                WidgetHUDPlayerClass
+            );
 
-        APlayerController* PC = World->GetFirstPlayerController();
-        if (!PC) return;
-
-        WidgetHUDPlayer = CreateWidget<UAzulWidgetHUDPlayer>(
-            PC,
-            WidgetHUDPlayerClass
-        );
-
-        if (WidgetHUDPlayer)
+            if (WidgetHUDPlayer)
+            {
+                WidgetHUDPlayer->AddToViewport();
+                WidgetHUDPlayer->SetVisibility(ESlateVisibility::Visible);
+            }
+        }
+       
+        if (WidgetDialogueClass)
         {
-            WidgetHUDPlayer->AddToViewport();
-            WidgetHUDPlayer->SetVisibility(ESlateVisibility::Visible);
+            WidgetDialogue = CreateWidget<UAzulWidgetDialogueBase>(
+                PC,
+                WidgetDialogueClass
+            );
+
+            if (WidgetDialogue)
+            {
+                WidgetDialogue->AddToViewport();
+                WidgetDialogue->SetVisibility(ESlateVisibility::Collapsed);
+            }
         }
     }
+}
+
+
+void UAzulGameSubsystem::RegisterDialogueWidget(UAzulWidgetDialogueBase* InWidget)
+{
+    WidgetDialogue = InWidget;
+
+    if (WidgetDialogue && ActiveDialogue)
+    {
+        WidgetDialogue->Dialogue = ActiveDialogue;
+        WidgetDialogue->SetVisibility(ESlateVisibility::Visible);
+        RefreshDialogueWidget();
+    }
+}
+
+void UAzulGameSubsystem::RefreshDialogueWidget()
+{
+    if (!WidgetDialogue)
+        return;
+
+    if (!ActiveDialogue)
+    {
+        WidgetDialogue->Dialogue = nullptr;
+        WidgetDialogue->SetDialogueText(FString());
+        WidgetDialogue->SetVisibility(ESlateVisibility::Collapsed);
+        return;
+    }
+
+    WidgetDialogue->Dialogue = ActiveDialogue;
+    WidgetDialogue->SetDialogueText(GetActiveDialogueText());
+    WidgetDialogue->SetVisibility(ESlateVisibility::Visible);
+}
+
+FString UAzulGameSubsystem::GetActiveDialogueText() const
+{
+    if (!ActiveDialogue)
+        return FString();
+
+    return ActiveDialogue->GetProcessedCurrentText();
+}
+
+FString UAzulGameSubsystem::GetDialogueTextFromWidget() const
+{
+    if (!WidgetDialogue)
+        return FString();
+
+    return WidgetDialogue->GetDialogueTextString();
+}
+
+void UAzulGameSubsystem::OnActiveDialogueUpdated()
+{
+    RefreshDialogueWidget();
+}
+
+void UAzulGameSubsystem::OnActiveDialogueFinished()
+{
+    ClearDialogue();
 }
 
 void UAzulGameSubsystem::PlayLevelSequence(
@@ -105,12 +179,14 @@ void UAzulGameSubsystem::PlayLevelSequence(
 }
 
 
-void UAzulGameSubsystem::PlayVideo(UMediaPlayer* MediaPlayer)
+void UAzulGameSubsystem::PlayVideo(UMediaPlayer* MediaPlayer, UMediaSource* MediaSource)
 {
-    if (!MediaPlayer) return;
+    if (!MediaPlayer || !MediaSource)
+        return;
 
     UWorld* World = GetWorld();
-    if (!World) return;
+    if (!World)
+        return;
 
     if (APlayerController* PC = World->GetFirstPlayerController())
     {
@@ -131,12 +207,40 @@ void UAzulGameSubsystem::PlayVideo(UMediaPlayer* MediaPlayer)
         Character->BlockPlayerControl();
     }
 
+    if (ActiveMediaPlayer)
+    {
+        ActiveMediaPlayer->OnEndReached.RemoveDynamic(
+            this,
+            &UAzulGameSubsystem::OnVideoFinished
+        );
+    }
+
     ActiveMediaPlayer = MediaPlayer;
 
     ActiveMediaPlayer->OnEndReached.AddDynamic(
         this,
         &UAzulGameSubsystem::OnVideoFinished
     );
+
+    const bool bOpened = ActiveMediaPlayer->OpenSource(MediaSource);
+
+    if (!bOpened)
+    {
+        UE_LOG(
+            LogAzulCinematics,
+            Error,
+            TEXT("PlayVideo: No se pudo abrir el MediaSource (%s)"),
+            *GetNameSafe(MediaSource)
+        );
+
+        ActiveMediaPlayer->OnEndReached.RemoveDynamic(
+            this,
+            &UAzulGameSubsystem::OnVideoFinished
+        );
+
+        ActiveMediaPlayer = nullptr;
+        return;
+    }
 
     ActiveMediaPlayer->Play();
 }

@@ -5,10 +5,13 @@
 #include "LevelSequence.h"
 #include "LevelSequencePlayer.h"
 #include "MediaPlayer.h"
+#include "MediaSource.h"
 #include "Widgets/AzulWidgetHUDPlayer.h"
+#include "Dialogos/AzulWidgetDialogueBase.h"
 #include "AzulGameSubsystem.generated.h"
 
 class UAzulDialogue;
+class AAzulInteractuableBase;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(
     FOnLevelSequenceFinished,
@@ -43,6 +46,24 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Azul|Narrative")
     void RequestAdvanceDialogue();
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Azul|Dialogue")
+    TSubclassOf<UAzulWidgetDialogueBase> WidgetDialogueClass;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Azul|Dialogue")
+    UAzulWidgetDialogueBase* WidgetDialogue = nullptr;
+
+    UFUNCTION(BlueprintCallable, Category = "Azul|Dialogue")
+    void RegisterDialogueWidget(UAzulWidgetDialogueBase* InWidget);
+
+    UFUNCTION(BlueprintCallable, Category = "Azul|Dialogue")
+    void RefreshDialogueWidget();
+
+    UFUNCTION(BlueprintCallable, Category = "Azul|Dialogue")
+    FString GetActiveDialogueText() const;
+
+    UFUNCTION(BlueprintCallable, Category = "Azul|Dialogue")
+    FString GetDialogueTextFromWidget() const;
+
     //-----------------------------------------------------------CINEMÁTICAS
 
     UFUNCTION(BlueprintCallable, Category = "Azul|Cinematics")
@@ -56,7 +77,7 @@ public:
     FOnLevelSequenceFinished OnLevelSequenceFinished;
 
     UFUNCTION(BlueprintCallable, Category = "Azul|Cinematics")
-    void PlayVideo(UMediaPlayer* MediaPlayer);
+    void PlayVideo(UMediaPlayer* MediaPlayer, UMediaSource* MediaSource);
 
     UFUNCTION()
     bool IsSequenceActive();
@@ -114,4 +135,10 @@ private:
 
     UFUNCTION()
     void OnVideoFinished();
+
+    UFUNCTION()
+    void OnActiveDialogueUpdated();
+
+    UFUNCTION()
+    void OnActiveDialogueFinished();
 };

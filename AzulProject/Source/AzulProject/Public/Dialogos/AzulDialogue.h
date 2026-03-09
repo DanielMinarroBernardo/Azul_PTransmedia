@@ -49,10 +49,6 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Dialogo")
     UDataTable* DialogueTable;
 
-    /** Secuencia opcional de tablas para encadenar */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Dialogo")
-    TArray<UDataTable*> DialogueSequence;
-
     /** Índice actual en la secuencia */
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Azul|Dialogo")
     int32 CurrentTableIndex = 0;
@@ -92,6 +88,9 @@ public:
     FString GetCurrentText() const;
 
     UFUNCTION(BlueprintCallable)
+    FString GetProcessedCurrentText() const;
+
+    UFUNCTION(BlueprintCallable)
     void UpdateWidget(UHorizontalBox* ChoicesContainer);
 
     UFUNCTION(BlueprintCallable)
@@ -127,8 +126,7 @@ private:
     UFUNCTION()
     void HandleContinueClicked();
 
-    FString ProcessSonName(const FString& InText);
-
+    FString ProcessSonName(const FString& InText) const;
 
     UDataTable* CurrentTable = nullptr;
 };
