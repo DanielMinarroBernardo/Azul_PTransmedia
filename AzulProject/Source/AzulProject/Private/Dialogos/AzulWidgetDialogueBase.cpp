@@ -22,6 +22,9 @@ void UAzulWidgetDialogueBase::PressChoice(int32 ChoiceIndex)
     {
         Dialogue->OnChoiceClicked(ChoiceIndex);
     }
+    else {
+        UE_LOG(LogTemp, Error, TEXT("DialogueWidget: Dialogue es NULL"));
+    }
 }
 
 void UAzulWidgetDialogueBase::SetDialogueText(const FString& NewText)

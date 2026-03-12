@@ -253,6 +253,11 @@ void UAzulDialogue::SetDialogueText(UTextBlock* Text)
 
 }
 
+void UAzulDialogue::ForceDialogue(int NewID)
+{
+    CurrentID = NewID;
+}
+
 FString UAzulDialogue::GetProcessedCurrentText() const
 {
     if (!CurrentRow)

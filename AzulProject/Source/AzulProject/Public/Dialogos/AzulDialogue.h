@@ -108,6 +108,9 @@ public:
     UPROPERTY(BlueprintAssignable)
     FOnDialogueUpdated OnDialogueUpdated;
 
+    UFUNCTION(BlueprintCallable)
+    void ForceDialogue(int NewID);
+
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
     FText DialogueText;
