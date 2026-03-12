@@ -2,8 +2,7 @@
 #include "Characters/AzulCharacterBase.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Engine/LatentActionManager.h"
-#include "AzulComponentes/AzulStoryTextComponent.h"
-#include "AzulSubsystem/AzulStoryManagerSubsystem.h"
+//#include "AzulComponentes/AzulStoryTextComponent.h"
 #include "Dialogos/AzulDialogue.h"
 #include "Dialogos/AzulWidgetDialogueBase.h"
 #include "Kismet/GameplayStatics.h"
@@ -62,16 +61,6 @@ void AAzulInteractuableBase::BeginPlay()
 void AAzulInteractuableBase::Interactua_Implementation()
 {
 	OnExtraInteractBP();
-	//switch (NarrativeMode)
-	//{
-	//case EInteractionNarrativeMode::SimpleText:
-	//	ExecuteSimpleStoryText();
-	//	break;
-
-	//case EInteractionNarrativeMode::DialogueWithDecisions:
-	//	ExecuteDialogueWithDecisions();
-	//	break;
-	//}
 }
 
 // Called every frame
@@ -131,45 +120,4 @@ void AAzulInteractuableBase::OnEndOverlap(UPrimitiveComponent* OverlappedComp, A
 	);
 
 }
-
-//void AAzulInteractuableBase::ExecuteSimpleStoryText()
-//{
-//	if (!StoryTextComponent)
-//		return;
-//
-//	const FText StoryText =
-//		StoryTextComponent->GetStoryTextForContext(StoryContextTag);
-//
-//	if (StoryText.IsEmpty())
-//		return;
-//
-//	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
-//	if (!PC)
-//		return;
-//
-//	UUserWidget* Widget = CreateWidget<UUserWidget>(PC, SimpleTextWidgetClass);
-//	if (!Widget)
-//		return;
-//
-//	Widget->AddToViewport();
-//
-//}
-
-
-void AAzulInteractuableBase::ExecuteDialogueWithDecisions()
-{
-	if (DialogueID.IsNone())
-		return;
-
-	UGameInstance* GameInstance = GetGameInstance();
-	if (!GameInstance)
-		return;
-
-	UAzulStoryManagerSubsystem* StoryManager =
-		GameInstance->GetSubsystem<UAzulStoryManagerSubsystem>();
-
-	if (!StoryManager)
-		return;
-}
-
 

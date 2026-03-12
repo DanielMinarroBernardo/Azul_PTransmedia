@@ -86,9 +86,12 @@ void UAzulDialogue::UpdateWidget(UHorizontalBox* ChoicesContainer)
 
     if (ContinueButton)
     {
-        ContinueButton->SetIsEnabled(!CurrentRow->IsDecision);
+        ContinueButton->SetVisibility(
+            CurrentRow->IsDecision
+            ? ESlateVisibility::Collapsed
+            : ESlateVisibility::Visible
+        );
     }
-
 
     // 1. Primera vez: rellenar el array automáticamente desde el HorizontalBox
 // SIEMPRE reconstruir los botones

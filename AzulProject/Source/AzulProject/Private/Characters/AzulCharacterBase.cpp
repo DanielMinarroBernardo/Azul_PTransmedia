@@ -1,6 +1,6 @@
 ﻿#include "Characters/AzulCharacterBase.h"
-#include "Actors/AzulStoryObjectBase.h"
-#include "Widgets/AzulWidgetBolsoBase.h"
+//#include "Actors/AzulStoryObjectBase.h"
+//#include "Widgets/AzulWidgetBolsoBase.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Interfaces/AzulInteractuableInterface.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -8,13 +8,13 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
 #include "GameFramework/PlayerController.h"
-#include "Actors/AzulAscensorBase.h"
 #include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 #include "EnhancedInputComponent.h"
 #include "AzulSubsystem/AzulTutorialSubsystem.h"
 #include "AzulSubsystem/AzulGameSubsystem.h"
 #include "GameplayTagContainer.h"
+#include "Actors/AzulInteractuableBase.h"
 
 
 // Sets default values
@@ -34,10 +34,10 @@ void AAzulCharacterBase::BeginPlay()
 {
     Super::BeginPlay();
 
-    if (BolsoComponent)
-    {
-        BolsoComponent->InitializeBolso(this);
-    }
+    //if (BolsoComponent)
+    //{
+    //    BolsoComponent->InitializeBolso(this);
+    //}
 
     if (HiloActor)
     {

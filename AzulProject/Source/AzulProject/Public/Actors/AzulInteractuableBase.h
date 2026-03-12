@@ -7,19 +7,12 @@
 #include "GameplayTagContainer.h"
 #include "Interfaces/AzulInteractuableInterface.h"
 #include "Components/WidgetComponent.h"
-#include "AzulComponentes/AzulStoryTextComponent.h"
+//#include "AzulComponentes/AzulStoryTextComponent.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/ArrowComponent.h"
 #include "AzulInteractuableBase.generated.h"
 
 class AAzulCharacterBase;
-
-UENUM(BlueprintType)
-enum class EInteractionNarrativeMode : uint8
-{
-	SimpleText UMETA(DisplayName = "Simple Text"),
-	DialogueWithDecisions UMETA(DisplayName = "Dialogue With Decisions")
-};
 
 UCLASS()
 class AZULPROJECT_API AAzulInteractuableBase : public AActor, public IAzulInteractuableInterface
@@ -50,22 +43,16 @@ public:
 	//--------------------------TEXTO NARRATIVO -------------------------------------------------------
 protected:
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Azul|Narrative")
-	EInteractionNarrativeMode NarrativeMode;
-
 	// Para texto simple
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Azul|Narrative")
 	FGameplayTag StoryContextTag;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UAzulStoryTextComponent* StoryTextComponent;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	//UAzulStoryTextComponent* StoryTextComponent;
 
 	// Para diálogos con decisiones
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Azul|Narrative")
 	FName DialogueID;
-
-	void ExecuteSimpleStoryText();
-	void ExecuteDialogueWithDecisions();
 
 	// Widget para texto simple (NO decisiones)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Azul|Narrative|UI")
@@ -74,17 +61,12 @@ protected:
 
 public:
 
-
-	//
-
 	UFUNCTION(BlueprintCallable, Category = "Azul|Interactuable")
 	bool IsValidInteractionComponent(const UPrimitiveComponent* Component) const;
 
 	// Componentes válidos para interacción por mirilla
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Azul|Interactuable")
 	TArray<UPrimitiveComponent*> InteractionComponents;
-
-
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Character")
 	AAzulCharacterBase* OverlappingCharacter;
