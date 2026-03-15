@@ -179,6 +179,15 @@ public:
 	void BlockPlayerControl();
 	void UnblockPlayerControl();
 
+
+
+	//-------------------------Planetas---------------------------------------------
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Azul|Planetas")
+	bool  bPlanetsCompleted = false;
+	UFUNCTION(BlueprintCallable,Category = "Azul|Planetas")
+	void ChangePlanetsToCompleted();
+
 private:
 	bool bIsBlocked = false;
 
