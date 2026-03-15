@@ -6,33 +6,80 @@ void UAzulTutorialSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
 
-    /* Requisitos para terminar el tutorial */
-    TutorialCompletionRequirements.AddTag(
-        FGameplayTag::RequestGameplayTag("Tutorial.First.Space")
-    );
+    // Estado inicial: por seguridad lo dejamos desactivado
+    bTutorialEnabled = false;
 
-    TutorialCompletionRequirements.AddTag(
-        FGameplayTag::RequestGameplayTag("Tutorial.First.Move")
-    );
+    // Si ya existe un mundo válido, comprobamos el mapa actual
+    if (UWorld* World = GetWorld())
+    {
+        UpdateTutorialStateFromWorld(World);
+    }
 
-    TutorialCompletionRequirements.AddTag(
-        FGameplayTag::RequestGameplayTag("Tutorial.First.Look")
-    );
+    // Nos suscribimos para actualizar el estado cada vez que cargue un mapa
+    FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this, &UAzulTutorialSubsystem::OnPostLoadMap);
+   
+}
 
-    TutorialCompletionRequirements.AddTag(
-        FGameplayTag::RequestGameplayTag("Tutorial.Interact")
-    );
+void UAzulTutorialSubsystem::Deinitialize()
+{
+    FCoreUObjectDelegates::PostLoadMapWithWorld.RemoveAll(this);
 
-    TutorialCompletionRequirements.AddTag(
-        FGameplayTag::RequestGameplayTag("Tutorial.TakeManual")
-    );
+    Super::Deinitialize();
+}
 
-    TutorialCompletionRequirements.AddTag(
-        FGameplayTag::RequestGameplayTag("Tutorial.OpenManual")
-    );
+void UAzulTutorialSubsystem::OnPostLoadMap(UWorld* LoadedWorld)
+{
+    UpdateTutorialStateFromWorld(LoadedWorld);
+}
 
-    UE_LOG(LogTemp, Warning, TEXT("Tutorial Subsystem initialized with %d completion requirements"),
-        TutorialCompletionRequirements.Num());
+void UAzulTutorialSubsystem::UpdateTutorialStateFromWorld(UWorld* World)
+{
+    const bool bWasTutorialEnabled = bTutorialEnabled;
+    bTutorialEnabled = false;
+
+    if (!World)
+    {
+        return;
+    }
+
+    FString MapName = World->GetMapName();
+
+    // En PIE puede venir con prefijos como UEDPIE_0_
+    MapName.RemoveFromStart(World->StreamingLevelsPrefix);
+
+    if (MapName == TEXT("LV_Gameplay_01"))
+    {
+        bTutorialEnabled = true;
+    }
+
+    if (GEngine)
+    {
+        const FString DebugMessage = FString::Printf(
+            TEXT("[TutorialSubsystem] Nivel: %s | Tutorial activo: %s"),
+            *MapName,
+            bTutorialEnabled ? TEXT("TRUE") : TEXT("FALSE")
+        );
+
+        GEngine->AddOnScreenDebugMessage(
+            -1,
+            5.0f,
+            bTutorialEnabled ? FColor::Green : FColor::Red,
+            DebugMessage
+        );
+    }
+
+    // Si acabamos de entrar al nivel del tutorial
+    if (!bWasTutorialEnabled && bTutorialEnabled)
+    {
+        InitializeTasksTutorial();
+    }
+
+    // Si acabamos de salir del nivel del tutorial
+    if (bWasTutorialEnabled && !bTutorialEnabled)
+    {
+        // Aquí limpia o resetea lo necesario del tutorial
+        // ResetTutorial();
+    }
 }
 
 void UAzulTutorialSubsystem::NotifyActionCompleted(FGameplayTag ActionTag)
@@ -113,6 +160,37 @@ void UAzulTutorialSubsystem::ResetTutorial()
 bool UAzulTutorialSubsystem::IsTutorialActive() const
 {
     return bTutorialActive;
+}
+
+void UAzulTutorialSubsystem::InitializeTasksTutorial()
+{
+    /* Requisitos para terminar el tutorial */
+    TutorialCompletionRequirements.AddTag(
+        FGameplayTag::RequestGameplayTag("Tutorial.First.Space")
+    );
+
+    TutorialCompletionRequirements.AddTag(
+        FGameplayTag::RequestGameplayTag("Tutorial.First.Move")
+    );
+
+    TutorialCompletionRequirements.AddTag(
+        FGameplayTag::RequestGameplayTag("Tutorial.First.Look")
+    );
+
+    TutorialCompletionRequirements.AddTag(
+        FGameplayTag::RequestGameplayTag("Tutorial.Interact")
+    );
+
+    TutorialCompletionRequirements.AddTag(
+        FGameplayTag::RequestGameplayTag("Tutorial.TakeManual")
+    );
+
+    TutorialCompletionRequirements.AddTag(
+        FGameplayTag::RequestGameplayTag("Tutorial.OpenManual")
+    );
+
+    UE_LOG(LogTemp, Warning, TEXT("Tutorial Subsystem initialized with %d completion requirements"),
+        TutorialCompletionRequirements.Num());
 }
 
 void UAzulTutorialSubsystem::ApplyPauseMenuInputMode()

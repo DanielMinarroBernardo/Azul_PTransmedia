@@ -59,13 +59,28 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Azul|Tutorial")
     bool IsTutorialActive() const;
 
+    UFUNCTION(BlueprintCallable, Category = "Azul|Tutorial")
+    void InitializeTasksTutorial();
+
     UFUNCTION(BlueprintCallable, Category = "Azul|TutorialInput")
     void ApplyPauseMenuInputMode();
 
 
 protected:
 
+    // Cosas internas para no activarse si no está en el nivel 1
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+    virtual void Deinitialize() override;
+
+    UFUNCTION(BlueprintPure, Category = "Tutorial")
+    bool IsTutorialEnabled() const { return bTutorialEnabled; }
+
+    bool bTutorialEnabled = false;
+
+    UFUNCTION()
+    void OnPostLoadMap(UWorld* LoadedWorld);
+
+    void UpdateTutorialStateFromWorld(UWorld* World);
 
 private:
 
@@ -85,7 +100,5 @@ private:
     bool bTutorialCompleted = false;
 
     void CheckTutorialCompletion();
-
     bool bUseUIAndGameInput = false;
-
 };
