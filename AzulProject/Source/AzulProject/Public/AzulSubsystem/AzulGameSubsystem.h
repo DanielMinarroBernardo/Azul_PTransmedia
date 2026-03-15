@@ -105,8 +105,17 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Azul|Hilo")
     AAzulInteractuableBase* GetCurrentHijoActor();
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul")
+    //----------------------------------CUADROS
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Cuadros")
     bool bBlendFinishedCR= true;
+
+    //-----------------------------------GORRO
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Gorro")
+    UStaticMesh* ChosenGorro = nullptr;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Azul|Gorro")
+    FTransform TransformChosenGorro;
+
 
 private:
 

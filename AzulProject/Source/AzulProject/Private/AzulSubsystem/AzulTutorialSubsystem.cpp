@@ -52,7 +52,7 @@ void UAzulTutorialSubsystem::UpdateTutorialStateFromWorld(UWorld* World)
         bTutorialEnabled = true;
     }
 
-    if (GEngine)
+   /* if (GEngine)
     {
         const FString DebugMessage = FString::Printf(
             TEXT("[TutorialSubsystem] Nivel: %s | Tutorial activo: %s"),
@@ -66,7 +66,7 @@ void UAzulTutorialSubsystem::UpdateTutorialStateFromWorld(UWorld* World)
             bTutorialEnabled ? FColor::Green : FColor::Red,
             DebugMessage
         );
-    }
+    }*/
 
     // Si acabamos de entrar al nivel del tutorial
     if (!bWasTutorialEnabled && bTutorialEnabled)
