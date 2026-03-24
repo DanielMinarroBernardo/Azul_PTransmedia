@@ -492,3 +492,8 @@ void UAzulGameSubsystem::RequestAdvanceDialogue()
 
     ActiveDialogue->ContinueDialogue();
 }
+
+void UAzulGameSubsystem::ChangePlanetsToCompleted() {
+    bPlanetsCompleted = true;
+    UE_LOG(LogTemp, Warning, TEXT("PlanetsCompleted"));
+}

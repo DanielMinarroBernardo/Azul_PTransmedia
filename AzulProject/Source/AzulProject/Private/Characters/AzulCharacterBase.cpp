@@ -217,14 +217,6 @@ void AAzulCharacterBase::UnblockPlayerControl()
     }
 }
 
-void AAzulCharacterBase::ChangePlanetsToCompleted()
-{
-    bPlanetsCompleted = true;
-    UE_LOG(LogTemp, Warning, TEXT("PlanetsCompleted"));
-
-}
-
-
 
 void AAzulCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {

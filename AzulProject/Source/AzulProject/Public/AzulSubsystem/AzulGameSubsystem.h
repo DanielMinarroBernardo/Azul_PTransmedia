@@ -117,6 +117,13 @@ public:
     FTransform TransformChosenGorro;
 
 
+    //-------------------------PLANETAS---------------------------------------------
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Azul|Planetas")
+    bool  bPlanetsCompleted = false;
+    UFUNCTION(BlueprintCallable, Category = "Azul|Planetas")
+    void ChangePlanetsToCompleted();
+
+
 private:
 
     UPROPERTY()
